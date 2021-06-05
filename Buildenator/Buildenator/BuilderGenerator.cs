@@ -17,38 +17,12 @@ namespace Buildenator
 
         public void Execute(GeneratorExecutionContext context)
         {
-            InjectAutoGenerateBuilderAttribute(context);
-
             var classSymbols = GetClassSymbols(context);
 
             foreach (var classSymbol in classSymbols)
             {
                 context.AddSource($"{classSymbol.Builder.Name}.cs", SourceText.From(CreateBuilderCode(classSymbol.Builder, classSymbol.ClassToBuild), Encoding.UTF8));
             }
-        }
-
-        private static void InjectAutoGenerateBuilderAttribute(GeneratorExecutionContext context)
-        {
-
-            const string attributeText = @"
-using System;
-
-namespace Buildenator
-{
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-    public sealed class MakeBuilderAttribute : Attribute
-    {
-        public MakeBuilderAttribute(Type typeForBuilder)
-        {
-            TypeForBuilder = typeForBuilder;
-        }
-
-        public Type TypeForBuilder { get; }
-    }
-}";
-
-            context.AddSource("MakeBuilderAttribute.cs", SourceText.From(attributeText, Encoding.UTF8));
-
         }
 
         private static List<(INamedTypeSymbol Builder, INamedTypeSymbol ClassToBuild)> GetClassSymbols(GeneratorExecutionContext context)
@@ -73,7 +47,7 @@ namespace Buildenator
 
         private static INamedTypeSymbol? ExtractClassToBuildTypeInfo(SemanticModel semanticModel, ClassDeclarationSyntax classSyntax)
         {
-            var attribute = classSyntax.AttributeLists.SelectMany(b => b.Attributes.Where(a => a.Name.ToString().Contains("Buildenator.MakeBuilder"))).FirstOrDefault();
+            var attribute = classSyntax.AttributeLists.SelectMany(b => b.Attributes.Where(a => a.Name.ToString().Contains("MakeBuilder"))).FirstOrDefault();
             if (attribute is null)
                 return null;
 
@@ -135,13 +109,12 @@ namespace Buildenator
         }
 
         // TODO: Custom fixtures strategies
-        // TODO: Nullable configurable
         private string CreateBuilderCode(INamedTypeSymbol builderSymbol, INamedTypeSymbol classSymbol)
              => $@"
 using System;
 using AutoFixture;
 using {classSymbol.ContainingNamespace};
-#nullable enable
+
 namespace {builderSymbol.ContainingNamespace}
 {{
     public partial class {builderSymbol.Name}

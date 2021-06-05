@@ -1,7 +1,6 @@
 ﻿using Buildenator.Abstraction;
-using SampleProject;
 
-namespace SampleTestProject.Builders
+namespace Buildenator.UnitTests.Source.Builders
 {
     [MakeBuilder(typeof(DomainEntity))]
     public partial class DomainEntityBuilder
