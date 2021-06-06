@@ -23,11 +23,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{53455285-1
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{34D14563-E89B-4337-B751-C50D9149C827}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Buildenator.UnitTests", "Tests\Buildenator.UnitTests\Buildenator.UnitTests.csproj", "{FD1F3017-00E4-46EF-8003-6328C0218FF1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.Abstraction", "Buildenator.Abstraction\Buildenator.Abstraction.csproj", "{F477D68B-0704-4D9A-B8DA-941FC25AB473}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Buildenator.Abstraction", "Buildenator.Abstraction\Buildenator.Abstraction.csproj", "{F477D68B-0704-4D9A-B8DA-941FC25AB473}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.IntegrationTests", "Tests\Buildenator.IntegrationTests\Buildenator.IntegrationTests.csproj", "{2A0C17DF-AAC6-40DC-B27B-2DC1F57B38E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Buildenator.UnitTests.Source", "Tests\ClassLibrary1\Buildenator.UnitTests.Source.csproj", "{C1F342AD-C255-42B7-86F8-FCE929D645AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.IntegrationTests.Source", "Tests\Buildenator.IntegrationTests.Source\Buildenator.IntegrationTests.Source.csproj", "{0622FAF2-5B9A-45C8-9D0D-51FB2335501D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,18 +47,18 @@ Global
 		{EF5AFAF9-A0F7-4950-83E5-6119919A39B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EF5AFAF9-A0F7-4950-83E5-6119919A39B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EF5AFAF9-A0F7-4950-83E5-6119919A39B3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FD1F3017-00E4-46EF-8003-6328C0218FF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FD1F3017-00E4-46EF-8003-6328C0218FF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FD1F3017-00E4-46EF-8003-6328C0218FF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FD1F3017-00E4-46EF-8003-6328C0218FF1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F477D68B-0704-4D9A-B8DA-941FC25AB473}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F477D68B-0704-4D9A-B8DA-941FC25AB473}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F477D68B-0704-4D9A-B8DA-941FC25AB473}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F477D68B-0704-4D9A-B8DA-941FC25AB473}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C1F342AD-C255-42B7-86F8-FCE929D645AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C1F342AD-C255-42B7-86F8-FCE929D645AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C1F342AD-C255-42B7-86F8-FCE929D645AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C1F342AD-C255-42B7-86F8-FCE929D645AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A0C17DF-AAC6-40DC-B27B-2DC1F57B38E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A0C17DF-AAC6-40DC-B27B-2DC1F57B38E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A0C17DF-AAC6-40DC-B27B-2DC1F57B38E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A0C17DF-AAC6-40DC-B27B-2DC1F57B38E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0622FAF2-5B9A-45C8-9D0D-51FB2335501D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0622FAF2-5B9A-45C8-9D0D-51FB2335501D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0622FAF2-5B9A-45C8-9D0D-51FB2335501D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0622FAF2-5B9A-45C8-9D0D-51FB2335501D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -66,8 +66,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{349AB0F2-DF88-49C7-A784-DEE4C3BA7BB3} = {503567C3-3A65-4C59-A052-B5A1A9267FC6}
 		{EF5AFAF9-A0F7-4950-83E5-6119919A39B3} = {503567C3-3A65-4C59-A052-B5A1A9267FC6}
-		{FD1F3017-00E4-46EF-8003-6328C0218FF1} = {34D14563-E89B-4337-B751-C50D9149C827}
-		{C1F342AD-C255-42B7-86F8-FCE929D645AF} = {34D14563-E89B-4337-B751-C50D9149C827}
+		{2A0C17DF-AAC6-40DC-B27B-2DC1F57B38E4} = {34D14563-E89B-4337-B751-C50D9149C827}
+		{0622FAF2-5B9A-45C8-9D0D-51FB2335501D} = {34D14563-E89B-4337-B751-C50D9149C827}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {04953D1F-3E96-4E7A-B1C8-C71198D797F6}
