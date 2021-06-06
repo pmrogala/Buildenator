@@ -1,4 +1,4 @@
-﻿namespace Buildenator.UnitTests.Source
+﻿namespace Buildenator.IntegrationTests.Source
 {
     public class DomainEntity
     {

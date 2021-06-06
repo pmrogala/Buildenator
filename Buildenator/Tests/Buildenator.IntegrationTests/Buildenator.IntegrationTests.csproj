@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClassLibrary1\Buildenator.UnitTests.Source.csproj" />
+    <ProjectReference Include="..\Buildenator.IntegrationTests.Source\Buildenator.IntegrationTests.Source.csproj" />
   </ItemGroup>
 
 </Project>

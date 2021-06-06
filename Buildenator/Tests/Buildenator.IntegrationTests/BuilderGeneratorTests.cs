@@ -1,9 +1,9 @@
 using AutoFixture.Xunit2;
-using Buildenator.UnitTests.Source.Builders;
+using Buildenator.IntegrationTests.Source.Builders;
 using FluentAssertions;
 using Xunit;
 
-namespace Buildenator.UnitTests
+namespace Buildenator.IntegrationTests
 {
     public class BuilderGeneratorTests
     {
