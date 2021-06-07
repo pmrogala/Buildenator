@@ -11,11 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
-## 0.1.0 - 2021-06-04
+## 1.0.0 - 2021-06-07
 
 ### Added
 
 - Initial projects
   - A basic builder source generator
+    - the source generator creates the "with" methods basing on constructor parameters and settable properties.
+      - if there is duplication in naming, a constructor parameter has higher priority than the property.
   - Sample projects
+  - IntegrationTests
 - a .gitignore file

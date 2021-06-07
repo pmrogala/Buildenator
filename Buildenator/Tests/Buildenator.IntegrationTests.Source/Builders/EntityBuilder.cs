@@ -2,8 +2,8 @@
 
 namespace Buildenator.IntegrationTests.Source.Builders
 {
-    [MakeBuilder(typeof(DomainEntity))]
-    public partial class DomainEntityBuilder
+    [MakeBuilder(typeof(Entity))]
+    public partial class EntityBuilder
     {
     }
 }
