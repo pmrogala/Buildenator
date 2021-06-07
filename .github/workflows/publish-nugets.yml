@@ -1,0 +1,41 @@
+name: publish NuGet packages
+on:
+  create:
+    tags:
+      - '*'
+jobs:
+  publish:
+    name: build, pack & publish
+    runs-on: windows-latest
+    steps:
+      - name: Retrieve version number
+        uses: actions-ecosystem/action-regex-match@v2
+        id: get_version
+        with:
+          text: ${{ github.ref }}
+          regex: '[0-9]+.[0-9]+.[0-9]+-?[0-9a-z]*'
+      - name: Check version or exit
+        id: check-version
+        shell: bash
+        if: steps.get_version.outputs.match == null
+        run: |
+          echo Version number extracted from ${GITHUB_REF} is invalid
+          exit 1
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core 3.1
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.406
+      - name: Setup .NET Core 5
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.102
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:Version=${{steps.get_version.outputs.match}}
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build --no-restore -v normal -o ./nupkgs -p:Version=${{steps.get_version.outputs.match}}
+      - name: Push
+        run: dotnet nuget push *.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate -n true
+        working-directory: ./nupkgs
