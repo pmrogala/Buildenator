@@ -35,15 +35,15 @@ namespace {_builder.ContainingNamespace}
 
         private string GenerateConstructor()
         {
-            var parameters = GetConstructorParameters();
+            var parameters = GetAllUniqueSettablePropertiesAndParameters();
 
             var output = new StringBuilder();
             output.AppendLine($@"
         public {_builder.Name}()
         {{");
-            foreach (var parameter in parameters)
+            foreach (var (parameter, type) in parameters)
             {
-                output.AppendLine($@"            {parameter.UnderScoreName()} = _fixture.Create<{parameter.Type}>();");
+                output.AppendLine($@"            {parameter.UnderScoreName()} = _fixture.Create<{type}>();");
             }
             output.AppendLine($@"
         }}");
@@ -52,19 +52,19 @@ namespace {_builder.ContainingNamespace}
 
         private string GeneratePropertiesCode()
         {
-            var parameters = GetConstructorParameters();
+            var properties = GetAllUniqueSettablePropertiesAndParameters();
 
             var output = new StringBuilder();
 
-            foreach (var parameter in parameters)
+            foreach (var (property, type) in properties)
             {
                 output.AppendLine($@"
 
-        private {parameter.Type} {parameter.UnderScoreName()};
+        private {type} {property.UnderScoreName()};
 
-        public {_builder.Name} With{parameter.PascalCaseName()}({parameter.Type} value)
+        public {_builder.Name} With{property.PascalCaseName()}({type} value)
         {{
-            {parameter.UnderScoreName()} = value;
+            {property.UnderScoreName()} = value;
             return this;
         }}");
 
@@ -73,53 +73,61 @@ namespace {_builder.ContainingNamespace}
             return output.ToString();
         }
 
+        private IEnumerable<(ISymbol, ITypeSymbol Type)> GetAllUniqueSettablePropertiesAndParameters()
+        {
+            var parameters = GetConstructorParameters();
+            return GetSetableProperties()
+                .Where(x => !parameters.ContainsKey(x.Name))
+                .Select(x => ((ISymbol)x, x.Type))
+                .Concat(parameters.Values.Select(x => ((ISymbol)x, x.Type)));
+        }
+
         private string GenerateBuildsCode()
         {
             var parameters = GetConstructorParameters();
+            var properties = GetSetableProperties()
+                .Where(x => !parameters.ContainsKey(x.Name));
 
-            var output = new StringBuilder();
-
-            output.AppendLine($@"        public {_classToBuild.Name} Build()
+            return $@"        public {_classToBuild.Name} Build()
         {{
-            return new {_classToBuild.Name}(");
-
-            output.Append(string.Join(", ", parameters.Select(parameter => parameter.UnderScoreName())));
-
-            output.AppendLine($@");
+            return new {_classToBuild.Name}({string.Join(", ", parameters.Values.Select(parameter => parameter.UnderScoreName()))})
+            {{
+                {string.Join(", ", properties.Select(property => $"{property.Name} = {property.UnderScoreName()}"))}
+            }};
         }}
         
-        public static {_builder.Name} {_classToBuild.Name} => new {_builder.Name}();");
-
-            return output.ToString();
+        public static {_builder.Name} {_classToBuild.Name} => new {_builder.Name}();
+";
 
         }
 
-        private IEnumerable<IParameterSymbol> GetConstructorParameters()
+        private IReadOnlyDictionary<string, IParameterSymbol> GetConstructorParameters()
         {
             var properties = _classToBuild.Constructors.OrderByDescending(x => x.Parameters.Length).First().Parameters;
-            var propertyNames = properties.Select(x => x.Name);
 
-            var baseType = _classToBuild.BaseType;
-
-            return properties;
+            return properties.ToDictionary(x => x.PascalCaseName());
         }
 
         private IEnumerable<IPropertySymbol> GetSetableProperties()
         {
             var properties = _classToBuild.GetMembers().OfType<IPropertySymbol>()
                 .Where(x => x.SetMethod is not null)
+                .Where(x => x.SetMethod!.DeclaredAccessibility == Accessibility.Public)
                 .Where(x => x.CanBeReferencedByName).ToList();
-            var propertyNames = properties.Select(x => x.Name);
+
+            var propertyNames = new HashSet<string>(properties.Select(x => x.Name));
 
             var baseType = _classToBuild.BaseType;
 
             while (baseType != null)
             {
-
-                properties.AddRange(baseType.GetMembers().OfType<IPropertySymbol>()
+                var newProperties = baseType.GetMembers().OfType<IPropertySymbol>()
                                             .Where(x => x.CanBeReferencedByName)
                                             .Where(x => x.SetMethod is not null)
-                                            .Where(x => !propertyNames.Contains(x.Name)));
+                                            .Where(x => x.SetMethod!.DeclaredAccessibility == Accessibility.Public)
+                                            .Where(x => !propertyNames.Contains(x.Name)).ToList();
+                properties.AddRange(newProperties);
+                propertyNames.UnionWith(newProperties.Select(x => x.Name));
 
                 baseType = baseType.BaseType;
             }
