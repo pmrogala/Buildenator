@@ -1,6 +1,5 @@
 ﻿using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,10 +24,7 @@ namespace Buildenator
 
         public string CreateBuilderCode()
              => $@"
-using System;
-using {_fixtureConfiguration.Namespace};
-using {_classToBuild.ContainingNamespace};
-{GenerateAdditionalNamespaces()}
+{GenerateNamespaces()}
 
 namespace {_builder.ContainingNamespace}
 {{
@@ -41,10 +37,16 @@ namespace {_builder.ContainingNamespace}
     }}
 }}";
 
-        private string GenerateAdditionalNamespaces()
+        private string GenerateNamespaces()
         {
+            var list = new List<string>
+            {
+                "System",
+                _fixtureConfiguration.Namespace,
+                _classToBuild.ContainingNamespace.ToDisplayString()
+            };
             var output = new StringBuilder();
-            foreach(var @namespace in _fixtureConfiguration.AdditionalNamespaces)
+            foreach(var @namespace in list.Concat(_fixtureConfiguration.AdditionalNamespaces).Distinct())
             {
                 output.AppendLine($"using {@namespace};");
             }

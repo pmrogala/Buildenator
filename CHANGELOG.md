@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enabled fixtures configuration on the assembly and class levels.
   - It is not a breaking change.
+- Fixing bug of rare possibility to generate some duplicated usings.
 
 ## 1.0.0 - 2021-06-07
 
