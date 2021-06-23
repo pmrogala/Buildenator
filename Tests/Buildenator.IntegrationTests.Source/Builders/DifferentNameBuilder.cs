@@ -6,13 +6,4 @@ namespace Buildenator.IntegrationTests.Source.Builders
     public partial class DifferentNameBuilder
     {
     }
-
-    [MakeBuilder(typeof(SettableEntityWithoutConstructor))]
-    public partial class SettableEntityWithoutConstructorBuilder
-    {
-    }
-    [MakeBuilder(typeof(SettableEntityWithConstructor))]
-    public partial class SettableEntityWithConstructorBuilder
-    {
-    }
 }
