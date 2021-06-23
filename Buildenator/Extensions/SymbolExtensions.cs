@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace Buildenator
+namespace Buildenator.Extensions
 {
     internal static class SymbolExtensions
     {

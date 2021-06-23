@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Buildenator
+namespace Buildenator.Extensions
 {
-    public static class NullReferenceExtensions
+    internal static class NullReferenceExtensions
     {
         public static IEnumerable<T> IsNotNull<T>(this IEnumerable<T> enumerable)
             where T : notnull => enumerable.Where(x => x != null);

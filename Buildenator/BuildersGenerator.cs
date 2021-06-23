@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Buildenator.Extensions;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Generic;
@@ -17,18 +18,25 @@ namespace Buildenator
 
         public void Execute(GeneratorExecutionContext context)
         {
+            // Debugger.Launch();
             var classSymbols = GetClassSymbols(context);
+
+            var compilation = context.Compilation;
+            var assembly = compilation.Assembly;
+            var fixtureConfigurationBuilder = new FixtureConfigurationBuilder(assembly);
 
             foreach (var classSymbol in classSymbols)
             {
-                var generator = new BuilderSourceStringGenerator(classSymbol.Builder, classSymbol.ClassToBuild);
+                var generator = new BuilderSourceStringGenerator(
+                    classSymbol.Builder,
+                    classSymbol.ClassToBuild,
+                    fixtureConfigurationBuilder.Build(classSymbol.Builder));
                 context.AddSource($"{classSymbol.Builder.Name}.cs", SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
             }
         }
 
         private static List<(INamedTypeSymbol Builder, INamedTypeSymbol ClassToBuild)> GetClassSymbols(GeneratorExecutionContext context)
         {
-            // Debugger.Launch();
             var classSymbols = new List<(INamedTypeSymbol, INamedTypeSymbol)>();
 
             var compilation = context.Compilation;

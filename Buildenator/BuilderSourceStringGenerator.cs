@@ -1,37 +1,55 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Buildenator.Extensions;
+using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
 namespace Buildenator
 {
-    public class BuilderSourceStringGenerator
+    internal class BuilderSourceStringGenerator
     {
         private readonly INamedTypeSymbol _builder;
         private readonly INamedTypeSymbol _classToBuild;
+        private readonly FixtureConfiguration _fixtureConfiguration;
 
-        public BuilderSourceStringGenerator(INamedTypeSymbol builder, INamedTypeSymbol classToBuild)
+        public BuilderSourceStringGenerator(
+            INamedTypeSymbol builder,
+            INamedTypeSymbol classToBuild,
+            FixtureConfiguration fixtureConfiguration)
         {
             _builder = builder;
             _classToBuild = classToBuild;
+            _fixtureConfiguration = fixtureConfiguration;
         }
 
         public string CreateBuilderCode()
              => $@"
 using System;
-using AutoFixture;
+using {_fixtureConfiguration.Namespace};
 using {_classToBuild.ContainingNamespace};
+{GenerateAdditionalNamespaces()}
 
 namespace {_builder.ContainingNamespace}
 {{
     public partial class {_builder.Name}
     {{
-        private readonly Fixture _fixture = new Fixture();
+        private readonly {_fixtureConfiguration.Name} _fixture = new {_fixtureConfiguration.Name}();
 {GenerateConstructor()}
 {GeneratePropertiesCode()}
 {GenerateBuildsCode()}
     }}
 }}";
+
+        private string GenerateAdditionalNamespaces()
+        {
+            var output = new StringBuilder();
+            foreach(var @namespace in _fixtureConfiguration.AdditionalNamespaces)
+            {
+                output.AppendLine($"using {@namespace};");
+            }
+            return output.ToString();
+        }
 
         private string GenerateConstructor()
         {
