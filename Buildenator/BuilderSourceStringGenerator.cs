@@ -76,13 +76,18 @@ namespace {_builder.ContainingNamespace}
 
             var output = new StringBuilder();
 
-            foreach (var (property, type) in properties)
+            foreach (var (property, type) in properties
+                .Where(x => !_builder.Fields.TryGetValue(x.Property.UnderScoreName(), out var field) || field.Type.Name != x.Type.Name))
+            {
+                output.AppendLine($@"        private {type} {property.UnderScoreName()};");
+            }
+
+            foreach (var (property, type) in properties.Where(x => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x.Property), out var method)
+                 || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.Type.Name)))
             {
                 output.AppendLine($@"
 
-        private {type} {property.UnderScoreName()};
-
-        public {_builder.Name} With{property.PascalCaseName()}({type} value)
+        public {_builder.Name} {CreateMethodName(property)}({type} value)
         {{
             {property.UnderScoreName()} = value;
             return this;
@@ -91,6 +96,8 @@ namespace {_builder.ContainingNamespace}
             }
 
             return output.ToString();
+
+            string CreateMethodName(ISymbol property) => $"{_builder.BuildingMethodsPrefix}{property.PascalCaseName()}";
         }
 
         private string GenerateBuildsCode()
