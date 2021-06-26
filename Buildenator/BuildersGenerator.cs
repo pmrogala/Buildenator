@@ -28,8 +28,8 @@ namespace Buildenator
             foreach (var classSymbol in classSymbols)
             {
                 var generator = new BuilderSourceStringGenerator(
-                    classSymbol.Builder,
-                    classSymbol.ClassToBuild,
+                    new BuilderProperties(classSymbol.Builder),
+                    new EntityToBuildProperties(classSymbol.ClassToBuild),
                     fixtureConfigurationBuilder.Build(classSymbol.Builder));
                 context.AddSource($"{classSymbol.Builder.Name}.cs", SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
             }

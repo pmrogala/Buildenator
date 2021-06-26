@@ -1,7 +1,7 @@
 using AutoFixture.Xunit2;
+using Buildenator.IntegrationTests.Source;
 using Buildenator.IntegrationTests.Source.Builders;
 using FluentAssertions;
-using System.Reflection;
 using Xunit;
 
 namespace Buildenator.IntegrationTests
@@ -58,9 +58,49 @@ namespace Buildenator.IntegrationTests
             entity.PropertyInt.Should().Be(value);
             entity.Property.Should().Be(str);
             entity.NoConstructorProperty.Should().BeSameAs(strs);
-            entity.GetType()
-            .GetField("_privateField", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-            .GetValue(entity).Should().BeSameAs(arr);
+            entity.GetPrivateField().Should().BeSameAs(arr);
+        }
+
+        [Theory]
+        [AutoData]
+        public void BuildersGenerator_OneLevelInheritance_AllFieldsCreated(
+            ChildEntity childEntity)
+        {
+            var builder = ChildEntityBuilder.ChildEntity;
+
+            var result = builder
+                .WithEntityInDifferentNamespace(childEntity.EntityInDifferentNamespace)
+                .WithPrivateField(childEntity.GetPrivateField())
+                .WithPropertyStringGetter(childEntity.PropertyGetter)
+                .WithProtectedProperty(childEntity.GetProtectedProperty())
+                .WithByteProperty(childEntity.ByteProperty)
+                .WithPropertyIntGetter(childEntity.PropertyIntGetter)
+                .Build();
+
+            result.Should().BeEquivalentTo(childEntity);
+            result.GetPrivateField().Should().BeEquivalentTo(childEntity.GetPrivateField());
+            result.GetProtectedProperty().Should().BeEquivalentTo(childEntity.GetProtectedProperty());
+        }
+
+        [Theory]
+        [AutoData]
+        public void BuildersGenerator_TwoLevelsInheritance_AllFieldsCreated(
+            GrandchildEntity grandchildEntity)
+        {
+            var builder = GrandchildEntityBuilder.GrandchildEntity;
+
+            var result = builder
+                .WithEntityInDifferentNamespace(grandchildEntity.EntityInDifferentNamespace)
+                .WithPrivateField(grandchildEntity.GetPrivateField())
+                .WithPropertyStringGetter(grandchildEntity.PropertyGetter)
+                .WithProtectedProperty(grandchildEntity.GetProtectedProperty())
+                .WithByteProperty(grandchildEntity.ByteProperty)
+                .WithPropertyIntGetter(grandchildEntity.PropertyIntGetter)
+                .Build();
+
+            result.Should().BeEquivalentTo(grandchildEntity);
+            result.GetPrivateField().Should().BeEquivalentTo(grandchildEntity.GetPrivateField());
+            result.GetProtectedProperty().Should().BeEquivalentTo(grandchildEntity.GetProtectedProperty());
         }
     }
 }

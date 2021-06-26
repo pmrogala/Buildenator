@@ -14,5 +14,7 @@
         public string[] NoConstructorProperty { get; set; }
 
         private readonly int[] _privateField;
+
+        public int[] GetPrivateField() => _privateField;
     }
 }
