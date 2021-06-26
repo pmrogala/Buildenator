@@ -20,7 +20,7 @@ namespace Buildenator
             SettableProperties = GetSetableProperties(entityToBuildSymbol);
         }
 
-        public IEnumerable<(ISymbol, ITypeSymbol Type)> GetAllUniqueSettablePropertiesAndParameters()
+        public IEnumerable<(ISymbol Property, ITypeSymbol Type)> GetAllUniqueSettablePropertiesAndParameters()
         {
             var parameters = ConstructorParameters;
             return SettableProperties

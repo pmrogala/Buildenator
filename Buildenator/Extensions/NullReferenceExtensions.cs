@@ -12,5 +12,9 @@ namespace Buildenator.Extensions
             where T1 : notnull
             where T2 : notnull
             => enumerable.Where(x => x.Item1 != null && x.Item2 != null).OfType<(T1, T2)>();
+
+        public static IEnumerable<(T1, T2)> IsRightNotNull<T1, T2>(this IEnumerable<(T1, T2?)> enumerable)
+            where T2 : notnull
+            => enumerable.Where(x => x.Item2 != null).OfType<(T1, T2)>();
     }
 }

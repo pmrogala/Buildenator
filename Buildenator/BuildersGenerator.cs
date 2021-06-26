@@ -1,4 +1,5 @@
-﻿using Buildenator.Extensions;
+﻿using Buildenator.Abstraction;
+using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -28,59 +29,39 @@ namespace Buildenator
             foreach (var classSymbol in classSymbols)
             {
                 var generator = new BuilderSourceStringGenerator(
-                    new BuilderProperties(classSymbol.Builder),
+                    new BuilderProperties(classSymbol.Builder, classSymbol.Attribute),
                     new EntityToBuildProperties(classSymbol.ClassToBuild),
                     fixtureConfigurationBuilder.Build(classSymbol.Builder));
                 context.AddSource($"{classSymbol.Builder.Name}.cs", SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
             }
         }
 
-        private static List<(INamedTypeSymbol Builder, INamedTypeSymbol ClassToBuild)> GetClassSymbols(GeneratorExecutionContext context)
+        private static List<(INamedTypeSymbol Builder, INamedTypeSymbol ClassToBuild, AttributeData Attribute)> 
+            GetClassSymbols(GeneratorExecutionContext context)
         {
-            var classSymbols = new List<(INamedTypeSymbol, INamedTypeSymbol)>();
+            var classSymbols = new List<(INamedTypeSymbol, INamedTypeSymbol, AttributeData)>();
 
             var compilation = context.Compilation;
 
-            foreach (var syntaxTree in compilation.SyntaxTrees.Where(x => x.FilePath.Contains("Builders")))
+            foreach (var syntaxTree in compilation.SyntaxTrees)
             {
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
                 classSymbols.AddRange(
                         syntaxTree.GetRoot().DescendantNodesAndSelf()
                         .OfType<ClassDeclarationSyntax>()
-                        .Select(classSyntax => (compilation.GetTypeByMetadataName(GetFullNameFrom(classSyntax)), ExtractClassToBuildTypeInfo(semanticModel, classSyntax)))
-                        .AreNotNull());
+                        .Select(x => semanticModel.GetDeclaredSymbol(x))
+                        .OfType<INamedTypeSymbol>()
+                        .Select(classSymbol => (classSymbol, classSymbol.GetAttributes().Where(x => x.AttributeClass?.Name == nameof(MakeBuilderAttribute)).SingleOrDefault()))
+                        .Where(x => x.Item2 != null)
+                        .Select(tuple => (tuple.classSymbol, ExtractClassToBuildTypeInfo(tuple.Item2), tuple.Item2)));
             }
 
             return classSymbols;
         }
 
-        private static INamedTypeSymbol? ExtractClassToBuildTypeInfo(SemanticModel semanticModel, ClassDeclarationSyntax classSyntax)
+        private static INamedTypeSymbol ExtractClassToBuildTypeInfo(AttributeData attribute)
         {
-            var attribute = classSyntax.AttributeLists.SelectMany(b => b.Attributes.Where(a => a.Name.ToString().Contains("MakeBuilder"))).FirstOrDefault();
-            if (attribute is null)
-                return null;
-
-            var id = attribute.ArgumentList?.Arguments.First().Expression.ChildNodes().OfType<IdentifierNameSyntax>().First();
-            if (id is null)
-                return null;
-
-            return (INamedTypeSymbol?)semanticModel.GetTypeInfo(id).Type;
+            return (INamedTypeSymbol)attribute.ConstructorArguments[0].Value!;
         }
-
-        private static string GetFullNameFrom(ClassDeclarationSyntax s)
-        {
-            var @namespace = GetNamespaceFrom(s);
-            return string.IsNullOrWhiteSpace(@namespace)
-                            ? s.Identifier.ToString()
-                            : $"{@namespace}.{s.Identifier}";
-        }
-
-        public static string GetNamespaceFrom(SyntaxNode s) =>
-            s.Parent switch
-            {
-                NamespaceDeclarationSyntax namespaceDeclarationSyntax => namespaceDeclarationSyntax.Name.ToString(),
-                null => string.Empty,
-                _ => GetNamespaceFrom(s.Parent)
-            };
     }
 }

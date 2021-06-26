@@ -2,6 +2,7 @@ using AutoFixture.Xunit2;
 using Buildenator.IntegrationTests.Source;
 using Buildenator.IntegrationTests.Source.Builders;
 using FluentAssertions;
+using System.Collections.Generic;
 using Xunit;
 
 namespace Buildenator.IntegrationTests
@@ -31,6 +32,17 @@ namespace Buildenator.IntegrationTests
             var builder = EntityBuilder.Entity;
 
             var entity = builder.WithPropertyIntGetter(value).WithPropertyStringGetter(str).Build();
+            entity.PropertyIntGetter.Should().Be(value);
+            entity.PropertyGetter.Should().Be(str);
+        }
+
+        [Theory]
+        [AutoData]
+        public void BuildersGenerator_DifferentPrefixSet_MethodsNamesChanged(int value, string str)
+        {
+            var builder = SetEntityBuilder.Entity;
+
+            var entity = builder.SetPropertyIntGetter(value).SetPropertyStringGetter(str).Build();
             entity.PropertyIntGetter.Should().Be(value);
             entity.PropertyGetter.Should().Be(str);
         }
@@ -98,9 +110,32 @@ namespace Buildenator.IntegrationTests
                 .WithPropertyIntGetter(grandchildEntity.PropertyIntGetter)
                 .Build();
 
+
+            typeof(GrandchildEntityBuilder).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), new[] { typeof(List<string>) });
             result.Should().BeEquivalentTo(grandchildEntity);
             result.GetPrivateField().Should().BeEquivalentTo(grandchildEntity.GetPrivateField());
             result.GetProtectedProperty().Should().BeEquivalentTo(grandchildEntity.GetProtectedProperty());
+        }
+
+        [Theory]
+        [AutoData]
+        public void BuildersGenerator_CustomMethods_CustomMethodsAreCalled(
+            GrandchildEntity grandchildEntity)
+        {
+            var builder = EntityBuilderWithCustomMethods.GrandchildEntity;
+
+            var result = builder
+                .WithEntityInDifferentNamespace(grandchildEntity.EntityInDifferentNamespace)
+                .WithPrivateField(grandchildEntity.GetPrivateField())
+                .WithPropertyStringGetter(grandchildEntity.PropertyGetter)
+                .WithByteProperty(grandchildEntity.ByteProperty)
+                .WithPropertyIntGetter(grandchildEntity.PropertyIntGetter)
+                .Build();
+
+            typeof(EntityBuilderWithCustomMethods).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), new[] { typeof(List<string>) })
+                .Which.Should().HaveAccessModifier(FluentAssertions.Common.CSharpAccessModifier.Private);
+            result.PropertyIntGetter.Should().Be(grandchildEntity.PropertyIntGetter / 2);
+            result.PropertyGetter.Should().Be(grandchildEntity.PropertyGetter + "custom");
         }
     }
 }
