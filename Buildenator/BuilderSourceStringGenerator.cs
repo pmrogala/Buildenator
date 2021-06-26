@@ -8,17 +8,17 @@ namespace Buildenator
 {
     internal class BuilderSourceStringGenerator
     {
-        private readonly INamedTypeSymbol _builder;
-        private readonly INamedTypeSymbol _classToBuild;
+        private readonly BuilderProperties _builder;
+        private readonly EntityToBuildProperties _entity;
         private readonly FixtureConfiguration _fixtureConfiguration;
 
         public BuilderSourceStringGenerator(
-            INamedTypeSymbol builder,
-            INamedTypeSymbol classToBuild,
+            BuilderProperties builder,
+            EntityToBuildProperties entity,
             FixtureConfiguration fixtureConfiguration)
         {
             _builder = builder;
-            _classToBuild = classToBuild;
+            _entity = entity;
             _fixtureConfiguration = fixtureConfiguration;
         }
 
@@ -43,10 +43,10 @@ namespace {_builder.ContainingNamespace}
             {
                 "System",
                 _fixtureConfiguration.Namespace,
-                _classToBuild.ContainingNamespace.ToDisplayString()
+                _entity.ContainingNamespace
             };
             var output = new StringBuilder();
-            foreach(var @namespace in list.Concat(_fixtureConfiguration.AdditionalNamespaces).Distinct())
+            foreach (var @namespace in list.Concat(_fixtureConfiguration.AdditionalNamespaces).Distinct())
             {
                 output.AppendLine($"using {@namespace};");
             }
@@ -55,7 +55,7 @@ namespace {_builder.ContainingNamespace}
 
         private string GenerateConstructor()
         {
-            var parameters = GetAllUniqueSettablePropertiesAndParameters();
+            var parameters = _entity.GetAllUniqueSettablePropertiesAndParameters();
 
             var output = new StringBuilder();
             output.AppendLine($@"
@@ -72,7 +72,7 @@ namespace {_builder.ContainingNamespace}
 
         private string GeneratePropertiesCode()
         {
-            var properties = GetAllUniqueSettablePropertiesAndParameters();
+            var properties = _entity.GetAllUniqueSettablePropertiesAndParameters();
 
             var output = new StringBuilder();
 
@@ -93,66 +93,23 @@ namespace {_builder.ContainingNamespace}
             return output.ToString();
         }
 
-        private IEnumerable<(ISymbol, ITypeSymbol Type)> GetAllUniqueSettablePropertiesAndParameters()
-        {
-            var parameters = GetConstructorParameters();
-            return GetSetableProperties()
-                .Where(x => !parameters.ContainsKey(x.Name))
-                .Select(x => ((ISymbol)x, x.Type))
-                .Concat(parameters.Values.Select(x => ((ISymbol)x, x.Type)));
-        }
-
         private string GenerateBuildsCode()
         {
-            var parameters = GetConstructorParameters();
-            var properties = GetSetableProperties()
+            var parameters = _entity.ConstructorParameters;
+            var properties = _entity.SettableProperties
                 .Where(x => !parameters.ContainsKey(x.Name));
 
-            return $@"        public {_classToBuild.Name} Build()
+            return $@"        public {_entity.Name} Build()
         {{
-            return new {_classToBuild.Name}({string.Join(", ", parameters.Values.Select(parameter => parameter.UnderScoreName()))})
+            return new {_entity.Name}({string.Join(", ", parameters.Values.Select(parameter => parameter.UnderScoreName()))})
             {{
                 {string.Join(", ", properties.Select(property => $"{property.Name} = {property.UnderScoreName()}"))}
             }};
         }}
         
-        public static {_builder.Name} {_classToBuild.Name} => new {_builder.Name}();
+        public static {_builder.Name} {_entity.Name} => new {_builder.Name}();
 ";
 
-        }
-
-        private IReadOnlyDictionary<string, IParameterSymbol> GetConstructorParameters()
-        {
-            var properties = _classToBuild.Constructors.OrderByDescending(x => x.Parameters.Length).First().Parameters;
-
-            return properties.ToDictionary(x => x.PascalCaseName());
-        }
-
-        private IEnumerable<IPropertySymbol> GetSetableProperties()
-        {
-            var properties = _classToBuild.GetMembers().OfType<IPropertySymbol>()
-                .Where(x => x.SetMethod is not null)
-                .Where(x => x.SetMethod!.DeclaredAccessibility == Accessibility.Public)
-                .Where(x => x.CanBeReferencedByName).ToList();
-
-            var propertyNames = new HashSet<string>(properties.Select(x => x.Name));
-
-            var baseType = _classToBuild.BaseType;
-
-            while (baseType != null)
-            {
-                var newProperties = baseType.GetMembers().OfType<IPropertySymbol>()
-                                            .Where(x => x.CanBeReferencedByName)
-                                            .Where(x => x.SetMethod is not null)
-                                            .Where(x => x.SetMethod!.DeclaredAccessibility == Accessibility.Public)
-                                            .Where(x => !propertyNames.Contains(x.Name)).ToList();
-                properties.AddRange(newProperties);
-                propertyNames.UnionWith(newProperties.Select(x => x.Name));
-
-                baseType = baseType.BaseType;
-            }
-
-            return properties;
         }
     }
 }
