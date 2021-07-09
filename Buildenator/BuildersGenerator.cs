@@ -1,6 +1,6 @@
 ﻿using Buildenator.Abstraction;
-using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Generic;
@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Buildenator
 {
-    [Generator]
+    [Generator()]
     public class BuildersGenerator : ISourceGenerator
     {
         public void Initialize(GeneratorInitializationContext context)
@@ -20,48 +20,56 @@ namespace Buildenator
         public void Execute(GeneratorExecutionContext context)
         {
             // Debugger.Launch();
-            var classSymbols = GetClassSymbols(context);
+            var classSymbols = GetBuilderSymbolAndItsAttribute(context);
 
             var compilation = context.Compilation;
             var assembly = compilation.Assembly;
             var fixtureConfigurationBuilder = new FixtureConfigurationBuilder(assembly);
 
-            foreach (var classSymbol in classSymbols)
+            foreach (var (builder, attribute) in classSymbols)
             {
                 var generator = new BuilderSourceStringGenerator(
-                    new BuilderProperties(classSymbol.Builder, classSymbol.Attribute),
-                    new EntityToBuildProperties(classSymbol.ClassToBuild),
-                    fixtureConfigurationBuilder.Build(classSymbol.Builder));
-                context.AddSource($"{classSymbol.Builder.Name}.cs", SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
+                    new BuilderProperties(builder, attribute),
+                    new EntityToBuildProperties(attribute),
+                    fixtureConfigurationBuilder.Build(builder));
+
+                context.AddSource($"{builder.Name}.cs", SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
+
+                if (context.CancellationToken.IsCancellationRequested)
+                    break;
             }
         }
 
-        private static List<(INamedTypeSymbol Builder, INamedTypeSymbol ClassToBuild, AttributeData Attribute)> 
-            GetClassSymbols(GeneratorExecutionContext context)
+        private static List<(INamedTypeSymbol Builder, MakeBuilderAttributeInternal Attribute)> 
+            GetBuilderSymbolAndItsAttribute(GeneratorExecutionContext context)
         {
-            var classSymbols = new List<(INamedTypeSymbol, INamedTypeSymbol, AttributeData)>();
+            var result = new List<(INamedTypeSymbol, MakeBuilderAttributeInternal)>();
 
             var compilation = context.Compilation;
 
             foreach (var syntaxTree in compilation.SyntaxTrees)
             {
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
-                classSymbols.AddRange(
-                        syntaxTree.GetRoot().DescendantNodesAndSelf()
-                        .OfType<ClassDeclarationSyntax>()
-                        .Select(x => semanticModel.GetDeclaredSymbol(x))
-                        .OfType<INamedTypeSymbol>()
-                        .Select(classSymbol => (classSymbol, classSymbol.GetAttributes().Where(x => x.AttributeClass?.Name == nameof(MakeBuilderAttribute)).SingleOrDefault()))
-                        .Where(x => x.Item2 != null)
-                        .Select(tuple => (tuple.classSymbol, ExtractClassToBuildTypeInfo(tuple.Item2), tuple.Item2)));
+                foreach (var classSyntax in syntaxTree.GetRoot(context.CancellationToken).DescendantNodesAndSelf().OfType<ClassDeclarationSyntax>())
+                {
+                    var classSymbol = semanticModel.GetDeclaredSymbol(classSyntax, context.CancellationToken);
+                    if (classSymbol is not INamedTypeSymbol namedClassSymbol)
+                        continue;
+
+                    var attribute = namedClassSymbol.GetAttributes().Where(x => x.AttributeClass?.Name == nameof(MakeBuilderAttribute)).SingleOrDefault();
+                    if (attribute is null)
+                        continue;
+
+                    result.Add((namedClassSymbol, CreateMakeBuilderAttributeInternal(attribute)));
+                }
             }
 
-            return classSymbols;
+            return result;
         }
 
-        private static INamedTypeSymbol ExtractClassToBuildTypeInfo(AttributeData attribute)
-        {
-            return (INamedTypeSymbol)attribute.ConstructorArguments[0].Value!;
-        }
+        private static MakeBuilderAttributeInternal CreateMakeBuilderAttributeInternal(AttributeData attribute)
+            => new MakeBuilderAttributeInternal(
+                (INamedTypeSymbol)attribute.ConstructorArguments[0].Value!,
+                (string)attribute.ConstructorArguments[1].Value!);
     }
 }
