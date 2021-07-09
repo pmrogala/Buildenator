@@ -7,26 +7,33 @@ namespace Buildenator
 {
     internal class BuilderProperties
     {
-        public BuilderProperties(INamedTypeSymbol builderSymbol, AttributeData attributeData)
+        private readonly Dictionary<string, IMethodSymbol> _buildingMethods;
+        private readonly Dictionary<string, IFieldSymbol> _fields;
+
+        public BuilderProperties(INamedTypeSymbol builderSymbol, MakeBuilderAttributeInternal attributeData)
         {
             ContainingNamespace = builderSymbol.ContainingNamespace.ToDisplayString();
             Name = builderSymbol.Name;
-            BuildingMethodsPrefix = (string)attributeData.ConstructorArguments[1].Value!;
+            BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix;
 
             if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
                 throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");
 
-            var memebers = builderSymbol.GetMembers();
-            BuildingMethods = memebers.OfType<IMethodSymbol>()
-                .Where(x => x.Name.StartsWith(BuildingMethodsPrefix))
-                .ToDictionary(x => x.Name);
-            Fields = memebers.OfType<IFieldSymbol>().ToDictionary(x => x.Name);
+            _buildingMethods = new Dictionary<string, IMethodSymbol>();
+            _fields = new Dictionary<string, IFieldSymbol>();
+            foreach (var member in builderSymbol.GetMembers())
+            {
+                if (member is IMethodSymbol method && method.Name.StartsWith(BuildingMethodsPrefix))
+                    _buildingMethods.Add(method.Name, method);
+                else if (member is IFieldSymbol field)
+                    _fields.Add(field.Name, field);
+            }
         }
 
         public string ContainingNamespace { get; }
         public string Name { get; }
         public string BuildingMethodsPrefix { get; }
-        public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods { get; }
-        public IReadOnlyDictionary<string, IFieldSymbol> Fields { get; }
+        public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;
+        public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
     }
 }

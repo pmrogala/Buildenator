@@ -39,7 +39,7 @@ namespace {_builder.ContainingNamespace}
 
         private string GenerateNamespaces()
         {
-            var list = new List<string>
+            var list = new string[]
             {
                 "System",
                 _fixtureConfiguration.Namespace,
@@ -48,7 +48,7 @@ namespace {_builder.ContainingNamespace}
             var output = new StringBuilder();
             foreach (var @namespace in list.Concat(_fixtureConfiguration.AdditionalNamespaces).Distinct())
             {
-                output.AppendLine($"using {@namespace};");
+                output.Append("using ").Append(@namespace).AppendLine(";");
             }
             return output.ToString();
         }
@@ -77,12 +77,12 @@ namespace {_builder.ContainingNamespace}
             var output = new StringBuilder();
 
             foreach (var (property, type) in properties
-                .Where(x => !_builder.Fields.TryGetValue(x.Property.UnderScoreName(), out var field) || field.Type.Name != x.Type.Name))
+                .Where(x => !_builder.Fields.TryGetValue(x.Symbol.UnderScoreName(), out var field) || field.Type.Name != x.Type.Name))
             {
                 output.AppendLine($@"        private {type} {property.UnderScoreName()};");
             }
 
-            foreach (var (property, type) in properties.Where(x => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x.Property), out var method)
+            foreach (var (property, type) in properties.Where(x => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x.Symbol), out var method)
                  || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.Type.Name)))
             {
                 output.AppendLine($@"
