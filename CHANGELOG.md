@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## 1.2.0 - 2021-06-23
+
+### Added
+
+- Now the generator detected user defined "with" methods, so it does not generate duplicates causing compilation errors
+- .NetBenchmark with some simple scenarios
+
+### Changed
+
+- a bit of refactoring of the code
+
 ## 1.1.0 - 2021-06-23
 
 ### Added
