@@ -1,6 +1,5 @@
 ﻿using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -10,16 +9,22 @@ namespace Buildenator
     {
         private readonly BuilderProperties _builder;
         private readonly EntityToBuildProperties _entity;
-        private readonly FixtureConfiguration _fixtureConfiguration;
+        private readonly FixtureProperties? _fixtureConfiguration;
+        private readonly MockingProperties? _mockingConfiguration;
+        private const string SetupActionLiteral = "setupAction";
+        private const string ValueLiteral = "value";
+        private const string FixtureLiteral = "_fixture";
 
         public BuilderSourceStringGenerator(
             BuilderProperties builder,
             EntityToBuildProperties entity,
-            FixtureConfiguration fixtureConfiguration)
+            FixtureProperties? fixtureConfiguration,
+            MockingProperties? mockingConfiguration)
         {
             _builder = builder;
             _entity = entity;
             _fixtureConfiguration = fixtureConfiguration;
+            _mockingConfiguration = mockingConfiguration;
         }
 
         public string CreateBuilderCode()
@@ -30,7 +35,7 @@ namespace {_builder.ContainingNamespace}
 {{
     public partial class {_builder.Name}
     {{
-        private readonly {_fixtureConfiguration.Name} _fixture = new {_fixtureConfiguration.Name}();
+        {(_fixtureConfiguration is null ? string.Empty : $"private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}()")};
 {GenerateConstructor()}
 {GeneratePropertiesCode()}
 {GenerateBuildsCode()}
@@ -42,11 +47,18 @@ namespace {_builder.ContainingNamespace}
             var list = new string[]
             {
                 "System",
-                _fixtureConfiguration.Namespace,
                 _entity.ContainingNamespace
-            };
+            }
+                .Concat(_fixtureConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>())
+                .Concat(_mockingConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>());
+
+            if (_fixtureConfiguration is not null)
+                list = list.Append(_fixtureConfiguration.Namespace);
+
+            list = list.Distinct();
+
             var output = new StringBuilder();
-            foreach (var @namespace in list.Concat(_fixtureConfiguration.AdditionalNamespaces).Distinct())
+            foreach (var @namespace in list)
             {
                 output.Append("using ").Append(@namespace).AppendLine(";");
             }
@@ -63,12 +75,40 @@ namespace {_builder.ContainingNamespace}
         {{");
             foreach (var (parameter, type) in parameters)
             {
-                output.AppendLine($@"            {parameter.UnderScoreName()} = _fixture.Create<{type}>();");
+                output.AppendLine($@"            {parameter.UnderScoreName()} = {GenerateCreatingFieldInitialization(type)};");
             }
             output.AppendLine($@"
         }}");
             return output.ToString();
         }
+
+        private string GenerateCreatingFieldInitialization(ITypeSymbol typeSymbol)
+            => IsMockable(typeSymbol)
+                ? string.Format(_mockingConfiguration!.FieldDeafultValueAssigmentFormat, typeSymbol.ToDisplayString())
+                : IsFakeable(typeSymbol)
+                    ? $"{FixtureLiteral}.Create<{typeSymbol}>()"
+                    : $"default({typeSymbol})";
+
+        private bool IsMockable(ITypeSymbol typeSymbol)
+            => _mockingConfiguration switch
+            {
+                MockingProperties { Strategy: Abstraction.MockingInterfacesStrategy.All }
+                    when typeSymbol.TypeKind == TypeKind.Interface => true,
+                MockingProperties { Strategy: Abstraction.MockingInterfacesStrategy.WithoutGenericCollection }
+                    when typeSymbol.TypeKind == TypeKind.Interface && typeSymbol.AllInterfaces.All(x => x.SpecialType != SpecialType.System_Collections_IEnumerable) => true,
+                _ => false
+            };
+
+        private bool IsFakeable(ITypeSymbol typeSymbol)
+            => _fixtureConfiguration switch
+            {
+                null => false,
+                FixtureProperties { Strategy: Abstraction.FixtureInterfacesStrategy.None }
+                    when typeSymbol.TypeKind == TypeKind.Interface => false,
+                FixtureProperties { Strategy: Abstraction.FixtureInterfacesStrategy.OnlyGenericCollections }
+                    when typeSymbol.TypeKind == TypeKind.Interface && typeSymbol.AllInterfaces.All(x => x.SpecialType != SpecialType.System_Collections_IEnumerable) => false,
+                _ => true
+            };
 
         private string GeneratePropertiesCode()
         {
@@ -79,7 +119,7 @@ namespace {_builder.ContainingNamespace}
             foreach (var (property, type) in properties
                 .Where(x => !_builder.Fields.TryGetValue(x.Symbol.UnderScoreName(), out var field) || field.Type.Name != x.Type.Name))
             {
-                output.AppendLine($@"        private {type} {property.UnderScoreName()};");
+                output.AppendLine($@"        private {GenerateFieldType(type)} {property.UnderScoreName()};");
             }
 
             foreach (var (property, type) in properties.Where(x => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x.Symbol), out var method)
@@ -87,18 +127,30 @@ namespace {_builder.ContainingNamespace}
             {
                 output.AppendLine($@"
 
-        public {_builder.Name} {CreateMethodName(property)}({type} value)
+        public {_builder.Name} {GenerateMethodName(property, type)}
         {{
-            {property.UnderScoreName()} = value;
+            {GenerateValueAssigment(property, type)};
             return this;
         }}");
 
             }
 
             return output.ToString();
-
-            string CreateMethodName(ISymbol property) => $"{_builder.BuildingMethodsPrefix}{property.PascalCaseName()}";
         }
+
+        private string GenerateValueAssigment(ISymbol symbol, ITypeSymbol typeSymbol)
+            => IsMockable(typeSymbol)
+                ? $"{SetupActionLiteral}({symbol.UnderScoreName()})"
+                : $"{symbol.UnderScoreName()} = {ValueLiteral}";
+
+        private string CreateMethodName(ISymbol property) => $"{_builder.BuildingMethodsPrefix}{property.PascalCaseName()}";
+
+        private string GenerateMethodName(ISymbol symbol, ITypeSymbol type)
+            => $"{CreateMethodName(symbol)}{(IsMockable(type) ? $"(Action<{CreateMockableFieldType(type)}> {SetupActionLiteral})" : $"({type} {ValueLiteral})")}";
+
+        private object GenerateFieldType(ITypeSymbol type) => IsMockable(type) ? CreateMockableFieldType(type) : type.ToDisplayString();
+
+        private string CreateMockableFieldType(ITypeSymbol type) => string.Format(_mockingConfiguration!.TypeDeclarationFormat, type.ToDisplayString());
 
         private string GenerateBuildsCode()
         {
@@ -108,9 +160,9 @@ namespace {_builder.ContainingNamespace}
 
             return $@"        public {_entity.Name} Build()
         {{
-            return new {_entity.Name}({string.Join(", ", parameters.Values.Select(parameter => parameter.UnderScoreName()))})
+            return new {_entity.Name}({string.Join(", ", parameters.Values.Select(parameter => GenerateFieldValueReturn(new TypedSymbol(parameter))))})
             {{
-                {string.Join(", ", properties.Select(property => $"{property.Name} = {property.UnderScoreName()}"))}
+                {string.Join(", ", properties.Select(property => $"{property.Name} = {GenerateFieldValueReturn(new TypedSymbol(property))}"))}
             }};
         }}
         
@@ -118,5 +170,10 @@ namespace {_builder.ContainingNamespace}
 ";
 
         }
+
+        private string GenerateFieldValueReturn(TypedSymbol property)
+            => IsMockable(property.Type)
+                ? string.Format(_mockingConfiguration!.ReturnObjectFormat, property.Symbol.UnderScoreName())
+                : property.Symbol.UnderScoreName();
     }
 }

@@ -1,16 +1,15 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Buildenator
 {
-    internal class BuilderProperties
+    internal class BuildenatorProperties
     {
         private readonly Dictionary<string, IMethodSymbol> _buildingMethods;
         private readonly Dictionary<string, IFieldSymbol> _fields;
 
-        public BuilderProperties(INamedTypeSymbol builderSymbol, MakeBuilderAttributeInternal attributeData)
+        public BuildenatorProperties(INamedTypeSymbol builderSymbol, MakeBuilderAttributeInternal attributeData)
         {
             ContainingNamespace = builderSymbol.ContainingNamespace.ToDisplayString();
             Name = builderSymbol.Name;

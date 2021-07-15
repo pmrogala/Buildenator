@@ -75,14 +75,14 @@ namespace Buildenator.IntegrationTests
 
         [Theory]
         [AutoData]
-        public void BuildersGenerator_OneLevelInheritance_AllFieldsCreated(
+        public void BuildersGenerator_OneLevelInheritance_MoqAllInterfaces_AllFieldsCreatedAndInterfacesMocked(
             ChildEntity childEntity)
         {
             var builder = ChildEntityBuilder.ChildEntity;
 
             var result = builder
                 .WithEntityInDifferentNamespace(childEntity.EntityInDifferentNamespace)
-                .WithPrivateField(childEntity.GetPrivateField())
+                .WithPrivateField(mock => mock.Setup(a => a.GetEnumerator()).Returns(childEntity.GetPrivateField().GetEnumerator()))
                 .WithPropertyStringGetter(childEntity.PropertyGetter)
                 .WithProtectedProperty(childEntity.GetProtectedProperty())
                 .WithByteProperty(childEntity.ByteProperty)
@@ -90,12 +90,12 @@ namespace Buildenator.IntegrationTests
                 .Build();
 
             result.Should().BeEquivalentTo(childEntity);
-            result.GetPrivateField().Should().BeEquivalentTo(childEntity.GetPrivateField());
+            result.GetPrivateField().GetEnumerator().Should().BeEquivalentTo(childEntity.GetPrivateField().GetEnumerator());
             result.GetProtectedProperty().Should().BeEquivalentTo(childEntity.GetProtectedProperty());
         }
 
         [Theory]
-        [AutoData]
+        [CustomAutoData]
         public void BuildersGenerator_TwoLevelsInheritance_AllFieldsCreated(
             GrandchildEntity grandchildEntity)
         {
@@ -118,9 +118,9 @@ namespace Buildenator.IntegrationTests
         }
 
         [Theory]
-        [AutoData]
+        [CustomAutoData]
         public void BuildersGenerator_CustomMethods_CustomMethodsAreCalled(
-            GrandchildEntity grandchildEntity)
+            GrandchildEntity grandchildEntity, string interfaceProperty)
         {
             var builder = EntityBuilderWithCustomMethods.GrandchildEntity;
 
@@ -130,12 +130,67 @@ namespace Buildenator.IntegrationTests
                 .WithPropertyStringGetter(grandchildEntity.PropertyGetter)
                 .WithByteProperty(grandchildEntity.ByteProperty)
                 .WithPropertyIntGetter(grandchildEntity.PropertyIntGetter)
+                .WithInterfaceType(mock => mock.Setup(x => x.Property).Returns(interfaceProperty))
                 .Build();
 
             typeof(EntityBuilderWithCustomMethods).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), new[] { typeof(List<string>) })
                 .Which.Should().HaveAccessModifier(FluentAssertions.Common.CSharpAccessModifier.Private);
             result.PropertyIntGetter.Should().Be(grandchildEntity.PropertyIntGetter / 2);
             result.PropertyGetter.Should().Be(grandchildEntity.PropertyGetter + "custom");
+            result.InterfaceType.Property.Should().Be(interfaceProperty);
+        }
+
+        [Theory]
+        [CustomAutoData]
+        public void BuildersGenerator_NoMockingAndFakingAndInterfaceSetup_InterfacesShouldBeClean(
+            GrandchildEntity grandchildEntity)
+        {
+            var builder = GrandchildEntityNoMoqBuilder.GrandchildEntity;
+
+            var result = builder
+                .WithEntityInDifferentNamespace(grandchildEntity.EntityInDifferentNamespace)
+                .WithPrivateField(grandchildEntity.GetPrivateField())
+                .WithPropertyStringGetter(grandchildEntity.PropertyGetter)
+                .WithByteProperty(grandchildEntity.ByteProperty)
+                .WithPropertyIntGetter(grandchildEntity.PropertyIntGetter)
+                .WithInterfaceType(grandchildEntity.InterfaceType)
+                .Build();
+
+            result.PropertyIntGetter.Should().Be(grandchildEntity.PropertyIntGetter);
+            result.PropertyGetter.Should().Be(grandchildEntity.PropertyGetter);
+            result.InterfaceType.Should().Be(grandchildEntity.InterfaceType);
+        }
+
+        [Fact]
+        public void BuildersGenerator_NoMockingAndFaking_InterfacesShouldBeNull()
+        {
+            var builder = GrandchildEntityNoMoqBuilder.GrandchildEntity;
+
+            var result = builder
+                .Build();
+
+            result.InterfaceType.Should().BeNull();
+            result.PropertyGetter.Should().BeNull();
+            result.PropertyIntGetter.Should().Be(default);
+            result.EntityInDifferentNamespace.Should().BeNull();
+            result.ByteProperty.Should().BeNull();
+            result.GetPrivateField().Should().BeNull();
+            result.GetProtectedProperty().Should().BeNull();
+        }
+
+        [Fact]
+        public void BuildersGenerator_FakingAndMocking_AllFieldsShouldBeDifferentFromDefault()
+        {
+            var builder = GrandchildEntityBuilder.GrandchildEntity;
+
+            var result = builder.Build();
+
+            result.PropertyGetter.Should().NotBeNullOrEmpty();
+            result.PropertyIntGetter.Should().NotBe(default);
+            result.EntityInDifferentNamespace.Should().NotBeNull();
+            result.ByteProperty.Should().NotBeNullOrEmpty();
+            result.GetPrivateField().Should().NotBeNullOrEmpty();
+            result.GetProtectedProperty().Should().NotBeNullOrEmpty();
         }
     }
 }

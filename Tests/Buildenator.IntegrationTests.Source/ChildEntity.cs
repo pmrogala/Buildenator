@@ -1,5 +1,4 @@
 ﻿using Buildenator.IntegrationTests.Source.DifferentNamespace;
-using System;
 using System.Collections.Generic;
 
 namespace Buildenator.IntegrationTests.Source

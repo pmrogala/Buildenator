@@ -24,14 +24,16 @@ namespace Buildenator
 
             var compilation = context.Compilation;
             var assembly = compilation.Assembly;
-            var fixtureConfigurationBuilder = new FixtureConfigurationBuilder(assembly);
+            var fixtureConfigurationBuilder = new FixturePropertiesBuilder(assembly);
+            var mockingConfigurationBuilder = new MockingPropertiesBuilder(assembly);
 
             foreach (var (builder, attribute) in classSymbols)
             {
                 var generator = new BuilderSourceStringGenerator(
                     new BuilderProperties(builder, attribute),
                     new EntityToBuildProperties(attribute),
-                    fixtureConfigurationBuilder.Build(builder));
+                    fixtureConfigurationBuilder.Build(builder),
+                    mockingConfigurationBuilder.Build(builder));
 
                 context.AddSource($"{builder.Name}.cs", SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
 
@@ -40,7 +42,7 @@ namespace Buildenator
             }
         }
 
-        private static List<(INamedTypeSymbol Builder, MakeBuilderAttributeInternal Attribute)> 
+        private static IReadOnlyCollection<(INamedTypeSymbol Builder, MakeBuilderAttributeInternal Attribute)> 
             GetBuilderSymbolAndItsAttribute(GeneratorExecutionContext context)
         {
             var result = new List<(INamedTypeSymbol, MakeBuilderAttributeInternal)>();

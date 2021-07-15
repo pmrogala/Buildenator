@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Buildenator.Abstraction\FixtureConfigurationAttribute.cs" Link="FixtureConfigurationAttribute.cs" />
-    <Compile Include="..\Buildenator.Abstraction\MakeBuilderAttribute.cs" Link="MakeBuilderAttribute.cs" />
+    <Compile Include="..\Buildenator.Abstraction\FixtureConfigurationAttribute.cs" Link="LinkedAttributes\FixtureConfigurationAttribute.cs" />
+    <Compile Include="..\Buildenator.Abstraction\FixtureInterfacesStrategy.cs" Link="LinkedAttributes\FixtureInterfacesStrategy.cs" />
+    <Compile Include="..\Buildenator.Abstraction\MakeBuilderAttribute.cs" Link="LinkedAttributes\MakeBuilderAttribute.cs" />
+    <Compile Include="..\Buildenator.Abstraction\MockingConfigurationAttribute.cs" Link="LinkedAttributes\MockingConfigurationAttribute.cs" />
+    <Compile Include="..\Buildenator.Abstraction\MockingInterfacesStrategy.cs" Link="LinkedAttributes\MockingInterfacesStrategy.cs" />
   </ItemGroup>
 
   <ItemGroup>
