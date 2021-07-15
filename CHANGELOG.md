@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Possibility to add a mocking fuctionality for interfaces
-  - mocking strategies introduces
+  - mocking strategies introduced
+  - possibility to add custom mocking providers
+  - Moq extension
 - Faking strategies
 
 
