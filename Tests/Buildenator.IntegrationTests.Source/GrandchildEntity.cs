@@ -10,5 +10,7 @@ namespace Buildenator.IntegrationTests.Source
         }
 
         protected override List<string> ProtectedProperty => base.ProtectedProperty;
+
+        public IInterfaceType InterfaceType { get; set; }
     }
 }
