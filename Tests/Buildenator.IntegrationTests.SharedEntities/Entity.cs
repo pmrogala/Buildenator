@@ -1,6 +1,6 @@
-﻿using Buildenator.IntegrationTests.Source.DifferentNamespace;
+﻿using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 
-namespace Buildenator.IntegrationTests.Source
+namespace Buildenator.IntegrationTests.SharedEntities
 {
     public class Entity
     {

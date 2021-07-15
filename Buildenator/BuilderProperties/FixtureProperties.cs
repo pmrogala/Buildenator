@@ -2,19 +2,31 @@
 
 namespace Buildenator
 {
-
     internal class FixtureProperties
     {
-        public FixtureProperties(string name, string @namespace, Abstraction.FixtureInterfacesStrategy strategy, string[] additionalNamespaces)
+        public FixtureProperties(
+            string name,
+            string createSingleFormat,
+            string createManyFormat,
+            string? constructorParameters,
+            string? additionalConfiguration, 
+            FixtureInterfacesStrategy strategy,
+            string[] additionalNamespaces)
         {
             Name = name;
-            Namespace = @namespace;
+            CreateSingleFormat = createSingleFormat;
+            CreateManyFormat = createManyFormat;
+            ConstructorParameters = constructorParameters;
+            AdditionalConfiguration = additionalConfiguration;
             Strategy = strategy;
             AdditionalNamespaces = additionalNamespaces;
         }
 
         public string Name { get; }
-        public string Namespace { get; }
+        public string CreateSingleFormat { get; }
+        public string CreateManyFormat { get; }
+        public string? ConstructorParameters { get; }
+        public string? AdditionalConfiguration { get; }
         public FixtureInterfacesStrategy Strategy { get; }
         public string[] AdditionalNamespaces { get; }
 

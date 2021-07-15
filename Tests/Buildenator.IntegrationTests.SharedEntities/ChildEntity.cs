@@ -1,7 +1,7 @@
-﻿using Buildenator.IntegrationTests.Source.DifferentNamespace;
+﻿using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 using System.Collections.Generic;
 
-namespace Buildenator.IntegrationTests.Source
+namespace Buildenator.IntegrationTests.SharedEntities
 {
     public class ChildEntity : Entity
     {
