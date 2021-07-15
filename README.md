@@ -12,6 +12,7 @@ using SampleProject;
 namespace SampleTestProject.Builders
 {
     [MakeBuilder(typeof(DomainEntity))]
+    [FixtureConfiguration(typeof(AutoFixture.Fixture))]
     public partial class DomainEntityBuilder
     {
     }
