@@ -2,12 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>preview</LangVersion>
-    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Buildenator.Abstraction\Buildenator.Abstraction.csproj" />
+    <ProjectReference Include="..\Buildenator.IntegrationTests.SharedEntities\Buildenator.IntegrationTests.SharedEntities.csproj" />
   </ItemGroup>
 
 </Project>

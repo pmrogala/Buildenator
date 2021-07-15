@@ -35,7 +35,7 @@ namespace {_builder.ContainingNamespace}
 {{
     public partial class {_builder.Name}
     {{
-        {(_fixtureConfiguration is null ? string.Empty : $"private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}()")};
+        {(_fixtureConfiguration is null ? string.Empty : $"private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
 {GenerateConstructor()}
 {GeneratePropertiesCode()}
 {GenerateBuildsCode()}
@@ -51,9 +51,6 @@ namespace {_builder.ContainingNamespace}
             }
                 .Concat(_fixtureConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>())
                 .Concat(_mockingConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>());
-
-            if (_fixtureConfiguration is not null)
-                list = list.Append(_fixtureConfiguration.Namespace);
 
             list = list.Distinct();
 
@@ -77,8 +74,15 @@ namespace {_builder.ContainingNamespace}
             {
                 output.AppendLine($@"            {parameter.UnderScoreName()} = {GenerateCreatingFieldInitialization(type)};");
             }
+
+            if (_fixtureConfiguration is not null && _fixtureConfiguration.AdditionalConfiguration is not null)
+            {
+                output.AppendLine($@"            {string.Format(_fixtureConfiguration.AdditionalConfiguration, FixtureLiteral)};");
+            }
+
             output.AppendLine($@"
         }}");
+
             return output.ToString();
         }
 
@@ -86,7 +90,7 @@ namespace {_builder.ContainingNamespace}
             => IsMockable(typeSymbol)
                 ? string.Format(_mockingConfiguration!.FieldDeafultValueAssigmentFormat, typeSymbol.ToDisplayString())
                 : IsFakeable(typeSymbol)
-                    ? $"{FixtureLiteral}.Create<{typeSymbol}>()"
+                    ? $"{FixtureLiteral}.{string.Format(_fixtureConfiguration!.CreateSingleFormat, typeSymbol.ToDisplayString())}"
                     : $"default({typeSymbol})";
 
         private bool IsMockable(ITypeSymbol typeSymbol)

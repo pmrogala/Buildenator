@@ -1,4 +1,4 @@
-﻿namespace Buildenator.IntegrationTests.Source
+﻿namespace Buildenator.IntegrationTests.SharedEntities
 {
     public class SettableEntityWithConstructor
     {

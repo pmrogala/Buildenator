@@ -1,5 +1,5 @@
 using AutoFixture.Xunit2;
-using Buildenator.IntegrationTests.Source;
+using Buildenator.IntegrationTests.SharedEntities;
 using Buildenator.IntegrationTests.Source.Builders;
 using FluentAssertions;
 using System.Collections.Generic;

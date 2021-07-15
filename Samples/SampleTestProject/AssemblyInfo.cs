@@ -1,4 +1,3 @@
-﻿using AutoFixture;
-using Buildenator.Abstraction;
+﻿using Buildenator.Abstraction.AutoFixture;
 
-[assembly: FixtureConfiguration(typeof(Fixture))]
+[assembly: AutoFixtureConfiguration()]

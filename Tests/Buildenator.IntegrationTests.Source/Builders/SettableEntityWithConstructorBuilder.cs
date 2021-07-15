@@ -1,10 +1,11 @@
-﻿using AutoFixture;
-using Buildenator.Abstraction;
+﻿using Buildenator.Abstraction;
+using Buildenator.Abstraction.AutoFixture;
+using Buildenator.IntegrationTests.SharedEntities;
 
 namespace Buildenator.IntegrationTests.Source.Builders
 {
     [MakeBuilder(typeof(SettableEntityWithConstructor))]
-    [FixtureConfiguration(typeof(Fixture))]
+    [AutoFixtureConfiguration()]
     public partial class SettableEntityWithConstructorBuilder
     {
     }

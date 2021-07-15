@@ -1,4 +1,5 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.IntegrationTests.SharedEntities;
 using System.Collections.Generic;
 
 namespace Buildenator.IntegrationTests.Source.Builders

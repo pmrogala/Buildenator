@@ -1,29 +1,24 @@
 ﻿using System;
 
-namespace Buildenator.Abstraction
+namespace Buildenator.Abstraction.AutoFixture
 {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
-    public abstract class FixtureConfigurationAttribute : Attribute
+    public class AutoFixtureConfigurationAttribute : FixtureConfigurationAttribute
     {
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="fixtureType"></param>
         /// <param name="additionalUsings">List all the additional namespaces that are important for the fixture; separate them by comma ','. 
         /// An example: "Namespace1,Namespace2.Subspace"</param>
-        public FixtureConfigurationAttribute(
-            string fixtureTypeName,
-            string createSingleFormat,
+        public AutoFixtureConfigurationAttribute(
+            string fixtureTypeName = "Fixture",
+            string createSingleFormat = "Create<{0}>()",
             string? constructorParameters = null,
             string? additionalConfiguration = null,
             FixtureInterfacesStrategy strategy = FixtureInterfacesStrategy.OnlyGenericCollections,
-            string? additionalUsings = null)
+            string? additionalUsings = "AutoFixture")
+            :base(fixtureTypeName, createSingleFormat, constructorParameters, additionalConfiguration, strategy, additionalUsings)
         {
-            Strategy = strategy;
-            AdditionalUsings = additionalUsings?.Split(',') ?? Array.Empty<string>();
         }
-
-        public FixtureInterfacesStrategy Strategy { get; }
-        public string[] AdditionalUsings { get; }
     }
 }
