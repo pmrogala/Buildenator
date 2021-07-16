@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## 3.0.0 - 2021-07-15
+
+### Changed
+
+- Possibility to add a fixture fuctionality
+  - faking strategies introduced
+  - possibility to add custom facking providers
+  - AutoFixture extension
+
+
 ## 2.0.0 - 2021-07-15
 
 ### Added
@@ -46,8 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial projects
   - A basic builder source generator
-    - the source generator creates the "with" methods basing on constructor parameters and settable properties.
-      - if there is duplication in naming, a constructor parameter has higher priority than the property.
+     - the source generator creates the "with" methods basing on constructor parameters and settable properties.
+       - if there is duplication in naming, a constructor parameter has higher priority than the property.
   - Sample projects
   - IntegrationTests
 - a .gitignore file
