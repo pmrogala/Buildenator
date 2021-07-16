@@ -7,12 +7,13 @@ A test data builders source generator for .net 5 and later.
 The following code:
 ```csharp
 using Buildenator.Abstraction;
+using Buildenator.Abstraction.AutoFixture;
 using SampleProject;
 
 namespace SampleTestProject.Builders
 {
     [MakeBuilder(typeof(DomainEntity))]
-    [FixtureConfiguration(typeof(AutoFixture.Fixture))]
+    [AutoFixtureConfiguration()]
     public partial class DomainEntityBuilder
     {
     }
