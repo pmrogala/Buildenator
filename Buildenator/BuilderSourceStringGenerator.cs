@@ -28,14 +28,13 @@ namespace Buildenator
         }
 
         public string CreateBuilderCode()
-             => $@"
-{GenerateNamespaces()}
+             => $@"{GenerateNamespaces()}
 
 namespace {_builder.ContainingNamespace}
 {{
     public partial class {_builder.Name}
     {{
-        {(_fixtureConfiguration is null ? string.Empty : $"private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
+{(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
 {GenerateConstructor()}
 {GeneratePropertiesCode()}
 {GenerateBuildsCode()}
@@ -162,14 +161,15 @@ namespace {_builder.ContainingNamespace}
             var properties = _entity.SettableProperties
                 .Where(x => !parameters.ContainsKey(x.Name));
 
+            string propertiesAssigment = string.Join(", ", properties.Select(property => $"{property.Name} = {GenerateFieldValueReturn(new TypedSymbol(property))}"));
             return $@"        public {_entity.Name} Build()
         {{
             return new {_entity.Name}({string.Join(", ", parameters.Values.Select(parameter => GenerateFieldValueReturn(new TypedSymbol(parameter))))})
             {{
-                {string.Join(", ", properties.Select(property => $"{property.Name} = {GenerateFieldValueReturn(new TypedSymbol(property))}"))}
+{(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
             }};
         }}
-        
+
         public static {_builder.Name} {_entity.Name} => new {_builder.Name}();
 ";
 
