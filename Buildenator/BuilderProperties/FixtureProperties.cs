@@ -7,7 +7,6 @@ namespace Buildenator
         public FixtureProperties(
             string name,
             string createSingleFormat,
-            string createManyFormat,
             string? constructorParameters,
             string? additionalConfiguration, 
             FixtureInterfacesStrategy strategy,
@@ -15,7 +14,6 @@ namespace Buildenator
         {
             Name = name;
             CreateSingleFormat = createSingleFormat;
-            CreateManyFormat = createManyFormat;
             ConstructorParameters = constructorParameters;
             AdditionalConfiguration = additionalConfiguration;
             Strategy = strategy;
@@ -24,7 +22,6 @@ namespace Buildenator
 
         public string Name { get; }
         public string CreateSingleFormat { get; }
-        public string CreateManyFormat { get; }
         public string? ConstructorParameters { get; }
         public string? AdditionalConfiguration { get; }
         public FixtureInterfacesStrategy Strategy { get; }

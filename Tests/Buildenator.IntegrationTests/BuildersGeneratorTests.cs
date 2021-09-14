@@ -170,12 +170,12 @@ namespace Buildenator.IntegrationTests
                 .Build();
 
             result.InterfaceType.Should().BeNull();
-            result.PropertyGetter.Should().BeNull();
-            result.PropertyIntGetter.Should().Be(default);
-            result.EntityInDifferentNamespace.Should().BeNull();
-            result.ByteProperty.Should().BeNull();
+            result.PropertyGetter.Should().NotBeNull();
+            result.PropertyIntGetter.Should().NotBe(default);
+            result.EntityInDifferentNamespace.Should().NotBeNull();
+            result.ByteProperty.Should().NotBeNull();
             result.GetPrivateField().Should().BeNull();
-            result.GetProtectedProperty().Should().BeNull();
+            result.GetProtectedProperty().Should().NotBeNull();
         }
 
         [Fact]
