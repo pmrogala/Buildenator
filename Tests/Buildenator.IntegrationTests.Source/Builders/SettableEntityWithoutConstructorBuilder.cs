@@ -6,7 +6,7 @@ using Buildenator.IntegrationTests.Source.Fixtures;
 namespace Buildenator.IntegrationTests.Source.Builders
 {
     [MakeBuilder(typeof(SettableEntityWithoutConstructor))]
-    [AutoFixtureConfiguration(nameof(CustomFixtureInheritedFromExternal))]
+    [AutoFixtureConfiguration("Buildenator.IntegrationTests.Source.Fixtures.CustomFixtureInheritedFromExternal")]
     public partial class SettableEntityWithoutConstructorBuilder
     {
     }

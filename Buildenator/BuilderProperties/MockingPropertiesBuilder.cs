@@ -36,7 +36,8 @@ namespace Buildenator
 
         private static ImmutableArray<TypedConstant>? GetMockingConfigurationOrDefault(ISymbol context)
         {
-            var attribute = context.GetAttributes().Where(x => x.AttributeClass?.BaseType?.Name == nameof(MockingConfigurationAttribute)).SingleOrDefault();
+            var attributeDatas = context.GetAttributes();
+            var attribute = attributeDatas.Where(x => x.AttributeClass?.BaseType?.Name == nameof(MockingConfigurationAttribute)).SingleOrDefault();
             return attribute?.ConstructorArguments;
         }
     }
