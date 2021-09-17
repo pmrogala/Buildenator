@@ -15,6 +15,7 @@ namespace Buildenator
             ContainingNamespace = builderSymbol.ContainingNamespace.ToDisplayString();
             Name = builderSymbol.Name;
             BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix;
+            StaticCreator = attributeData.DefaultStaticCreator;
 
             if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
                 throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");
@@ -33,6 +34,7 @@ namespace Buildenator
         public string ContainingNamespace { get; }
         public string Name { get; }
         public string BuildingMethodsPrefix { get; }
+        public bool StaticCreator { get; }
 
         public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;
         public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;

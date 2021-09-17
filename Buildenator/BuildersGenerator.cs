@@ -29,11 +29,13 @@ namespace Buildenator
 
             foreach (var (builder, attribute) in classSymbols)
             {
+                var mockingConfiguration = mockingConfigurationBuilder.Build(builder);
+                var fixtureConfiguration = fixtureConfigurationBuilder.Build(builder);
                 var generator = new BuilderSourceStringGenerator(
                     new BuilderProperties(builder, attribute),
-                    new EntityToBuildProperties(attribute),
-                    fixtureConfigurationBuilder.Build(builder),
-                    mockingConfigurationBuilder.Build(builder));
+                    new EntityToBuildProperties(attribute, mockingConfiguration, fixtureConfiguration),
+                    fixtureConfiguration,
+                    mockingConfiguration);
 
                 context.AddSource($"{builder.Name}.cs", SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
 
@@ -70,8 +72,9 @@ namespace Buildenator
         }
 
         private static MakeBuilderAttributeInternal CreateMakeBuilderAttributeInternal(AttributeData attribute)
-            => new MakeBuilderAttributeInternal(
+            => new (
                 (INamedTypeSymbol)attribute.ConstructorArguments[0].Value!,
-                (string)attribute.ConstructorArguments[1].Value!);
+                (string)attribute.ConstructorArguments[1].Value!,
+                (bool)attribute.ConstructorArguments[2].Value!);
     }
 }

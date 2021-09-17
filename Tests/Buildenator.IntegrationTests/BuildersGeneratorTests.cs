@@ -191,6 +191,21 @@ namespace Buildenator.IntegrationTests
             result.ByteProperty.Should().NotBeNullOrEmpty();
             result.GetPrivateField().Should().NotBeNullOrEmpty();
             result.GetProtectedProperty().Should().NotBeNullOrEmpty();
+            result.InterfaceType.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void BuildersGenerator_DefaultStaticCreator_ShouldCreateWithAllDefaultValues()
+        {
+            var result = GrandchildEntityBuilder.BuildDefault();
+
+            result.PropertyGetter.Should().BeNull();
+            result.PropertyIntGetter.Should().Be(default);
+            result.EntityInDifferentNamespace.Should().BeNull();
+            result.ByteProperty.Should().BeNull();
+            result.GetPrivateField().Should().BeNull();
+            result.GetProtectedProperty().Should().BeNull();
+            result.InterfaceType.Should().BeNull();
         }
     }
 }
