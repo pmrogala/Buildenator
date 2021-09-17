@@ -4,7 +4,7 @@ using Buildenator.IntegrationTests.SharedEntities;
 
 namespace Buildenator.IntegrationTests.Source.Builders
 {
-    [MakeBuilder(typeof(GrandchildEntity))]
+    [MakeBuilder(typeof(GrandchildEntity), defaultStaticCreator: true)]
     [AutoFixtureConfiguration()]
     public partial class GrandchildEntityBuilder
     {

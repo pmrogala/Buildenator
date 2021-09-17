@@ -6,7 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Buildenator.Abstraction\Buildenator.Abstraction.csproj" />
     <ProjectReference Include="..\Buildenator.IntegrationTests.SharedEntities\Buildenator.IntegrationTests.SharedEntities.csproj" />
+    <ProjectReference Include="..\..\Buildenator\Buildenator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>
