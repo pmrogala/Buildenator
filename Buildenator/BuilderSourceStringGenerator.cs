@@ -33,7 +33,7 @@ namespace Buildenator
 
 namespace {_builder.ContainingNamespace}
 {{
-    public partial class {_builder.Name}
+{GenerateBuilderDefinition()}
     {{
 {(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
 {GenerateConstructor()}
@@ -43,6 +43,9 @@ namespace {_builder.ContainingNamespace}
     }}
 }}";
 
+        private string GenerateBuilderDefinition()
+            => @$"    public partial class {_entity.FullNameWithConstraints.Replace(_entity.Name, _builder.Name)}";
+
         private string GenerateNamespaces()
         {
             var list = new string[]
@@ -51,7 +54,8 @@ namespace {_builder.ContainingNamespace}
                 _entity.ContainingNamespace
             }
                 .Concat(_fixtureConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>())
-                .Concat(_mockingConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>());
+                .Concat(_mockingConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>())
+                .Concat(_entity?.AdditionalNamespaces ?? Enumerable.Empty<string>());
 
             list = list.Distinct();
 
@@ -92,7 +96,7 @@ namespace {_builder.ContainingNamespace}
                 ? string.Format(_mockingConfiguration!.FieldDeafultValueAssigmentFormat, typedSymbol.Type.ToDisplayString())
                 : typedSymbol.IsFakeable()
                     ? $"{FixtureLiteral}.{string.Format(_fixtureConfiguration!.CreateSingleFormat, typedSymbol.Type.ToDisplayString())}"
-                    : $"default({typedSymbol.Type})";
+                    : $"default({typedSymbol.Type.ToDisplayString()})";
 
         private string GeneratePropertiesCode()
         {
@@ -130,7 +134,7 @@ namespace {_builder.ContainingNamespace}
         private string CreateMethodName(ISymbol property) => $"{_builder.BuildingMethodsPrefix}{property.PascalCaseName()}";
 
         private string GenerateMethodDefinition(TypedSymbol typedSymbol)
-            => $"public {_builder.Name} {CreateMethodName(typedSymbol.Symbol)}({GenerateMethodParameterDefinition(typedSymbol)})";
+            => $"public {_builder.FullName} {CreateMethodName(typedSymbol.Symbol)}({GenerateMethodParameterDefinition(typedSymbol)})";
 
         private string GenerateMethodParameterDefinition(TypedSymbol typedSymbol)
             => typedSymbol.IsMockable() ? $"Action<{CreateMockableFieldType(typedSymbol.Type)}> {SetupActionLiteral}" : $"{typedSymbol.Type} {ValueLiteral}";
@@ -143,12 +147,12 @@ namespace {_builder.ContainingNamespace}
         {
             var (parameters, properties) = GetParametersAndProperties();
 
-            return $@"        public {_entity.Name} Build()
+            return $@"        public {_entity.FullName} Build()
         {{
             {GenerateBuildEntityString(parameters, properties)}
         }}
 
-        public static {_builder.Name} {_entity.Name} => new {_builder.Name}();
+        public static {_builder.FullName} {_entity.Name} => new {_builder.FullName}();
 ";
 
         }
@@ -163,7 +167,7 @@ namespace {_builder.ContainingNamespace}
                     var fieldType = GenerateFieldType(s);
                     return $"{fieldType} {s.Symbol.UnderScoreName()} = default({fieldType})";
                 }).ComaJoin();
-            return $@"        public static {_entity.Name} BuildDefault({methodParameters})
+            return $@"        public static {_entity.FullName} BuildDefault({methodParameters})
         {{
             {GenerateBuildEntityString(parameters, properties)}
         }}
@@ -175,13 +179,13 @@ namespace {_builder.ContainingNamespace}
         {
             var parameters = _entity.ConstructorParameters;
             var properties = _entity.SettableProperties.Where(x => !parameters.ContainsKey(x.Symbol.Name));
-            return (parameters.Values,  properties);
+            return (parameters.Values, properties);
         }
 
         private string GenerateBuildEntityString(IEnumerable<TypedSymbol> parameters, IEnumerable<TypedSymbol> properties)
         {
             string propertiesAssigment = properties.Select(property => $"{property.Symbol.Name} = {GenerateFieldValueReturn(property)}").ComaJoin();
-            return @$"return new {_entity.Name}({parameters.Select(parameter => GenerateFieldValueReturn(parameter)).ComaJoin()})
+            return @$"return new {_entity.FullName}({parameters.Select(parameter => GenerateFieldValueReturn(parameter)).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
             }};";
@@ -192,5 +196,5 @@ namespace {_builder.ContainingNamespace}
                 ? string.Format(_mockingConfiguration!.ReturnObjectFormat, property.UnderScoreName())
                 : property.UnderScoreName();
     }
-        
+
 }

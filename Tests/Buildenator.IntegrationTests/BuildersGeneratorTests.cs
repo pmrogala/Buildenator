@@ -1,6 +1,7 @@
 using AutoFixture.Xunit2;
 using Buildenator.IntegrationTests.SharedEntities;
 using Buildenator.IntegrationTests.Source.Builders;
+using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 using FluentAssertions;
 using System.Collections.Generic;
 using Xunit;
@@ -206,6 +207,19 @@ namespace Buildenator.IntegrationTests
             result.GetPrivateField().Should().BeNull();
             result.GetProtectedProperty().Should().BeNull();
             result.InterfaceType.Should().BeNull();
+        }
+
+        [Fact]
+        public void BuildersGenerator_GenericClass_ShouldCreateGenericBuilder()
+        {
+            var result = GenericGrandchildEntityBuilder<int, EntityInDifferentNamespace>.BuildDefault();
+
+            result.PropertyGetter.Should().BeNull();
+            result.PropertyIntGetter.Should().Be(default);
+            result.EntityInDifferentNamespace.Should().BeNull();
+            result.ByteProperty.Should().BeNull();
+            result.GetPrivateField().Should().BeNull();
+            result.GetProtectedProperty().Should().BeNull();
         }
     }
 }

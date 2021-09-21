@@ -13,14 +13,29 @@ namespace Buildenator
 
         public string ContainingNamespace { get; }
         public string Name { get; }
+        public string FullName { get; }
+        public string FullNameWithConstraints { get; }
         public IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
         public IEnumerable<TypedSymbol> SettableProperties { get; }
+        public IEnumerable<string>? AdditionalNamespaces { get; }
 
         public EntityToBuildProperties(MakeBuilderAttributeInternal attribute, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
         {
-            var entityToBuildSymbol = attribute.TypeForBuilder;
+            INamedTypeSymbol? entityToBuildSymbol;
+            if (attribute.TypeForBuilder.IsGenericType)
+            {
+                entityToBuildSymbol = attribute.TypeForBuilder.ConstructedFrom;
+                AdditionalNamespaces = entityToBuildSymbol.TypeParameters.Where(a => a.ConstraintTypes.Any()).SelectMany(a => a.ConstraintTypes).Select(a => a.ContainingNamespace.ToDisplayString()).ToArray();
+            }
+            else
+            {
+                entityToBuildSymbol = attribute.TypeForBuilder;
+            }
             ContainingNamespace = entityToBuildSymbol.ContainingNamespace.ToDisplayString();
             Name = entityToBuildSymbol.Name;
+            FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
+            FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
+                genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters | SymbolDisplayGenericsOptions.IncludeTypeConstraints | SymbolDisplayGenericsOptions.IncludeVariance));
             _mockingConfiguration = mockingConfiguration;
             _fixtureConfiguration = fixtureConfiguration;
             ConstructorParameters = GetConstructorParameters(entityToBuildSymbol);

@@ -14,6 +14,7 @@ namespace Buildenator
         {
             ContainingNamespace = builderSymbol.ContainingNamespace.ToDisplayString();
             Name = builderSymbol.Name;
+            FullName = builderSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
             BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix;
             StaticCreator = attributeData.DefaultStaticCreator;
 
@@ -33,6 +34,7 @@ namespace Buildenator
 
         public string ContainingNamespace { get; }
         public string Name { get; }
+        public string FullName { get; }
         public string BuildingMethodsPrefix { get; }
         public bool StaticCreator { get; }
 
