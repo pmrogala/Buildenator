@@ -39,6 +39,7 @@ namespace {_builder.ContainingNamespace}
 {GenerateConstructor()}
 {GeneratePropertiesCode()}
 {GenerateBuildsCode()}
+{GenerateBuildManyCode()}
 {(_builder.StaticCreator ? GenerateStaticBuildsCode() : string.Empty)}
     }}
 }}";
@@ -51,6 +52,7 @@ namespace {_builder.ContainingNamespace}
             var list = new string[]
             {
                 "System",
+                "System.Linq",
                 _entity.ContainingNamespace
             }
                 .Concat(_fixtureConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>())
@@ -153,6 +155,15 @@ namespace {_builder.ContainingNamespace}
         }}
 
         public static {_builder.FullName} {_entity.Name} => new {_builder.FullName}();
+";
+
+        }
+        private string GenerateBuildManyCode()
+        {
+            return $@"        public System.Collections.Generic.IEnumerable<{_entity.FullName}> BuildMany(int count = 3)
+        {{
+            return Enumerable.Range(0, count).Select(_ => Build());
+        }}
 ";
 
         }
