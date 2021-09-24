@@ -1,4 +1,5 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.Abstraction.Helpers;
 using Buildenator.IntegrationTests.SharedEntities;
 using System.Collections.Generic;
 
@@ -7,7 +8,7 @@ namespace Buildenator.IntegrationTests.Source.Builders
     [MakeBuilder(typeof(GrandchildEntity))]
     public partial class EntityBuilderWithCustomMethods
     {
-        private int _propertyIntGetter;
+        private Nullbox<int>? _propertyIntGetter;
         public EntityBuilderWithCustomMethods WithPropertyIntGetter(int value)
         {
             _propertyIntGetter = value / 2;
@@ -22,7 +23,7 @@ namespace Buildenator.IntegrationTests.Source.Builders
 
         private EntityBuilderWithCustomMethods WithProtectedProperty(List<string> value)
         {
-            _protectedProperty.AddRange(value);
+            (_protectedProperty ??= new List<string>()).Object.AddRange(value);
             return this;
         }
     }

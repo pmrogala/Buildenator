@@ -10,19 +10,12 @@ namespace Buildenator.Abstraction
         /// </summary>
         /// <param name="typeForBuilder">What type of an object this builder is creating.</param>
         /// <param name="buildingMethodsPrefix">How the builder methods should be named.</param>
-        /// <param name="defaultStaticCreator">The resulting builder will have a special static building method with default parameters.</param>
+        /// <param name="defaultStaticCreator">The resulting builder will have a special static building method with default parameters. true/false/null</param>
         public MakeBuilderAttribute(
             Type typeForBuilder,
-            string buildingMethodsPrefix = "With",
-            bool defaultStaticCreator = false)
+            string? buildingMethodsPrefix = "With",
+            object? defaultStaticCreator = null)
         {
-            TypeForBuilder = typeForBuilder;
-            BuildingMethodsPrefix = buildingMethodsPrefix;
-            StaticCreator = defaultStaticCreator;
         }
-
-        public Type TypeForBuilder { get; }
-        public string BuildingMethodsPrefix { get; }
-        public bool StaticCreator { get; }
     }
 }

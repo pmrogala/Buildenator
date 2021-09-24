@@ -1,5 +1,6 @@
 ﻿using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
+using System;
 using System.Linq;
 
 namespace Buildenator
@@ -22,11 +23,19 @@ namespace Buildenator
             _fixtureConfiguration = fixtureConfiguration;
         }
 
-        public ISymbol Symbol { get; }
-        public ITypeSymbol Type { get; }
+        private ISymbol Symbol { get; }
+        private ITypeSymbol Type { get; }
 
         private string? _underscoreName = null;
-        public string UnderScoreName() => _underscoreName ??= Symbol.UnderScoreName();
+        public string UnderScoreName => _underscoreName ??= Symbol.UnderScoreName();
+
+        private string? _typeFullName = null;
+        public string TypeFullName => _typeFullName ??= Type.ToDisplayString();
+
+        public string TypeName => Type.Name;
+
+        public string SymbolPascalName => Symbol.PascalCaseName();
+        public string SymbolName => Symbol.Name;
 
         private readonly MockingProperties? _mockingConfiguration;
         private bool? _isMockable = null;

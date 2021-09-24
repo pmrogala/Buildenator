@@ -4,11 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.3.0]
+## [4.0.0]
 
 ### Added
 ### Changed
 ### Removed
+
+
+## 4.0.0 - 2021-10-01
+
+### Added
+
+- Now you can configure the global settings for all your builders in an assembly, by ```BuildenatorConfigurationAttribute```
+    - By default null values are passed to ```MakeBuilderAttribute```, so then the global attribute has priority over the all builders.
+
+### Changed
+
+- *Breaking change* Now values are generated on build, i.e. the lazy approach rather than the eager one
+    - it helps with generating unique objects on each build call
+- *Breaking change* Static default builder is enabled by default
+
 
 
 ## 3.3.0 - 2021-09-21

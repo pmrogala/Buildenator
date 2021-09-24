@@ -1,15 +1,15 @@
 ﻿namespace Buildenator.Abstraction.Helpers
 {
-    public readonly struct NullBox<T>
+    public readonly struct Nullbox<T>
     {
-        private readonly T _value;
+        public T? Object { get; }
 
-        public NullBox(T value)
+        public Nullbox(T? value)
         {
-            _value = value;
+            Object = value;
         }
 
-        public static implicit operator T(NullBox<T> nullBox) => nullBox._value;
-        public static implicit operator NullBox<T>(T nullBox) => new (nullBox);
+        public static implicit operator Nullbox<T?>(T? obj) => new (obj);
+        public static explicit operator T?(Nullbox<T?> nullbox) => nullbox.Object;
     }
 }
