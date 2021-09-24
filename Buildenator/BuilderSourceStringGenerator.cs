@@ -53,6 +53,7 @@ namespace {_builder.ContainingNamespace}
             {
                 "System",
                 "System.Linq",
+                "Buildenator.Abstraction.Helpers",
                 _entity.ContainingNamespace
             }
                 .Concat(_fixtureConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>())
@@ -77,9 +78,9 @@ namespace {_builder.ContainingNamespace}
             output.AppendLine($@"
         public {_builder.Name}()
         {{");
-            foreach (var typedSymbol in parameters)
+            foreach (var typedSymbol in parameters.Where(a => a.IsMockable()))
             {
-                output.AppendLine($@"            {typedSymbol.UnderScoreName()} = {GenerateCreatingFieldInitialization(typedSymbol)};");
+                output.AppendLine($@"            {typedSymbol.UnderScoreName} = {GenerateMockedFieldInitialization(typedSymbol)};");
             }
 
             if (_fixtureConfiguration is not null && _fixtureConfiguration.AdditionalConfiguration is not null)
@@ -93,12 +94,8 @@ namespace {_builder.ContainingNamespace}
             return output.ToString();
         }
 
-        private string GenerateCreatingFieldInitialization(TypedSymbol typedSymbol)
-            => typedSymbol.IsMockable()
-                ? string.Format(_mockingConfiguration!.FieldDeafultValueAssigmentFormat, typedSymbol.Type.ToDisplayString())
-                : typedSymbol.IsFakeable()
-                    ? $"{FixtureLiteral}.{string.Format(_fixtureConfiguration!.CreateSingleFormat, typedSymbol.Type.ToDisplayString())}"
-                    : $"default({typedSymbol.Type.ToDisplayString()})";
+        private string GenerateMockedFieldInitialization(TypedSymbol typedSymbol)
+            => string.Format(_mockingConfiguration!.FieldDeafultValueAssigmentFormat, typedSymbol.TypeFullName);       
 
         private string GeneratePropertiesCode()
         {
@@ -106,14 +103,12 @@ namespace {_builder.ContainingNamespace}
 
             var output = new StringBuilder();
 
-            foreach (var typedSymbol in properties
-                .Where(x => !_builder.Fields.TryGetValue(x.UnderScoreName(), out var field) || field.Type.Name != x.Type.Name))
+            foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
             {
-                output.AppendLine($@"        private {GenerateFieldType(typedSymbol)} {typedSymbol.UnderScoreName()};");
+                output.AppendLine($@"        private {GenerateLazyFieldType(typedSymbol)} {typedSymbol.UnderScoreName};");
             }
 
-            foreach (var typedSymbol in properties.Where(x => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x.Symbol), out var method)
-                 || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.Type.Name)))
+            foreach (var typedSymbol in properties.Where(IsNotYetDeclaredMethod))
             {
                 output.AppendLine($@"
 
@@ -126,24 +121,33 @@ namespace {_builder.ContainingNamespace}
             }
 
             return output.ToString();
+
+            bool IsNotYetDeclaredField(TypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out var field);
+
+            bool IsNotYetDeclaredMethod(TypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
+                                 || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
         }
 
         private string GenerateValueAssigment(TypedSymbol typedSymbol)
             => typedSymbol.IsMockable()
-                ? $"{SetupActionLiteral}({typedSymbol.UnderScoreName()})"
-                : $"{typedSymbol.UnderScoreName()} = {ValueLiteral}";
+                ? $"{SetupActionLiteral}({typedSymbol.UnderScoreName})"
+                : $"{typedSymbol.UnderScoreName} = new Nullbox<{typedSymbol.TypeFullName}>({ValueLiteral})";
 
-        private string CreateMethodName(ISymbol property) => $"{_builder.BuildingMethodsPrefix}{property.PascalCaseName()}";
+        private string CreateMethodName(TypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
 
         private string GenerateMethodDefinition(TypedSymbol typedSymbol)
-            => $"public {_builder.FullName} {CreateMethodName(typedSymbol.Symbol)}({GenerateMethodParameterDefinition(typedSymbol)})";
+            => $"public {_builder.FullName} {CreateMethodName(typedSymbol)}({GenerateMethodParameterDefinition(typedSymbol)})";
 
         private string GenerateMethodParameterDefinition(TypedSymbol typedSymbol)
-            => typedSymbol.IsMockable() ? $"Action<{CreateMockableFieldType(typedSymbol.Type)}> {SetupActionLiteral}" : $"{typedSymbol.Type} {ValueLiteral}";
+            => typedSymbol.IsMockable() ? $"Action<{CreateMockableFieldType(typedSymbol)}> {SetupActionLiteral}" : $"{typedSymbol.TypeFullName} {ValueLiteral}";
 
-        private string GenerateFieldType(TypedSymbol typedSymbol) => typedSymbol.IsMockable() ? CreateMockableFieldType(typedSymbol.Type) : typedSymbol.Type.ToDisplayString();
+        private string GenerateLazyFieldType(TypedSymbol typedSymbol)
+            => typedSymbol.IsMockable() ? CreateMockableFieldType(typedSymbol) : $"Nullbox<{typedSymbol.TypeFullName}>?";
 
-        private string CreateMockableFieldType(ITypeSymbol type) => string.Format(_mockingConfiguration!.TypeDeclarationFormat, type.ToDisplayString());
+        private string GenerateFieldType(TypedSymbol typedSymbol)
+            => typedSymbol.IsMockable() ? CreateMockableFieldType(typedSymbol) : typedSymbol.TypeFullName;
+
+        private string CreateMockableFieldType(TypedSymbol type) => string.Format(_mockingConfiguration!.TypeDeclarationFormat, type.TypeFullName);
 
         private string GenerateBuildsCode()
         {
@@ -151,7 +155,7 @@ namespace {_builder.ContainingNamespace}
 
             return $@"        public {_entity.FullName} Build()
         {{
-            {GenerateBuildEntityString(parameters, properties)}
+            {GenerateLazyBuildEntityString(parameters, properties)}
         }}
 
         public static {_builder.FullName} {_entity.Name} => new {_builder.FullName}();
@@ -176,7 +180,7 @@ namespace {_builder.ContainingNamespace}
                 .Select(s =>
                 {
                     var fieldType = GenerateFieldType(s);
-                    return $"{fieldType} {s.Symbol.UnderScoreName()} = default({fieldType})";
+                    return $"{fieldType} {s.UnderScoreName} = default({fieldType})";
                 }).ComaJoin();
             return $@"        public static {_entity.FullName} BuildDefault({methodParameters})
         {{
@@ -189,23 +193,39 @@ namespace {_builder.ContainingNamespace}
         private (IEnumerable<TypedSymbol> Parameters, IEnumerable<TypedSymbol> Properties) GetParametersAndProperties()
         {
             var parameters = _entity.ConstructorParameters;
-            var properties = _entity.SettableProperties.Where(x => !parameters.ContainsKey(x.Symbol.Name));
+            var properties = _entity.SettableProperties.Where(x => !parameters.ContainsKey(x.SymbolName));
             return (parameters.Values, properties);
+        }
+
+        private string GenerateLazyBuildEntityString(IEnumerable<TypedSymbol> parameters, IEnumerable<TypedSymbol> properties)
+        {
+            string propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateLazyFieldValueReturn(property)}").ComaJoin();
+            return @$"return new {_entity.FullName}({parameters.Select(parameter => GenerateLazyFieldValueReturn(parameter)).ComaJoin()})
+            {{
+{(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
+            }};";
         }
 
         private string GenerateBuildEntityString(IEnumerable<TypedSymbol> parameters, IEnumerable<TypedSymbol> properties)
         {
-            string propertiesAssigment = properties.Select(property => $"{property.Symbol.Name} = {GenerateFieldValueReturn(property)}").ComaJoin();
+            string propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateFieldValueReturn(property)}").ComaJoin();
             return @$"return new {_entity.FullName}({parameters.Select(parameter => GenerateFieldValueReturn(parameter)).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
             }};";
         }
 
-        private string GenerateFieldValueReturn(TypedSymbol property)
-            => property.IsMockable()
-                ? string.Format(_mockingConfiguration!.ReturnObjectFormat, property.UnderScoreName())
-                : property.UnderScoreName();
+        private string GenerateLazyFieldValueReturn(TypedSymbol typedSymbol)
+            => typedSymbol.IsMockable()
+                ? string.Format(_mockingConfiguration!.ReturnObjectFormat, typedSymbol.UnderScoreName)
+                : @$"({typedSymbol.UnderScoreName}.HasValue ? {typedSymbol.UnderScoreName}.Value : new Nullbox<{typedSymbol.TypeFullName}>({(typedSymbol.IsFakeable()
+                    ? $"{FixtureLiteral}.{string.Format(_fixtureConfiguration!.CreateSingleFormat, typedSymbol.TypeFullName)}"
+                    : $"default({typedSymbol.TypeFullName})")})).Object";
+
+        private string GenerateFieldValueReturn(TypedSymbol typedSymbol)
+            => typedSymbol.IsMockable()
+                ? string.Format(_mockingConfiguration!.ReturnObjectFormat, typedSymbol.UnderScoreName)
+                : typedSymbol.UnderScoreName;
     }
 
 }

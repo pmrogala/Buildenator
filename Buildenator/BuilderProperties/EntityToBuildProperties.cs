@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Buildenator
 {
-    internal class EntityToBuildProperties
+    internal sealed class EntityToBuildProperties
     {
         private IEnumerable<TypedSymbol>? _uniqueTypedSymbols;
         private readonly MockingProperties? _mockingConfiguration;
@@ -19,17 +19,17 @@ namespace Buildenator
         public IEnumerable<TypedSymbol> SettableProperties { get; }
         public IEnumerable<string>? AdditionalNamespaces { get; }
 
-        public EntityToBuildProperties(MakeBuilderAttributeInternal attribute, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
+        public EntityToBuildProperties(INamedTypeSymbol typeForBuilder, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
         {
             INamedTypeSymbol? entityToBuildSymbol;
-            if (attribute.TypeForBuilder.IsGenericType)
+            if (typeForBuilder.IsGenericType)
             {
-                entityToBuildSymbol = attribute.TypeForBuilder.ConstructedFrom;
+                entityToBuildSymbol = typeForBuilder.ConstructedFrom;
                 AdditionalNamespaces = entityToBuildSymbol.TypeParameters.Where(a => a.ConstraintTypes.Any()).SelectMany(a => a.ConstraintTypes).Select(a => a.ContainingNamespace.ToDisplayString()).ToArray();
             }
             else
             {
-                entityToBuildSymbol = attribute.TypeForBuilder;
+                entityToBuildSymbol = typeForBuilder;
             }
             ContainingNamespace = entityToBuildSymbol.ContainingNamespace.ToDisplayString();
             Name = entityToBuildSymbol.Name;
@@ -45,7 +45,7 @@ namespace Buildenator
         public IEnumerable<TypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
         {
             return _uniqueTypedSymbols ??= SettableProperties
-                .Where(x => !ConstructorParameters.ContainsKey(x.Symbol.Name))
+                .Where(x => !ConstructorParameters.ContainsKey(x.SymbolName))
                 .Concat(ConstructorParameters.Values).ToList();
         }
 

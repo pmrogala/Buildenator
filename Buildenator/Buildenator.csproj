@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Buildenator.Abstraction\BuildenatorConfigurationAttribute.cs" Link="LinkedAttributes\BuildenatorConfigurationAttribute.cs" />
     <Compile Include="..\Buildenator.Abstraction\FixtureConfigurationAttribute.cs" Link="LinkedAttributes\FixtureConfigurationAttribute.cs" />
     <Compile Include="..\Buildenator.Abstraction\FixtureInterfacesStrategy.cs" Link="LinkedAttributes\FixtureInterfacesStrategy.cs" />
     <Compile Include="..\Buildenator.Abstraction\MakeBuilderAttribute.cs" Link="LinkedAttributes\MakeBuilderAttribute.cs" />
@@ -23,7 +24,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.9.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <!-- Package the generator in the analyzer directory of the nuget package -->

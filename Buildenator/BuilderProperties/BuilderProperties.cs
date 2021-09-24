@@ -1,11 +1,10 @@
 ﻿using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Buildenator
 {
-    internal class BuilderProperties
+    internal sealed class BuilderProperties
     {
         private readonly Dictionary<string, IMethodSymbol> _buildingMethods;
         private readonly Dictionary<string, IFieldSymbol> _fields;
@@ -15,8 +14,8 @@ namespace Buildenator
             ContainingNamespace = builderSymbol.ContainingNamespace.ToDisplayString();
             Name = builderSymbol.Name;
             FullName = builderSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
-            BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix;
-            StaticCreator = attributeData.DefaultStaticCreator;
+            BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix ?? "With";
+            StaticCreator = attributeData.DefaultStaticCreator ?? true;
 
             if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
                 throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");

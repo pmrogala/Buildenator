@@ -2,7 +2,7 @@
 
 namespace Buildenator
 {
-    internal class MockingProperties
+    internal sealed class MockingProperties
     {
         public MockingProperties(
             MockingInterfacesStrategy strategy,

@@ -5,6 +5,7 @@ using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 using FluentAssertions;
 using System.Collections.Generic;
 using Xunit;
+using System.Linq;
 
 namespace Buildenator.IntegrationTests
 {
@@ -24,6 +25,18 @@ namespace Buildenator.IntegrationTests
             var builder = DifferentNameBuilder.Entity;
 
             builder.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void BuildersGenerator_DefaultBuilderTrue_ShouldHaveDefaultBuilder()
+        {
+            typeof(DifferentNameBuilder).GetMethod("BuildDefault", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).Should().NotBeNull();
+        }
+
+        [Fact]
+        public void BuildersGenerator_DefaultBuilderFalse_ShouldNotHaveDefaultBuilder()
+        {
+            typeof(EntityBuilder).GetMethod("BuildDefault", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).Should().BeNull();
         }
 
         [Theory]
@@ -220,6 +233,16 @@ namespace Buildenator.IntegrationTests
             result.ByteProperty.Should().BeNull();
             result.GetPrivateField().Should().BeNull();
             result.GetProtectedProperty().Should().BeNull();
+        }
+
+        [Fact]
+        public void BuildersGenerator_BuildMany_ShouldCreateRandomValuesForEachObject()
+        {
+            var results = GrandchildEntityBuilder.GrandchildEntity.BuildMany(3).ToList();
+
+            results[0].Should().NotBeEquivalentTo(results[1]);
+            results[1].Should().NotBeEquivalentTo(results[2]);
+            results[0].Should().NotBeEquivalentTo(results[2]);
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Buildenator
 {
-    internal class FixtureProperties
+    internal sealed class FixtureProperties
     {
         public FixtureProperties(
             string name,

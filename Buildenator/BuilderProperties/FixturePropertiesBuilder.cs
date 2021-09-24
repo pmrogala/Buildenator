@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Buildenator
 {
-    internal class FixturePropertiesBuilder
+    internal sealed class FixturePropertiesBuilder
     {
         private readonly ImmutableArray<TypedConstant>? _globalParameters;
         public FixturePropertiesBuilder(IAssemblySymbol context)
