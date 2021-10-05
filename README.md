@@ -85,3 +85,6 @@ namespace SampleTestProject.Builders
 ```
 
 Check ```Buildenator.IntegrationTests``` for more examples.
+
+
+Feel free to contribute!
