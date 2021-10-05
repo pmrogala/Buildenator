@@ -19,7 +19,7 @@ namespace SampleTestProject.Builders
     }
 }
 ```
-Will generate somthign very close to this source code:
+Will generate something very close to this source code:
 
 ```csharp
 using System;
