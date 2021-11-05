@@ -5,7 +5,13 @@ namespace Buildenator.IntegrationTests.SharedEntities
 {
     public class GrandchildEntity : ChildEntity
     {
-        public GrandchildEntity(int propertyIntGetter, string propertyStringGetter, EntityInDifferentNamespace entityInDifferentNamespace, List<string> protectedProperty, IEnumerable<int> privateField) : base(propertyIntGetter, propertyStringGetter, entityInDifferentNamespace, protectedProperty, privateField)
+        public GrandchildEntity(
+            int propertyIntGetter,
+            string propertyStringGetter,
+            EntityInDifferentNamespace entityInDifferentNamespace,
+            List<string> protectedProperty,
+            IEnumerable<int> privateField)
+            : base(propertyIntGetter, propertyStringGetter, entityInDifferentNamespace, protectedProperty, privateField)
         {
         }
 

@@ -9,12 +9,17 @@ namespace Buildenator
     {
         private readonly string? _defaultNameWith;
         private readonly bool? _defaultStaticBuilder;
+        private readonly NullableStrategy? _nullableStrategy;
 
         public BuilderPropertiesBuilder(IAssemblySymbol context)
         {
             var globalAttributes = GetConfigurationOrDefault(context);
-            _defaultNameWith = (string?)globalAttributes?[0].Value;
-            _defaultStaticBuilder = (bool?)globalAttributes?[1].Value;
+            if (globalAttributes.HasValue)
+            {
+                _defaultNameWith = (string?)globalAttributes.Value[0].Value;
+                _defaultStaticBuilder = (bool?)globalAttributes.Value[1].Value;
+                _nullableStrategy = (NullableStrategy?)globalAttributes.Value[2].Value;
+            }
         }
 
         public BuilderProperties Build(INamedTypeSymbol builderSymbol, MakeBuilderAttributeInternal builderAttribute)
@@ -24,7 +29,8 @@ namespace Buildenator
                 new MakeBuilderAttributeInternal(
                     builderAttribute.TypeForBuilder,
                     builderAttribute.BuildingMethodsPrefix ?? _defaultNameWith,
-                    builderAttribute.DefaultStaticCreator ?? _defaultStaticBuilder));
+                    builderAttribute.DefaultStaticCreator ?? _defaultStaticBuilder,
+                    builderAttribute.NullableStrategy ?? _nullableStrategy));
         }
 
         private static ImmutableArray<TypedConstant>? GetConfigurationOrDefault(ISymbol context)
