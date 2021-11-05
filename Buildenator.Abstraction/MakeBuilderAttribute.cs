@@ -11,10 +11,12 @@ namespace Buildenator.Abstraction
         /// <param name="typeForBuilder">What type of an object this builder is creating.</param>
         /// <param name="buildingMethodsPrefix">How the builder methods should be named.</param>
         /// <param name="defaultStaticCreator">The resulting builder will have a special static building method with default parameters. true/false/null</param>
+        /// <param name="nullableStrategy">Change nullable context behaviour. Use the <see cref="NullableStrategy"/> enum.</param>
         public MakeBuilderAttribute(
             Type typeForBuilder,
             string? buildingMethodsPrefix = "With",
-            object? defaultStaticCreator = null)
+            object? defaultStaticCreator = null,
+            object? nullableStrategy = null)
         {
         }
     }

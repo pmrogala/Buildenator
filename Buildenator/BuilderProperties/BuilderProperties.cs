@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Buildenator.Abstraction;
+using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 
@@ -15,6 +16,7 @@ namespace Buildenator
             Name = builderSymbol.Name;
             FullName = builderSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
             BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix ?? "With";
+            NullableStrategy = attributeData.NullableStrategy ?? NullableStrategy.Default;
             StaticCreator = attributeData.DefaultStaticCreator ?? true;
 
             if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
@@ -35,6 +37,7 @@ namespace Buildenator
         public string Name { get; }
         public string FullName { get; }
         public string BuildingMethodsPrefix { get; }
+        public NullableStrategy NullableStrategy { get; }
         public bool StaticCreator { get; }
 
         public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;

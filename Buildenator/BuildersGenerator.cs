@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -55,6 +56,7 @@ namespace Buildenator
             foreach (var syntaxTree in compilation.SyntaxTrees)
             {
                 var semanticModel = compilation.GetSemanticModel(syntaxTree);
+
                 foreach (var classSyntax in syntaxTree.GetRoot(context.CancellationToken).DescendantNodesAndSelf().OfType<ClassDeclarationSyntax>())
                 {
                     var classSymbol = semanticModel.GetDeclaredSymbol(classSyntax, context.CancellationToken);
@@ -65,7 +67,15 @@ namespace Buildenator
                     if (attribute is null)
                         continue;
 
-                    result.Add((namedClassSymbol, CreateMakeBuilderAttributeInternal(attribute)));
+                    var makebuilderAttribute = CreateMakeBuilderAttributeInternal(attribute);
+
+                    if (makebuilderAttribute.TypeForBuilder.IsAbstract)
+                    {
+                        context.ReportDiagnostic(Diagnostic.Create(AbstractDiagnostic, classSymbol.Locations.First(), classSymbol.Name));
+                        continue;
+                    }
+
+                    result.Add((namedClassSymbol, makebuilderAttribute));
                 }
             }
 
@@ -73,9 +83,14 @@ namespace Buildenator
         }
 
         private static MakeBuilderAttributeInternal CreateMakeBuilderAttributeInternal(AttributeData attribute)
-            => new (
-                (INamedTypeSymbol)attribute.ConstructorArguments[0].Value!,
-                (string?)attribute.ConstructorArguments[1].Value,
-                (bool?)attribute.ConstructorArguments[2].Value);
+        {
+            return new(
+                           (INamedTypeSymbol)attribute.ConstructorArguments[0].Value!,
+                           (string?)attribute.ConstructorArguments[1].Value,
+                           (bool?)attribute.ConstructorArguments[2].Value,
+                           attribute.ConstructorArguments[3].Value is null ? null : (NullableStrategy)attribute.ConstructorArguments[3].Value!);
+        }
+
+        private static readonly DiagnosticDescriptor AbstractDiagnostic = new ("BDN001", "Cannot generate a builder for an abstract class", "Cannot generate a builder for the {0} abstract class", "Buildenator", DiagnosticSeverity.Error, true);
     }
 }

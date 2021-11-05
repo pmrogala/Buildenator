@@ -1,8 +1,12 @@
 ﻿namespace Buildenator.IntegrationTests.SharedEntities
 {
+#nullable enable
     public class SettableEntityWithConstructor
     {
-        public SettableEntityWithConstructor(int propertyInt, string property, int[] privateField)
+        public SettableEntityWithConstructor(
+            int propertyInt,
+            string property,
+            int[] privateField)
         {
             PropertyInt = propertyInt;
             Property = property;
@@ -11,7 +15,7 @@
 
         public int PropertyInt { get; set; }
         public string Property { get; set; }
-        public string[] NoConstructorProperty { get; set; }
+        public string[]? NoConstructorProperty { get; set; }
 
         private readonly int[] _privateField;
 

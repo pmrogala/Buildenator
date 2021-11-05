@@ -17,6 +17,7 @@
     <Compile Include="..\Buildenator.Abstraction\MakeBuilderAttribute.cs" Link="LinkedAttributes\MakeBuilderAttribute.cs" />
     <Compile Include="..\Buildenator.Abstraction\MockingConfigurationAttribute.cs" Link="LinkedAttributes\MockingConfigurationAttribute.cs" />
     <Compile Include="..\Buildenator.Abstraction\MockingInterfacesStrategy.cs" Link="LinkedAttributes\MockingInterfacesStrategy.cs" />
+    <Compile Include="..\Buildenator.Abstraction\NullableStrategy.cs" Link="LinkedAttributes\NullableStrategy.cs" />
   </ItemGroup>
 
   <ItemGroup>

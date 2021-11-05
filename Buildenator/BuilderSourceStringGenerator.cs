@@ -1,4 +1,5 @@
-﻿using Buildenator.Extensions;
+﻿using Buildenator.Abstraction;
+using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace Buildenator
 
 namespace {_builder.ContainingNamespace}
 {{
-{GenerateBuilderDefinition()}
+{GenerateGlobalNullable()}{GenerateBuilderDefinition()}
     {{
 {(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
 {GenerateConstructor()}
@@ -43,6 +44,14 @@ namespace {_builder.ContainingNamespace}
 {(_builder.StaticCreator ? GenerateStaticBuildsCode() : string.Empty)}
     }}
 }}";
+
+        private string GenerateGlobalNullable()
+            => _builder.NullableStrategy switch
+            {
+                NullableStrategy.Enabled => "#nullable enable\n",
+                NullableStrategy.Disabled => "#nullable disable\n",
+                _ => string.Empty
+            };
 
         private string GenerateBuilderDefinition()
             => @$"    public partial class {_entity.FullNameWithConstraints.Replace(_entity.Name, _builder.Name)}";
@@ -95,7 +104,7 @@ namespace {_builder.ContainingNamespace}
         }
 
         private string GenerateMockedFieldInitialization(TypedSymbol typedSymbol)
-            => string.Format(_mockingConfiguration!.FieldDeafultValueAssigmentFormat, typedSymbol.TypeFullName);       
+            => string.Format(_mockingConfiguration!.FieldDeafultValueAssigmentFormat, typedSymbol.TypeFullName);
 
         private string GeneratePropertiesCode()
         {
@@ -153,11 +162,18 @@ namespace {_builder.ContainingNamespace}
         {
             var (parameters, properties) = GetParametersAndProperties();
 
-            return $@"        public {_entity.FullName} Build()
+            string disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+                ? "#pragma warning disable CS8604\n"
+                : string.Empty;
+            string restoreWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+                ? "#pragma warning restore CS8604\n"
+                : string.Empty;
+
+            return $@"{disableWarning}        public {_entity.FullName} Build()
         {{
             {GenerateLazyBuildEntityString(parameters, properties)}
         }}
-
+{restoreWarning}
         public static {_builder.FullName} {_entity.Name} => new {_builder.FullName}();
 ";
 
@@ -182,11 +198,18 @@ namespace {_builder.ContainingNamespace}
                     var fieldType = GenerateFieldType(s);
                     return $"{fieldType} {s.UnderScoreName} = default({fieldType})";
                 }).ComaJoin();
-            return $@"        public static {_entity.FullName} BuildDefault({methodParameters})
+            string disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+                ? "#pragma warning disable CS8625\n"
+                : string.Empty;
+            string restoreWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+                ? "#pragma warning restore CS8625\n"
+                : string.Empty;
+
+            return $@"{disableWarning}        public static {_entity.FullName} BuildDefault({methodParameters})
         {{
             {GenerateBuildEntityString(parameters, properties)}
         }}
-";
+{restoreWarning}";
 
         }
 
