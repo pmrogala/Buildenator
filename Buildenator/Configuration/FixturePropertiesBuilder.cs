@@ -5,7 +5,7 @@ using System;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace Buildenator
+namespace Buildenator.Configuration
 {
     internal sealed class FixturePropertiesBuilder
     {
@@ -39,7 +39,7 @@ namespace Buildenator
         private static ImmutableArray<TypedConstant>? GetFixtureConfigurationOrDefault(ISymbol context)
         {
             var attributeDatas = context.GetAttributes();
-            var attribute = attributeDatas.Where(x => x.AttributeClass?.BaseType?.Name == nameof(FixtureConfigurationAttribute)).SingleOrDefault();
+            var attribute = attributeDatas.Where(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(FixtureConfigurationAttribute))).SingleOrDefault();
             return attribute?.ConstructorArguments;
         }
     }

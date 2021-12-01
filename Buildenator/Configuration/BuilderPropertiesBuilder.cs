@@ -1,9 +1,10 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace Buildenator
+namespace Buildenator.Configuration
 {
     internal sealed class BuilderPropertiesBuilder
     {
@@ -16,9 +17,9 @@ namespace Buildenator
             var globalAttributes = GetConfigurationOrDefault(context);
             if (globalAttributes.HasValue)
             {
-                _defaultNameWith = (string?)globalAttributes.Value[0].Value;
-                _defaultStaticBuilder = (bool?)globalAttributes.Value[1].Value;
-                _nullableStrategy = (NullableStrategy?)globalAttributes.Value[2].Value;
+                _defaultNameWith = globalAttributes.Value.GetOrThrow<string>(0, nameof(MakeBuilderAttributeInternal.BuildingMethodsPrefix));
+                _defaultStaticBuilder = globalAttributes.Value.GetOrThrow<bool>(1, nameof(MakeBuilderAttributeInternal.DefaultStaticCreator));
+                _nullableStrategy = globalAttributes.Value.GetOrThrow<NullableStrategy>(2, nameof(MakeBuilderAttributeInternal.NullableStrategy));
             }
         }
 
@@ -36,7 +37,7 @@ namespace Buildenator
         private static ImmutableArray<TypedConstant>? GetConfigurationOrDefault(ISymbol context)
         {
             var attributeDatas = context.GetAttributes();
-            var attribute = attributeDatas.Where(x => x.AttributeClass?.BaseType?.Name == nameof(BuildenatorConfigurationAttribute)).SingleOrDefault();
+            var attribute = attributeDatas.Where(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute))).SingleOrDefault();
             return attribute?.ConstructorArguments;
         }
     }

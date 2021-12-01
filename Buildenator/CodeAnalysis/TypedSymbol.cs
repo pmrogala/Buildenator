@@ -1,4 +1,5 @@
-﻿using Buildenator.Extensions;
+﻿using Buildenator.Configuration;
+using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Linq;

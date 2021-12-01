@@ -1,6 +1,6 @@
 ﻿using Buildenator.Abstraction;
 
-namespace Buildenator
+namespace Buildenator.Configuration
 {
     internal sealed class FixtureProperties
     {
@@ -8,7 +8,7 @@ namespace Buildenator
             string name,
             string createSingleFormat,
             string? constructorParameters,
-            string? additionalConfiguration, 
+            string? additionalConfiguration,
             FixtureInterfacesStrategy strategy,
             string[] additionalNamespaces)
         {
