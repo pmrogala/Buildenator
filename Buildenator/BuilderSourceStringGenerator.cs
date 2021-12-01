@@ -1,4 +1,5 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.Configuration;
 using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;

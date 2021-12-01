@@ -1,6 +1,6 @@
 ﻿using Buildenator.Abstraction;
 
-namespace Buildenator
+namespace Buildenator.Configuration
 {
     internal sealed class MockingProperties
     {

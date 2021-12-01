@@ -4,12 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.1.0]
+## [4.1.2]
 
 ### Added
 ### Changed
 ### Removed
 
+## 4.1.2 - 2021-11-05
+
+### Changed
+
+- Full type name fix
+- Global attribute fix
+
+## 4.1.1 - 2021-11-05
+
+### Added
+
+- Reverse to older CodeAnalysis package
 
 ## 4.1.0 - 2021-11-05
 

@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Buildenator
+namespace Buildenator.Configuration
 {
     internal sealed class EntityToBuildProperties
     {
@@ -33,7 +33,7 @@ namespace Buildenator
             }
             ContainingNamespace = entityToBuildSymbol.ContainingNamespace.ToDisplayString();
             Name = entityToBuildSymbol.Name;
-            FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
+            FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters, typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
             FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
                 genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters | SymbolDisplayGenericsOptions.IncludeTypeConstraints | SymbolDisplayGenericsOptions.IncludeVariance));
             _mockingConfiguration = mockingConfiguration;

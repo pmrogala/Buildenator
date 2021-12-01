@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 
-namespace Buildenator
+namespace Buildenator.Configuration
 {
     internal sealed class BuilderProperties
     {

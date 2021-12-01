@@ -5,7 +5,7 @@ using System;
 using System.Collections.Immutable;
 using System.Linq;
 
-namespace Buildenator
+namespace Buildenator.Configuration
 {
     internal class MockingPropertiesBuilder
     {
@@ -20,7 +20,7 @@ namespace Buildenator
             if ((GetMockingConfigurationOrDefault(builderSymbol) ?? _globalParameters) is not ImmutableArray<TypedConstant> attributeParameters)
                 return null;
 
-            var strategy = attributeParameters.GetOrThrow<MockingInterfacesStrategy>( 0, nameof(MockingProperties.Strategy));
+            var strategy = attributeParameters.GetOrThrow<MockingInterfacesStrategy>(0, nameof(MockingProperties.Strategy));
             var typeDeclarationFormat = attributeParameters.GetOrThrow(1, nameof(MockingProperties.TypeDeclarationFormat));
             var fieldDeafultValueAssigmentFormat = attributeParameters.GetOrThrow(2, nameof(MockingProperties.FieldDeafultValueAssigmentFormat));
             var returnObjectFormat = attributeParameters.GetOrThrow(3, nameof(MockingProperties.ReturnObjectFormat));
@@ -37,7 +37,7 @@ namespace Buildenator
         private static ImmutableArray<TypedConstant>? GetMockingConfigurationOrDefault(ISymbol context)
         {
             var attributeDatas = context.GetAttributes();
-            var attribute = attributeDatas.Where(x => x.AttributeClass?.BaseType?.Name == nameof(MockingConfigurationAttribute)).SingleOrDefault();
+            var attribute = attributeDatas.Where(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(MockingConfigurationAttribute))).SingleOrDefault();
             return attribute?.ConstructorArguments;
         }
     }
