@@ -95,7 +95,7 @@ namespace {_builder.ContainingNamespace}
 
             if (_fixtureConfiguration is not null && _fixtureConfiguration.AdditionalConfiguration is not null)
             {
-                output.AppendLine($@"            {string.Format(_fixtureConfiguration.AdditionalConfiguration, FixtureLiteral)};");
+                output.AppendLine($@"            {string.Format(_fixtureConfiguration.AdditionalConfiguration, FixtureLiteral, _fixtureConfiguration.Name)};");
             }
 
             output.AppendLine($@"

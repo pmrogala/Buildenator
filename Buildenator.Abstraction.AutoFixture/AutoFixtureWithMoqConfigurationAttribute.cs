@@ -14,8 +14,8 @@ namespace Buildenator.Abstraction.AutoFixture
             string fixtureTypeName = "Fixture",
             string createSingleFormat = "Create<{0}>()",
             string? constructorParameters = null,
-            string? additionalConfiguration = "{0} = {0}.Customize(new AutoMoqCustomization()))",
-            FixtureInterfacesStrategy strategy = FixtureInterfacesStrategy.OnlyGenericCollections,
+            string? additionalConfiguration = "{0} = ({1}){0}.Customize(new AutoMoqCustomization())",
+            FixtureInterfacesStrategy strategy = FixtureInterfacesStrategy.All,
             string? additionalUsings = "AutoFixture,AutoFixture.AutoMoq")
             :base(fixtureTypeName, createSingleFormat, constructorParameters, additionalConfiguration, strategy, additionalUsings)
         {
