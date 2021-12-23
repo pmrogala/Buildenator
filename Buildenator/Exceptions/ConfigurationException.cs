@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Buildenator
+namespace Buildenator.Exceptions
 {
     public class ConfigurationException : Exception
     {

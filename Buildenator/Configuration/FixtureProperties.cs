@@ -1,8 +1,9 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.Configuration.Contract;
 
 namespace Buildenator.Configuration
 {
-    internal sealed class FixtureProperties
+    internal sealed class FixtureProperties : IFixtureProperties
     {
         public FixtureProperties(
             string name,

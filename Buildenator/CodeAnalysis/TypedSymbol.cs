@@ -1,26 +1,25 @@
-﻿using Buildenator.Configuration;
+﻿using Buildenator.Abstraction;
 using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
-using System;
 using System.Linq;
 
-namespace Buildenator
+namespace Buildenator.CodeAnalysis
 {
-    internal sealed class TypedSymbol
+    internal sealed class TypedSymbol : ITypedSymbol
     {
-        public TypedSymbol(IPropertySymbol symbol, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
+        public TypedSymbol(IPropertySymbol symbol, MockingInterfacesStrategy? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
         {
             Symbol = symbol;
             Type = symbol.Type;
-            _mockingConfiguration = mockingConfiguration;
+            _mockingInterfaceStrategy = mockingInterfaceStrategy;
             _fixtureConfiguration = fixtureConfiguration;
         }
 
-        public TypedSymbol(IParameterSymbol symbol, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
+        public TypedSymbol(IParameterSymbol symbol, MockingInterfacesStrategy? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
         {
             Symbol = symbol;
             Type = symbol.Type;
-            _mockingConfiguration = mockingConfiguration;
+            _mockingInterfaceStrategy = mockingInterfaceStrategy;
             _fixtureConfiguration = fixtureConfiguration;
         }
 
@@ -38,28 +37,28 @@ namespace Buildenator
         public string SymbolPascalName => Symbol.PascalCaseName();
         public string SymbolName => Symbol.Name;
 
-        private readonly MockingProperties? _mockingConfiguration;
+        private readonly MockingInterfacesStrategy? _mockingInterfaceStrategy;
         private bool? _isMockable = null;
         public bool IsMockable()
-            => _isMockable ??= _mockingConfiguration switch
+            => _isMockable ??= _mockingInterfaceStrategy switch
             {
-                MockingProperties { Strategy: Abstraction.MockingInterfacesStrategy.All }
+                MockingInterfacesStrategy.All
                     when Type.TypeKind == TypeKind.Interface => true,
-                MockingProperties { Strategy: Abstraction.MockingInterfacesStrategy.WithoutGenericCollection }
+                MockingInterfacesStrategy.WithoutGenericCollection
                     when Type.TypeKind == TypeKind.Interface && Type.AllInterfaces.All(x => x.SpecialType != SpecialType.System_Collections_IEnumerable) => true,
                 _ => false
             };
 
 
-        private readonly FixtureProperties? _fixtureConfiguration;
+        private readonly FixtureInterfacesStrategy? _fixtureConfiguration;
         private bool? _IsFakeable = null;
         public bool IsFakeable()
             => _IsFakeable ??= _fixtureConfiguration switch
             {
                 null => false,
-                FixtureProperties { Strategy: Abstraction.FixtureInterfacesStrategy.None }
+                FixtureInterfacesStrategy.None
                     when Type.TypeKind == TypeKind.Interface => false,
-                FixtureProperties { Strategy: Abstraction.FixtureInterfacesStrategy.OnlyGenericCollections }
+                FixtureInterfacesStrategy.OnlyGenericCollections
                     when Type.TypeKind == TypeKind.Interface && Type.AllInterfaces.All(x => x.SpecialType != SpecialType.System_Collections_IEnumerable) => false,
                 _ => true
             };

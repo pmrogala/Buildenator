@@ -1,28 +1,30 @@
 ﻿using Buildenator.Abstraction;
-using Buildenator.Configuration;
+using Buildenator.CodeAnalysis;
+using Buildenator.Configuration.Contract;
 using Buildenator.Extensions;
-using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using static Buildenator.Generators.NamespacesGenerator;
+using static Buildenator.Generators.ConstructorsGenerator;
 
-namespace Buildenator
+namespace Buildenator.Generators
 {
     internal class BuilderSourceStringGenerator
     {
-        private readonly BuilderProperties _builder;
-        private readonly EntityToBuildProperties _entity;
-        private readonly FixtureProperties? _fixtureConfiguration;
-        private readonly MockingProperties? _mockingConfiguration;
+        private readonly IBuilderProperties _builder;
+        private readonly IEntityToBuildProperties _entity;
+        private readonly IFixtureProperties? _fixtureConfiguration;
+        private readonly IMockingProperties? _mockingConfiguration;
         private const string SetupActionLiteral = "setupAction";
         private const string ValueLiteral = "value";
         private const string FixtureLiteral = "_fixture";
 
         public BuilderSourceStringGenerator(
-            BuilderProperties builder,
-            EntityToBuildProperties entity,
-            FixtureProperties? fixtureConfiguration,
-            MockingProperties? mockingConfiguration)
+            IBuilderProperties builder,
+            IEntityToBuildProperties entity,
+            IFixtureProperties? fixtureConfiguration,
+            IMockingProperties? mockingConfiguration)
         {
             _builder = builder;
             _entity = entity;
@@ -32,14 +34,14 @@ namespace Buildenator
 
         public string CreateBuilderCode()
              => $@"{AutoGenerationComment}
-{GenerateNamespaces()}
+{GenerateNamespaces(_fixtureConfiguration, _mockingConfiguration, _entity)}
 
 namespace {_builder.ContainingNamespace}
 {{
 {GenerateGlobalNullable()}{GenerateBuilderDefinition()}
     {{
 {(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
-{GenerateConstructor()}
+{GenerateConstructor(_builder.Name, _entity, _mockingConfiguration, _fixtureConfiguration)}
 {GeneratePropertiesCode()}
 {GenerateBuildsCode()}
 {GenerateBuildManyCode()}
@@ -57,56 +59,6 @@ namespace {_builder.ContainingNamespace}
 
         private string GenerateBuilderDefinition()
             => @$"    public partial class {_entity.FullNameWithConstraints.Replace(_entity.Name, _builder.Name)}";
-
-        private string GenerateNamespaces()
-        {
-            var list = new string[]
-            {
-                "System",
-                "System.Linq",
-                "Buildenator.Abstraction.Helpers",
-                _entity.ContainingNamespace
-            }
-                .Concat(_fixtureConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>())
-                .Concat(_mockingConfiguration?.AdditionalNamespaces ?? Enumerable.Empty<string>())
-                .Concat(_entity?.AdditionalNamespaces ?? Enumerable.Empty<string>());
-
-            list = list.Distinct();
-
-            var output = new StringBuilder();
-            foreach (var @namespace in list)
-            {
-                output.Append("using ").Append(@namespace).AppendLine(";");
-            }
-            return output.ToString();
-        }
-
-        private string GenerateConstructor()
-        {
-            var parameters = _entity.GetAllUniqueSettablePropertiesAndParameters();
-
-            var output = new StringBuilder();
-            output.AppendLine($@"
-        public {_builder.Name}()
-        {{");
-            foreach (var typedSymbol in parameters.Where(a => a.IsMockable()))
-            {
-                output.AppendLine($@"            {typedSymbol.UnderScoreName} = {GenerateMockedFieldInitialization(typedSymbol)};");
-            }
-
-            if (_fixtureConfiguration is not null && _fixtureConfiguration.AdditionalConfiguration is not null)
-            {
-                output.AppendLine($@"            {string.Format(_fixtureConfiguration.AdditionalConfiguration, FixtureLiteral, _fixtureConfiguration.Name)};");
-            }
-
-            output.AppendLine($@"
-        }}");
-
-            return output.ToString();
-        }
-
-        private string GenerateMockedFieldInitialization(TypedSymbol typedSymbol)
-            => string.Format(_mockingConfiguration!.FieldDeafultValueAssigmentFormat, typedSymbol.TypeFullName);
 
         private string GeneratePropertiesCode()
         {
@@ -133,32 +85,32 @@ namespace {_builder.ContainingNamespace}
 
             return output.ToString();
 
-            bool IsNotYetDeclaredField(TypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out var field);
+            bool IsNotYetDeclaredField(ITypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out var field);
 
-            bool IsNotYetDeclaredMethod(TypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
+            bool IsNotYetDeclaredMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
                                  || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
         }
 
-        private string GenerateValueAssigment(TypedSymbol typedSymbol)
+        private string GenerateValueAssigment(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable()
                 ? $"{SetupActionLiteral}({typedSymbol.UnderScoreName})"
                 : $"{typedSymbol.UnderScoreName} = new Nullbox<{typedSymbol.TypeFullName}>({ValueLiteral})";
 
-        private string CreateMethodName(TypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
+        private string CreateMethodName(ITypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
 
-        private string GenerateMethodDefinition(TypedSymbol typedSymbol)
+        private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
             => $"public {_builder.FullName} {CreateMethodName(typedSymbol)}({GenerateMethodParameterDefinition(typedSymbol)})";
 
-        private string GenerateMethodParameterDefinition(TypedSymbol typedSymbol)
+        private string GenerateMethodParameterDefinition(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable() ? $"Action<{CreateMockableFieldType(typedSymbol)}> {SetupActionLiteral}" : $"{typedSymbol.TypeFullName} {ValueLiteral}";
 
-        private string GenerateLazyFieldType(TypedSymbol typedSymbol)
+        private string GenerateLazyFieldType(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable() ? CreateMockableFieldType(typedSymbol) : $"Nullbox<{typedSymbol.TypeFullName}>?";
 
-        private string GenerateFieldType(TypedSymbol typedSymbol)
+        private string GenerateFieldType(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable() ? CreateMockableFieldType(typedSymbol) : typedSymbol.TypeFullName;
 
-        private string CreateMockableFieldType(TypedSymbol type) => string.Format(_mockingConfiguration!.TypeDeclarationFormat, type.TypeFullName);
+        private string CreateMockableFieldType(ITypedSymbol type) => string.Format(_mockingConfiguration!.TypeDeclarationFormat, type.TypeFullName);
 
         private string GenerateBuildsCode()
         {
@@ -215,14 +167,14 @@ namespace {_builder.ContainingNamespace}
 
         }
 
-        private (IEnumerable<TypedSymbol> Parameters, IEnumerable<TypedSymbol> Properties) GetParametersAndProperties()
+        private (IEnumerable<ITypedSymbol> Parameters, IEnumerable<ITypedSymbol> Properties) GetParametersAndProperties()
         {
             var parameters = _entity.ConstructorParameters;
             var properties = _entity.SettableProperties.Where(x => !parameters.ContainsKey(x.SymbolName));
             return (parameters.Values, properties);
         }
 
-        private string GenerateLazyBuildEntityString(IEnumerable<TypedSymbol> parameters, IEnumerable<TypedSymbol> properties)
+        private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
             string propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateLazyFieldValueReturn(property)}").ComaJoin();
             return @$"return new {_entity.FullName}({parameters.Select(parameter => GenerateLazyFieldValueReturn(parameter)).ComaJoin()})
@@ -231,7 +183,7 @@ namespace {_builder.ContainingNamespace}
             }};";
         }
 
-        private string GenerateBuildEntityString(IEnumerable<TypedSymbol> parameters, IEnumerable<TypedSymbol> properties)
+        private string GenerateBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
             string propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateFieldValueReturn(property)}").ComaJoin();
             return @$"return new {_entity.FullName}({parameters.Select(parameter => GenerateFieldValueReturn(parameter)).ComaJoin()})
@@ -240,14 +192,14 @@ namespace {_builder.ContainingNamespace}
             }};";
         }
 
-        private string GenerateLazyFieldValueReturn(TypedSymbol typedSymbol)
+        private string GenerateLazyFieldValueReturn(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable()
                 ? string.Format(_mockingConfiguration!.ReturnObjectFormat, typedSymbol.UnderScoreName)
                 : @$"({typedSymbol.UnderScoreName}.HasValue ? {typedSymbol.UnderScoreName}.Value : new Nullbox<{typedSymbol.TypeFullName}>({(typedSymbol.IsFakeable()
                     ? $"{FixtureLiteral}.{string.Format(_fixtureConfiguration!.CreateSingleFormat, typedSymbol.TypeFullName)}"
                     : $"default({typedSymbol.TypeFullName})")})).Object";
 
-        private string GenerateFieldValueReturn(TypedSymbol typedSymbol)
+        private string GenerateFieldValueReturn(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable()
                 ? string.Format(_mockingConfiguration!.ReturnObjectFormat, typedSymbol.UnderScoreName)
                 : typedSymbol.UnderScoreName;

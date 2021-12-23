@@ -1,11 +1,12 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.Configuration.Contract;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 
 namespace Buildenator.Configuration
 {
-    internal sealed class BuilderProperties
+    internal sealed class BuilderProperties : IBuilderProperties
     {
         private readonly Dictionary<string, IMethodSymbol> _buildingMethods;
         private readonly Dictionary<string, IFieldSymbol> _fields;
