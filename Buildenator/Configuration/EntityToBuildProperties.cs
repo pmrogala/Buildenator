@@ -1,11 +1,14 @@
-﻿using Buildenator.Extensions;
+﻿using Buildenator.CodeAnalysis;
+using Buildenator.Configuration.Contract;
+using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Buildenator.Configuration
 {
-    internal sealed class EntityToBuildProperties
+    internal sealed class EntityToBuildProperties : IEntityToBuildProperties
     {
         private IEnumerable<TypedSymbol>? _uniqueTypedSymbols;
         private readonly MockingProperties? _mockingConfiguration;
@@ -17,21 +20,25 @@ namespace Buildenator.Configuration
         public string FullNameWithConstraints { get; }
         public IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
         public IEnumerable<TypedSymbol> SettableProperties { get; }
-        public IEnumerable<string>? AdditionalNamespaces { get; }
+        public string[] AdditionalNamespaces { get; }
 
         public EntityToBuildProperties(INamedTypeSymbol typeForBuilder, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
         {
             INamedTypeSymbol? entityToBuildSymbol;
+            var additionalNamespaces = Enumerable.Empty<string>();
             if (typeForBuilder.IsGenericType)
             {
                 entityToBuildSymbol = typeForBuilder.ConstructedFrom;
-                AdditionalNamespaces = entityToBuildSymbol.TypeParameters.Where(a => a.ConstraintTypes.Any()).SelectMany(a => a.ConstraintTypes).Select(a => a.ContainingNamespace.ToDisplayString()).ToArray();
+                additionalNamespaces = entityToBuildSymbol.TypeParameters.Where(a => a.ConstraintTypes.Any())
+                    .SelectMany(a => a.ConstraintTypes).Select(a => a.ContainingNamespace.ToDisplayString())
+                    .ToArray();
             }
             else
             {
                 entityToBuildSymbol = typeForBuilder;
             }
             ContainingNamespace = entityToBuildSymbol.ContainingNamespace.ToDisplayString();
+            AdditionalNamespaces = additionalNamespaces.Concat(new string[] { ContainingNamespace }).ToArray();
             Name = entityToBuildSymbol.Name;
             FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters, typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
             FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
@@ -52,7 +59,7 @@ namespace Buildenator.Configuration
         private IReadOnlyDictionary<string, TypedSymbol> GetConstructorParameters(INamedTypeSymbol entityToBuildSymbol)
         {
             return entityToBuildSymbol.Constructors.OrderByDescending(x => x.Parameters.Length).First().Parameters
-                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, _mockingConfiguration, _fixtureConfiguration));
+                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, _mockingConfiguration?.Strategy, _fixtureConfiguration?.Strategy));
         }
 
         private List<TypedSymbol> GetSetableProperties(INamedTypeSymbol entityToBuildSymbol)
@@ -76,7 +83,7 @@ namespace Buildenator.Configuration
                 baseType = baseType.BaseType;
             }
 
-            return properties.Select(s => new TypedSymbol(s, _mockingConfiguration, _fixtureConfiguration)).ToList();
+            return properties.Select(s => new TypedSymbol(s, _mockingConfiguration?.Strategy, _fixtureConfiguration?.Strategy)).ToList();
         }
 
         private static bool IsSetableProperty(IPropertySymbol x)

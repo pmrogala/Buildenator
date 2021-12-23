@@ -1,8 +1,9 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.Configuration.Contract;
 
 namespace Buildenator.Configuration
 {
-    internal sealed class MockingProperties
+    internal sealed class MockingProperties : IMockingProperties
     {
         public MockingProperties(
             MockingInterfacesStrategy strategy,

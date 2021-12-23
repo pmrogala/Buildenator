@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace Buildenator.Configuration
+namespace Buildenator.Extensions
 {
     internal static class NamedTypeClassExtensions
     {

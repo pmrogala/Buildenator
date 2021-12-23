@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31313.79
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.31911.260
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator", "Buildenator\Buildenator.csproj", "{DF20C7D1-9B74-49AA-AC16-45CE0CB2747F}"
 EndProject
@@ -35,9 +35,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.Abstraction.Moq
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.Abstraction.AutoFixture", "Buildenator.Abstraction.AutoFixture\Buildenator.Abstraction.AutoFixture.csproj", "{AFD35E96-0611-4E20-8EBB-B44910209403}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Buildenator.IntegrationTests.SourceWithoutAssemblyInfo", "Tests\Buildenator.IntegrationTests.SourceWithoutAssemblyInfo\Buildenator.IntegrationTests.SourceWithoutAssemblyInfo.csproj", "{63A6F9E6-56D5-4AF9-8725-54E2EC09E7F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.IntegrationTests.SourceWithoutAssemblyInfo", "Tests\Buildenator.IntegrationTests.SourceWithoutAssemblyInfo\Buildenator.IntegrationTests.SourceWithoutAssemblyInfo.csproj", "{63A6F9E6-56D5-4AF9-8725-54E2EC09E7F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Buildenator.IntegrationTests.SharedEntities", "Tests\Buildenator.IntegrationTests.SharedEntities\Buildenator.IntegrationTests.SharedEntities.csproj", "{A9E79A1B-8E38-4815-AC1A-129CCE999BE1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.IntegrationTests.SharedEntities", "Tests\Buildenator.IntegrationTests.SharedEntities\Buildenator.IntegrationTests.SharedEntities.csproj", "{A9E79A1B-8E38-4815-AC1A-129CCE999BE1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.UnitTests", "Tests\Buildenator.UnitTests\Buildenator.UnitTests.csproj", "{635AFFCA-8ACF-4F92-924C-FB7463D17C3C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,6 +91,10 @@ Global
 		{A9E79A1B-8E38-4815-AC1A-129CCE999BE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A9E79A1B-8E38-4815-AC1A-129CCE999BE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A9E79A1B-8E38-4815-AC1A-129CCE999BE1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{635AFFCA-8ACF-4F92-924C-FB7463D17C3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{635AFFCA-8ACF-4F92-924C-FB7463D17C3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{635AFFCA-8ACF-4F92-924C-FB7463D17C3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{635AFFCA-8ACF-4F92-924C-FB7463D17C3C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -101,6 +107,7 @@ Global
 		{7023762A-B29A-4A4E-888E-5D6A54E72D4E} = {34D14563-E89B-4337-B751-C50D9149C827}
 		{63A6F9E6-56D5-4AF9-8725-54E2EC09E7F4} = {34D14563-E89B-4337-B751-C50D9149C827}
 		{A9E79A1B-8E38-4815-AC1A-129CCE999BE1} = {34D14563-E89B-4337-B751-C50D9149C827}
+		{635AFFCA-8ACF-4F92-924C-FB7463D17C3C} = {34D14563-E89B-4337-B751-C50D9149C827}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {04953D1F-3E96-4E7A-B1C8-C71198D797F6}

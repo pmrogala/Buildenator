@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Buildenator.Exceptions;
+using Microsoft.CodeAnalysis;
 using System.Collections.Immutable;
 
 namespace Buildenator.Extensions
