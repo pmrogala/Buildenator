@@ -6,11 +6,22 @@ using FluentAssertions;
 using System.Collections.Generic;
 using Xunit;
 using System.Linq;
+using Buildenator.IntegrationTests.Builders;
 
 namespace Buildenator.IntegrationTests
 {
     public class BuildersGeneratorTests
     {
+        [Fact]
+        public void BuildersGenerator_GeneratesPostBuildMethod()
+        {
+            var builder = PostBuildEntityBuilder.PostBuildEntity;
+
+            var result = builder.Build();
+
+            result.Entry.Should().Be(-1);
+        }
+
         [Fact]
         public void BuildersGenerator_HasStaticBulderFactory()
         {

@@ -4,11 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.1.4]
+## [4.2.0]
 
 ### Added
 ### Changed
 ### Removed
+
+
+## 4.2.0 - 2022-08-01
+
+### Added
+
+- a method `PostBuild`, so you can do whatever you want after the default building method process.
+  - to "override" it, you just simple write your definition: `public void PostBuild(<<className>> buildResult) { /*your code here*/ }`
+
+### Changed
+
+- Moving stuff around, preparing for unit testing the solution
+- The Code build with the sdk 6
 
 ## 4.1.4 - 2021-12-14
 

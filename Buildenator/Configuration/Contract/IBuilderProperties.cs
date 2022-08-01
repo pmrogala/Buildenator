@@ -14,5 +14,6 @@ namespace Buildenator.Configuration.Contract
         string Name { get; }
         NullableStrategy NullableStrategy { get; }
         bool StaticCreator { get; }
+        bool IsPostBuildMethodOverriden { get; }
     }
 }
