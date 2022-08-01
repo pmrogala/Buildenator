@@ -6,4 +6,8 @@
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Buildenator.Abstraction\Buildenator.Abstraction.csproj" />
+  </ItemGroup>
+
 </Project>

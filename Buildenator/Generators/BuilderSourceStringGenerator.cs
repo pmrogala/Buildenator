@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using static Buildenator.Generators.NamespacesGenerator;
 using static Buildenator.Generators.ConstructorsGenerator;
+using System;
 
 namespace Buildenator.Generators
 {
@@ -46,8 +47,15 @@ namespace {_builder.ContainingNamespace}
 {GenerateBuildsCode()}
 {GenerateBuildManyCode()}
 {(_builder.StaticCreator ? GenerateStaticBuildsCode() : string.Empty)}
+{GeneratePostBuildMethod()}
     }}
 }}";
+
+        private object GeneratePostBuildMethod()
+            => _builder.IsPostBuildMethodOverriden
+            ? ""
+            : @$"       // You can ""override"" it by writing the definition in your part of the builder.
+        public void PostBuild({_entity.FullName} buildResult) {{ }}";
 
         private string GenerateGlobalNullable()
             => _builder.NullableStrategy switch
@@ -177,10 +185,12 @@ namespace {_builder.ContainingNamespace}
         private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
             string propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateLazyFieldValueReturn(property)}").ComaJoin();
-            return @$"return new {_entity.FullName}({parameters.Select(parameter => GenerateLazyFieldValueReturn(parameter)).ComaJoin()})
+            return @$"var result = new {_entity.FullName}({parameters.Select(parameter => GenerateLazyFieldValueReturn(parameter)).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
-            }};";
+            }};
+            PostBuild(result);
+            return result;";
         }
 
         private string GenerateBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)

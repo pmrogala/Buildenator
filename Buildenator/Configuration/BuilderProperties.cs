@@ -25,11 +25,19 @@ namespace Buildenator.Configuration
 
             _buildingMethods = new Dictionary<string, IMethodSymbol>();
             _fields = new Dictionary<string, IFieldSymbol>();
-            foreach (var member in builderSymbol.GetMembers())
+            var members = builderSymbol.GetMembers();
+            foreach (var member in members)
             {
-                if (member is IMethodSymbol method && method.Name.StartsWith(BuildingMethodsPrefix))
-                    _buildingMethods.Add(method.Name, method);
-                else if (member is IFieldSymbol field)
+                if (member is IMethodSymbol method)
+                {
+                    if (method.Name.StartsWith(BuildingMethodsPrefix))
+                        _buildingMethods.Add(method.Name, method);
+                    else if (method.Name == "PostBuild")
+                        IsPostBuildMethodOverriden = true;
+                    continue;
+                }
+
+                if (member is IFieldSymbol field)
                     _fields.Add(field.Name, field);
             }
         }
@@ -40,6 +48,7 @@ namespace Buildenator.Configuration
         public string BuildingMethodsPrefix { get; }
         public NullableStrategy NullableStrategy { get; }
         public bool StaticCreator { get; }
+        public bool IsPostBuildMethodOverriden { get; }
 
         public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;
         public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
