@@ -8,6 +8,7 @@
         string TypeName { get; }
         string UnderScoreName { get; }
 
+        string? GenerateFieldInitialization();
         bool IsFakeable();
         bool IsMockable();
     }

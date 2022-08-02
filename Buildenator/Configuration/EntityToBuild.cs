@@ -2,13 +2,12 @@
 using Buildenator.Configuration.Contract;
 using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Buildenator.Configuration
 {
-    internal sealed class EntityToBuildProperties : IEntityToBuildProperties
+    internal sealed class EntityToBuild : IEntityToBuild
     {
         private IEnumerable<TypedSymbol>? _uniqueTypedSymbols;
         private readonly MockingProperties? _mockingConfiguration;
@@ -22,7 +21,7 @@ namespace Buildenator.Configuration
         public IEnumerable<TypedSymbol> SettableProperties { get; }
         public string[] AdditionalNamespaces { get; }
 
-        public EntityToBuildProperties(INamedTypeSymbol typeForBuilder, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
+        public EntityToBuild(INamedTypeSymbol typeForBuilder, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
         {
             INamedTypeSymbol? entityToBuildSymbol;
             var additionalNamespaces = Enumerable.Empty<string>();
@@ -59,7 +58,7 @@ namespace Buildenator.Configuration
         private IReadOnlyDictionary<string, TypedSymbol> GetConstructorParameters(INamedTypeSymbol entityToBuildSymbol)
         {
             return entityToBuildSymbol.Constructors.OrderByDescending(x => x.Parameters.Length).First().Parameters
-                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, _mockingConfiguration?.Strategy, _fixtureConfiguration?.Strategy));
+                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, _mockingConfiguration, _fixtureConfiguration?.Strategy));
         }
 
         private List<TypedSymbol> GetSetableProperties(INamedTypeSymbol entityToBuildSymbol)
@@ -83,7 +82,7 @@ namespace Buildenator.Configuration
                 baseType = baseType.BaseType;
             }
 
-            return properties.Select(s => new TypedSymbol(s, _mockingConfiguration?.Strategy, _fixtureConfiguration?.Strategy)).ToList();
+            return properties.Select(s => new TypedSymbol(s, _mockingConfiguration, _fixtureConfiguration?.Strategy)).ToList();
         }
 
         private static bool IsSetableProperty(IPropertySymbol x)

@@ -10,5 +10,8 @@ namespace Buildenator.Configuration.Contract
         string CreateSingleFormat { get; }
         string Name { get; }
         FixtureInterfacesStrategy Strategy { get; }
+
+        string GenerateAdditionalConfiguration();
+        bool NeedsAdditionalConfiguration();
     }
 }

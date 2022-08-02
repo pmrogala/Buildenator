@@ -5,8 +5,8 @@ namespace Buildenator.Extensions
 {
     internal static class NullReferenceExtensions
     {
-        public static IEnumerable<T> IsNotNull<T>(this IEnumerable<T> enumerable)
-            where T : notnull => enumerable.Where(x => x != null);
+        public static IEnumerable<T> IsNotNull<T>(this IEnumerable<T?> enumerable)
+            where T : notnull => enumerable.Where(x => x != null).OfType<T>();
 
         public static IEnumerable<(T1, T2)> AreNotNull<T1, T2>(this IEnumerable<(T1?, T2?)> enumerable)
             where T1 : notnull

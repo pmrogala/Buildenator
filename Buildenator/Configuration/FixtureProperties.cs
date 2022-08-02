@@ -5,6 +5,8 @@ namespace Buildenator.Configuration
 {
     internal sealed class FixtureProperties : IFixtureProperties
     {
+        private const string FixtureLiteral = "_fixture";
+
         public FixtureProperties(
             string name,
             string createSingleFormat,
@@ -28,5 +30,8 @@ namespace Buildenator.Configuration
         public FixtureInterfacesStrategy Strategy { get; }
         public string[] AdditionalNamespaces { get; }
 
+        public string GenerateAdditionalConfiguration() => string.Format(AdditionalConfiguration, FixtureLiteral, Name);
+
+        public bool NeedsAdditionalConfiguration() => AdditionalConfiguration is not null;
     }
 }
