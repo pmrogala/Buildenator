@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Buildenator.Configuration.Contract
 {
-    internal interface IEntityToBuildProperties : IAdditionalNamespacesProvider
+    internal interface IEntityToBuild : IAdditionalNamespacesProvider
     {
         IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
         string ContainingNamespace { get; }

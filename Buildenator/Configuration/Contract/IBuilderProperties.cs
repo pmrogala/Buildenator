@@ -15,5 +15,6 @@ namespace Buildenator.Configuration.Contract
         NullableStrategy NullableStrategy { get; }
         bool StaticCreator { get; }
         bool IsPostBuildMethodOverriden { get; }
+        bool IsDefaultContructorOverriden { get; }
     }
 }

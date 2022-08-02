@@ -1,27 +1,31 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.Configuration.Contract;
 using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
+using System;
 using System.Linq;
 
 namespace Buildenator.CodeAnalysis
 {
     internal sealed class TypedSymbol : ITypedSymbol
     {
-        public TypedSymbol(IPropertySymbol symbol, MockingInterfacesStrategy? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
+        public TypedSymbol(IPropertySymbol symbol, IMockingProperties? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
         {
             Symbol = symbol;
             Type = symbol.Type;
-            _mockingInterfaceStrategy = mockingInterfaceStrategy;
+            _mockingProperties = mockingInterfaceStrategy;
             _fixtureConfiguration = fixtureConfiguration;
         }
 
-        public TypedSymbol(IParameterSymbol symbol, MockingInterfacesStrategy? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
+        public TypedSymbol(IParameterSymbol symbol, IMockingProperties? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
         {
             Symbol = symbol;
             Type = symbol.Type;
-            _mockingInterfaceStrategy = mockingInterfaceStrategy;
+            _mockingProperties = mockingInterfaceStrategy;
             _fixtureConfiguration = fixtureConfiguration;
         }
+
+        internal bool NeedsFieldInit() => IsMockable();
 
         private ISymbol Symbol { get; }
         private ITypeSymbol Type { get; }
@@ -37,10 +41,10 @@ namespace Buildenator.CodeAnalysis
         public string SymbolPascalName => Symbol.PascalCaseName();
         public string SymbolName => Symbol.Name;
 
-        private readonly MockingInterfacesStrategy? _mockingInterfaceStrategy;
+        private readonly IMockingProperties? _mockingProperties;
         private bool? _isMockable = null;
         public bool IsMockable()
-            => _isMockable ??= _mockingInterfaceStrategy switch
+            => _isMockable ??= _mockingProperties?.Strategy switch
             {
                 MockingInterfacesStrategy.All
                     when Type.TypeKind == TypeKind.Interface => true,
@@ -62,5 +66,8 @@ namespace Buildenator.CodeAnalysis
                     when Type.TypeKind == TypeKind.Interface && Type.AllInterfaces.All(x => x.SpecialType != SpecialType.System_Collections_IEnumerable) => false,
                 _ => true
             };
+
+        public string GenerateFieldInitialization()
+            => $"{UnderScoreName} = {string.Format(_mockingProperties!.FieldDeafultValueAssigmentFormat, TypeFullName)};";
     }
 }

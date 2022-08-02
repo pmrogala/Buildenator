@@ -7,14 +7,13 @@ using System.Linq;
 using System.Text;
 using static Buildenator.Generators.NamespacesGenerator;
 using static Buildenator.Generators.ConstructorsGenerator;
-using System;
 
 namespace Buildenator.Generators
 {
     internal class BuilderSourceStringGenerator
     {
         private readonly IBuilderProperties _builder;
-        private readonly IEntityToBuildProperties _entity;
+        private readonly IEntityToBuild _entity;
         private readonly IFixtureProperties? _fixtureConfiguration;
         private readonly IMockingProperties? _mockingConfiguration;
         private const string SetupActionLiteral = "setupAction";
@@ -23,7 +22,7 @@ namespace Buildenator.Generators
 
         public BuilderSourceStringGenerator(
             IBuilderProperties builder,
-            IEntityToBuildProperties entity,
+            IEntityToBuild entity,
             IFixtureProperties? fixtureConfiguration,
             IMockingProperties? mockingConfiguration)
         {
@@ -42,7 +41,7 @@ namespace {_builder.ContainingNamespace}
 {GenerateGlobalNullable()}{GenerateBuilderDefinition()}
     {{
 {(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
-{GenerateConstructor(_builder.Name, _entity, _mockingConfiguration, _fixtureConfiguration)}
+{(_builder.IsDefaultContructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration))}
 {GeneratePropertiesCode()}
 {GenerateBuildsCode()}
 {GenerateBuildManyCode()}
@@ -53,8 +52,8 @@ namespace {_builder.ContainingNamespace}
 
         private object GeneratePostBuildMethod()
             => _builder.IsPostBuildMethodOverriden
-            ? ""
-            : @$"       // You can ""override"" it by writing the definition in your part of the builder.
+            ? string.Empty
+            : @$"{CommentsGenerator.GenerateSummaryOverrideComment()}
         public void PostBuild({_entity.FullName} buildResult) {{ }}";
 
         private string GenerateGlobalNullable()

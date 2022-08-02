@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## 4.3.0 - 2022-08-02
+
+### Changed
+
+- Possibility to write your own default constructor. It will prevent generating the generator's default one 
+
 ## 4.2.0 - 2022-08-01
 
 ### Added

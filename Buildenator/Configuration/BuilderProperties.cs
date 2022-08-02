@@ -34,6 +34,8 @@ namespace Buildenator.Configuration
                         _buildingMethods.Add(method.Name, method);
                     else if (method.Name == "PostBuild")
                         IsPostBuildMethodOverriden = true;
+                    else if (method.MethodKind == MethodKind.Constructor && method.Parameters.Length == 0 && !method.IsImplicitlyDeclared)
+                        IsDefaultContructorOverriden = true;
                     continue;
                 }
 
@@ -49,6 +51,7 @@ namespace Buildenator.Configuration
         public NullableStrategy NullableStrategy { get; }
         public bool StaticCreator { get; }
         public bool IsPostBuildMethodOverriden { get; }
+        public bool IsDefaultContructorOverriden { get; }
 
         public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;
         public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
