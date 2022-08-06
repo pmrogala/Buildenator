@@ -184,7 +184,7 @@ namespace {_builder.ContainingNamespace}
         private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
             string propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateLazyFieldValueReturn(property)}").ComaJoin();
-            return @$"var result = new {_entity.FullName}({parameters.Select(parameter => GenerateLazyFieldValueReturn(parameter)).ComaJoin()})
+            return @$"var result = new {_entity.FullName}({parameters.Select(GenerateLazyFieldValueReturn).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
             }};
@@ -195,7 +195,7 @@ namespace {_builder.ContainingNamespace}
         private string GenerateBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
             string propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateFieldValueReturn(property)}").ComaJoin();
-            return @$"return new {_entity.FullName}({parameters.Select(parameter => GenerateFieldValueReturn(parameter)).ComaJoin()})
+            return @$"return new {_entity.FullName}({parameters.Select(GenerateFieldValueReturn).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
             }};";
@@ -205,7 +205,7 @@ namespace {_builder.ContainingNamespace}
             => typedSymbol.IsMockable()
                 ? string.Format(_mockingConfiguration!.ReturnObjectFormat, typedSymbol.UnderScoreName)
                 : @$"({typedSymbol.UnderScoreName}.HasValue ? {typedSymbol.UnderScoreName}.Value : new Nullbox<{typedSymbol.TypeFullName}>({(typedSymbol.IsFakeable()
-                    ? $"{FixtureLiteral}.{string.Format(_fixtureConfiguration!.CreateSingleFormat, typedSymbol.TypeFullName)}"
+                    ? $"{string.Format(_fixtureConfiguration!.CreateSingleFormat, typedSymbol.TypeFullName, typedSymbol.SymbolName, FixtureLiteral)}"
                     : $"default({typedSymbol.TypeFullName})")})).Object";
 
         private string GenerateFieldValueReturn(ITypedSymbol typedSymbol)

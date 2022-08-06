@@ -8,11 +8,9 @@ namespace Buildenator.Abstraction.AutoFixture
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="additionalUsings">List all the additional namespaces that are important for the fixture; separate them by comma ','. 
-        /// An example: "Namespace1,Namespace2.Subspace"</param>
         public AutoFixtureWithMoqConfigurationAttribute(
             string fixtureTypeName = "Fixture",
-            string createSingleFormat = "Create<{0}>()",
+            string createSingleFormat = "{2}.Create<{0}>()",
             string? constructorParameters = null,
             string? additionalConfiguration = "{0} = ({1}){0}.Customize(new AutoMoqCustomization())",
             FixtureInterfacesStrategy strategy = FixtureInterfacesStrategy.All,
