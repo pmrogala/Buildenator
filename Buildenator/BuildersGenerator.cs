@@ -21,7 +21,7 @@ namespace Buildenator
 
         public void Execute(GeneratorExecutionContext context)
         {
-            // Debugger.Launch();
+            Debugger.Launch();
             var classSymbols = GetBuilderSymbolAndItsAttribute(context);
 
             var compilation = context.Compilation;
@@ -89,7 +89,8 @@ namespace Buildenator
                            (INamedTypeSymbol)attribute.ConstructorArguments[0].Value!,
                            (string?)attribute.ConstructorArguments[1].Value,
                            (bool?)attribute.ConstructorArguments[2].Value,
-                           attribute.ConstructorArguments[3].Value is null ? null : (NullableStrategy)attribute.ConstructorArguments[3].Value!);
+                           attribute.ConstructorArguments[3].Value is null ? null : (NullableStrategy)attribute.ConstructorArguments[3].Value!,
+                           (bool?)attribute.ConstructorArguments[4].Value);
         }
 
         private static readonly DiagnosticDescriptor AbstractDiagnostic = new ("BDN001", "Cannot generate a builder for an abstract class", "Cannot generate a builder for the {0} abstract class", "Buildenator", DiagnosticSeverity.Error, true);

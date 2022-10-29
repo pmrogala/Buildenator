@@ -11,6 +11,7 @@ namespace Buildenator.Configuration
         private readonly string? _defaultNameWith;
         private readonly bool? _defaultStaticBuilder;
         private readonly NullableStrategy? _nullableStrategy;
+        private readonly bool? _generateMethodsForUnrechableProperties;
 
         public BuilderPropertiesBuilder(IAssemblySymbol context)
         {
@@ -20,6 +21,7 @@ namespace Buildenator.Configuration
                 _defaultNameWith = globalAttributes.Value.GetOrThrow<string>(0, nameof(MakeBuilderAttributeInternal.BuildingMethodsPrefix));
                 _defaultStaticBuilder = globalAttributes.Value.GetOrThrow<bool>(1, nameof(MakeBuilderAttributeInternal.DefaultStaticCreator));
                 _nullableStrategy = globalAttributes.Value.GetOrThrow<NullableStrategy>(2, nameof(MakeBuilderAttributeInternal.NullableStrategy));
+                _generateMethodsForUnrechableProperties = globalAttributes.Value.GetOrThrow<bool>(3, nameof(MakeBuilderAttributeInternal.GenerateMethodsForUnrechableProperties));
             }
         }
 
@@ -31,7 +33,8 @@ namespace Buildenator.Configuration
                     builderAttribute.TypeForBuilder,
                     builderAttribute.BuildingMethodsPrefix ?? _defaultNameWith,
                     builderAttribute.DefaultStaticCreator ?? _defaultStaticBuilder,
-                    builderAttribute.NullableStrategy ?? _nullableStrategy));
+                    builderAttribute.NullableStrategy ?? _nullableStrategy,
+                    builderAttribute.GenerateMethodsForUnrechableProperties ?? _generateMethodsForUnrechableProperties));
         }
 
         private static ImmutableArray<TypedConstant>? GetConfigurationOrDefault(ISymbol context)

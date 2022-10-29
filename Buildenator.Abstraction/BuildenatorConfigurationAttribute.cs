@@ -14,7 +14,8 @@ namespace Buildenator.Abstraction
         public BuildenatorConfigurationAttribute(
             string buildingMethodsPrefix = "With",
             bool defaultStaticCreator = true,
-            NullableStrategy nullableStrategy = NullableStrategy.Default)
+            NullableStrategy nullableStrategy = NullableStrategy.Default,
+            bool generateMethodsForUnrechableProperties = false)
         {
         }
     }

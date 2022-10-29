@@ -19,7 +19,7 @@ namespace Buildenator.Benchmarks
         }
     }
 
-    [SimpleJob]
+    [SimpleJob(BenchmarkDotNet.Engines.RunStrategy.Throughput)]
     [MemoryDiagnoser]
     [ThreadingDiagnoser]
     public class GenerationTests
