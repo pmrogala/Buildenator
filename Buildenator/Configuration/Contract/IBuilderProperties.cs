@@ -16,5 +16,6 @@ namespace Buildenator.Configuration.Contract
         bool StaticCreator { get; }
         bool IsPostBuildMethodOverriden { get; }
         bool IsDefaultContructorOverriden { get; }
+        bool ShouldGenerateMethodsForUnreachableProperties { get; }
     }
 }

@@ -16,9 +16,10 @@ namespace Buildenator.Configuration
             ContainingNamespace = builderSymbol.ContainingNamespace.ToDisplayString();
             Name = builderSymbol.Name;
             FullName = builderSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
-            BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix ?? "With";
+            BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix ?? DefaultConstants.BuildingMethodsPrefix;
             NullableStrategy = attributeData.NullableStrategy ?? NullableStrategy.Default;
             StaticCreator = attributeData.DefaultStaticCreator ?? true;
+            ShouldGenerateMethodsForUnreachableProperties = attributeData.GenerateMethodsForUnrechableProperties ?? false;
 
             if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
                 throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");
@@ -32,7 +33,7 @@ namespace Buildenator.Configuration
                 {
                     if (method.Name.StartsWith(BuildingMethodsPrefix))
                         _buildingMethods.Add(method.Name, method);
-                    else if (method.Name == "PostBuild")
+                    else if (method.Name == DefaultConstants.PostBuildMethodName)
                         IsPostBuildMethodOverriden = true;
                     else if (method.MethodKind == MethodKind.Constructor && method.Parameters.Length == 0 && !method.IsImplicitlyDeclared)
                         IsDefaultContructorOverriden = true;
@@ -52,8 +53,10 @@ namespace Buildenator.Configuration
         public bool StaticCreator { get; }
         public bool IsPostBuildMethodOverriden { get; }
         public bool IsDefaultContructorOverriden { get; }
+        public bool ShouldGenerateMethodsForUnreachableProperties { get; }
 
         public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;
         public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
+
     }
 }

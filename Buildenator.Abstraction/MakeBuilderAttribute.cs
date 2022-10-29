@@ -16,7 +16,9 @@ namespace Buildenator.Abstraction
             Type typeForBuilder,
             string? buildingMethodsPrefix = "With",
             object? defaultStaticCreator = null,
-            object? nullableStrategy = null)
+            object? nullableStrategy = null,
+            object? generateMethodsForUnrechableProperties = null
+            )
         {
         }
     }

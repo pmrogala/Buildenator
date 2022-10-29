@@ -6,5 +6,4 @@ namespace Buildenator.Extensions
     {
         public static string ComaJoin(this IEnumerable<string> strings) => string.Join(", ", strings);
     }
-
 }

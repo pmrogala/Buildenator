@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using static Buildenator.Generators.NamespacesGenerator;
 using static Buildenator.Generators.ConstructorsGenerator;
+using Microsoft.CodeAnalysis;
 
 namespace Buildenator.Generators
 {
@@ -70,6 +71,12 @@ namespace {_builder.ContainingNamespace}
         private string GeneratePropertiesCode()
         {
             var properties = _entity.GetAllUniqueSettablePropertiesAndParameters();
+            var unsettableProperties = Enumerable.Empty<TypedSymbol>();
+
+            if (_builder.ShouldGenerateMethodsForUnreachableProperties)
+            {
+                properties = properties.Concat(_entity.GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch());
+            }
 
             var output = new StringBuilder();
 
@@ -82,11 +89,7 @@ namespace {_builder.ContainingNamespace}
             {
                 output.AppendLine($@"
 
-        {GenerateMethodDefinition(typedSymbol)}
-        {{
-            {GenerateValueAssigment(typedSymbol)};
-            return this;
-        }}");
+        {GenerateMethodDefinition(typedSymbol)}");
 
             }
 
@@ -98,6 +101,13 @@ namespace {_builder.ContainingNamespace}
                                  || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
         }
 
+        private string GenerateMethodDefinition(TypedSymbol typedSymbol)
+            => $@"{GenerateMethodDefinitionHeader(typedSymbol)}
+        {{
+            {GenerateValueAssigment(typedSymbol)};
+            return this;
+        }}";
+
         private string GenerateValueAssigment(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable()
                 ? $"{SetupActionLiteral}({typedSymbol.UnderScoreName})"
@@ -105,7 +115,7 @@ namespace {_builder.ContainingNamespace}
 
         private string CreateMethodName(ITypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
 
-        private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
+        private string GenerateMethodDefinitionHeader(ITypedSymbol typedSymbol)
             => $"public {_builder.FullName} {CreateMethodName(typedSymbol)}({GenerateMethodParameterDefinition(typedSymbol)})";
 
         private string GenerateMethodParameterDefinition(ITypedSymbol typedSymbol)
@@ -188,6 +198,9 @@ namespace {_builder.ContainingNamespace}
             {{
 {(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
             }};
+            {(_builder.ShouldGenerateMethodsForUnreachableProperties
+            ? $"typeof(string).GetProperty(\"NotReachableProperty\").SetValue(result.NotReachableProperty, _notReachableProperty);"
+            : "")}
             PostBuild(result);
             return result;";
         }

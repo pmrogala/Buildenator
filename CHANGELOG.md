@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `createSingleFormat`, for generating properties by your fixture, has more arguments to use, and you also have to use the fixture instance name now.
+- `createSingleFormat`, for generating properties by your fixture, has more arguments to use, and you also must use the fixture instance name now.
 That's why it is a breaking change.
     - Example:
         - before: `Create<{0}>()` 
