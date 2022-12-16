@@ -7,11 +7,10 @@ using System.Linq;
 using System.Text;
 using static Buildenator.Generators.NamespacesGenerator;
 using static Buildenator.Generators.ConstructorsGenerator;
-using Microsoft.CodeAnalysis;
 
 namespace Buildenator.Generators
 {
-    internal class BuilderSourceStringGenerator
+    internal sealed class BuilderSourceStringGenerator
     {
         private readonly IBuilderProperties _builder;
         private readonly IEntityToBuild _entity;
@@ -198,11 +197,20 @@ namespace {_builder.ContainingNamespace}
             {{
 {(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
             }};
-            {(_builder.ShouldGenerateMethodsForUnreachableProperties
-            ? $"typeof(string).GetProperty(\"NotReachableProperty\").SetValue(result.NotReachableProperty, _notReachableProperty);"
-            : "")}
+            {(_builder.ShouldGenerateMethodsForUnreachableProperties ? GenerateUnreachableProperties(): "")}
             PostBuild(result);
             return result;";
+
+            string GenerateUnreachableProperties()
+            {
+                var output = new StringBuilder();
+                output.AppendLine($"var t = typeof({_entity.FullName});");
+                foreach (var a in _entity.GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch())
+                {
+                    output.AppendLine($"t.GetProperty(\"{a.SymbolName}\").SetValue(result, {GenerateLazyFieldValueReturn(a)}, System.Reflection.BindingFlags.NonPublic, null, null, null);");
+                }
+                return output.ToString();
+            }
         }
 
         private string GenerateBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)

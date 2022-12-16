@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## 5.1.0 - 2022-12-16
+
+### Added
+
+- `GenerateMethodsForUnrechableProperties ` - possibility to force generating builder methods for properties that have not public setters.
+
 ## 5.0.0 - 2022-08-06
 
 ### Changed
