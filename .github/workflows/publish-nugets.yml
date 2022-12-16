@@ -22,10 +22,10 @@ jobs:
           echo Version number extracted from ${GITHUB_REF} is invalid
           exit 1
       - uses: actions/checkout@v2
-      - name: Setup .NET Core 5
+      - name: Setup .NET Core 7
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 6.0.302
+          dotnet-version: 7.0.101
       - name: Install dependencies
         run: dotnet restore
       - name: Build

@@ -255,5 +255,14 @@ namespace Buildenator.IntegrationTests
             results[1].Should().NotBeEquivalentTo(results[2]);
             results[0].Should().NotBeEquivalentTo(results[2]);
         }
+
+        [Theory]
+        [CustomAutoData]
+        public void BuildersGenerator_UnsettableProperty_ShouldCreateMethodForSettingItsValue(int[] privateField)
+        {
+            var builder = UnsettableEntityWithConstructorBuilder.UnsettableEntityWithConstructor;
+            builder.WithPrivateField(privateField);
+            builder.Build().PrivateField.Should().BeEquivalentTo(privateField);
+        }
     }
 }
