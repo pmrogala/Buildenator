@@ -17,16 +17,16 @@ namespace Buildenator.Configuration
 
         public FixtureProperties? Build(ISymbol builderSymbol)
         {
-            if ((GetFixtureConfigurationOrDefault(builderSymbol) ?? _globalParameters) is not ImmutableArray<TypedConstant> attributeParameters)
+            if ((GetFixtureConfigurationOrDefault(builderSymbol) ?? _globalParameters) is not { } attributeParameters)
                 return null;
 
             var i = 0;
             var name = attributeParameters.GetOrThrow(i++, nameof(FixtureProperties.Name));
-            string createSingleFormat = attributeParameters.GetOrThrow(i++, nameof(FixtureProperties.CreateSingleFormat));
-            string? constructorParameters = (string?)attributeParameters[i++].Value;
-            string? additionalConfiguration = (string?)attributeParameters[i++].Value;
+            var createSingleFormat = attributeParameters.GetOrThrow(i++, nameof(FixtureProperties.CreateSingleFormat));
+            var constructorParameters = (string?)attributeParameters[i++].Value;
+            var additionalConfiguration = (string?)attributeParameters[i++].Value;
             var strategy = attributeParameters.GetOrThrow<FixtureInterfacesStrategy>(i++, nameof(FixtureProperties.Strategy));
-            var additionalNamespaces = (string?)attributeParameters[i++].Value;
+            var additionalNamespaces = (string?)attributeParameters[i].Value;
             return new FixtureProperties(
                 name,
                 createSingleFormat,
@@ -39,7 +39,7 @@ namespace Buildenator.Configuration
         private static ImmutableArray<TypedConstant>? GetFixtureConfigurationOrDefault(ISymbol context)
         {
             var attributeDatas = context.GetAttributes();
-            var attribute = attributeDatas.Where(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(FixtureConfigurationAttribute))).SingleOrDefault();
+            var attribute = attributeDatas.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(FixtureConfigurationAttribute)));
             return attribute?.ConstructorArguments;
         }
     }

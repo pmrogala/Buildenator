@@ -4,7 +4,7 @@ using Buildenator.IntegrationTests.SharedEntities;
 
 namespace Buildenator.IntegrationTests.Source.Builders
 {
-    [MakeBuilder(typeof(UnsettableEntityWithConstructor), nullableStrategy: NullableStrategy.Enabled, generateMethodsForUnrechableProperties: true)]
+    [MakeBuilder(typeof(UnsettableEntityWithConstructor), nullableStrategy: NullableStrategy.Enabled, generateMethodsForUnreachableProperties: true)]
     [AutoFixtureConfiguration()]
     public partial class UnsettableEntityWithConstructorBuilder
     {

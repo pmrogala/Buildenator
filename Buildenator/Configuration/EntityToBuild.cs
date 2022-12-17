@@ -35,7 +35,7 @@ namespace Buildenator.Configuration
                 entityToBuildSymbol = typeForBuilder;
             }
             ContainingNamespace = entityToBuildSymbol.ContainingNamespace.ToDisplayString();
-            AdditionalNamespaces = additionalNamespaces.Concat(new string[] { ContainingNamespace }).ToArray();
+            AdditionalNamespaces = additionalNamespaces.Concat(new[] { ContainingNamespace }).ToArray();
             Name = entityToBuildSymbol.Name;
             FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters, typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
             FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
@@ -46,14 +46,14 @@ namespace Buildenator.Configuration
             (SettableProperties, UnsettableProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration?.Strategy);
         }
 
-        public IEnumerable<TypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
+        public IReadOnlyList<TypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
         {
             return _uniqueTypedSymbols ??= SettableProperties
                 .Where(x => !ConstructorParameters.ContainsKey(x.SymbolName))
                 .Concat(ConstructorParameters.Values).ToList();
         }
 
-        public IEnumerable<TypedSymbol> GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch()
+        public IReadOnlyList<TypedSymbol> GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch()
         {
             return _uniqueUnsettableTypedSymbols ??= UnsettableProperties
                 .Where(x => !ConstructorParameters.ContainsKey(x.SymbolName)).ToList();
@@ -74,8 +74,8 @@ namespace Buildenator.Configuration
                 properties.NotSettable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray());
         }
 
-        private IEnumerable<TypedSymbol>? _uniqueTypedSymbols;
-        private IEnumerable<TypedSymbol>? _uniqueUnsettableTypedSymbols;
+        private IReadOnlyList<TypedSymbol>? _uniqueTypedSymbols;
+        private IReadOnlyList<TypedSymbol>? _uniqueUnsettableTypedSymbols;
         private readonly MockingProperties? _mockingConfiguration;
         private readonly FixtureProperties? _fixtureConfiguration;
     }

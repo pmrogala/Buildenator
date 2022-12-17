@@ -1,16 +1,19 @@
 ﻿using System;
+// ReSharper disable UnusedParameter.Local
 
 namespace Buildenator.Abstraction
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Assembly, Inherited = false)]
     public abstract class FixtureConfigurationAttribute : Attribute
     {
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="fixtureType"></param>
+        /// <param name="fixtureTypeName"></param>
+        /// <param name="strategy"></param>
         /// <param name="additionalUsings">List all the additional namespaces that are important for the fixture; separate them by comma ','. 
         /// An example: "Namespace1,Namespace2.Subspace"</param>
+        /// <param name="constructorParameters"></param>
         /// <param name="additionalConfiguration">You can make additional configuration of your fixture instance. 
         /// {0} is for the fixture object's name.
         /// {1} is for the fixture object's type.</param>

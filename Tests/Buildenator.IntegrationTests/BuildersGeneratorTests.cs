@@ -4,9 +4,9 @@ using Buildenator.IntegrationTests.Source.Builders;
 using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 using FluentAssertions;
 using System.Collections.Generic;
-using Xunit;
 using System.Linq;
-using Buildenator.IntegrationTests.Builders;
+using Xunit;
+using PostBuildEntityBuilder = Buildenator.IntegrationTests.Source.Builders.PostBuildEntityBuilder;
 
 namespace Buildenator.IntegrationTests
 {

@@ -18,7 +18,8 @@ namespace Buildenator.Extensions
         {
             var (setProperties, unsetProperties) = entityToBuildSymbol.GetMembers().OfType<IPropertySymbol>()
                 .Where(a => a.GetMethod is not null && a.GetMethod.DeclaredAccessibility != Accessibility.Private && a.GetMethod.DeclaredAccessibility != Accessibility.Protected)
-                .Split(a => a.IsSetableProperty());
+                .Split(a => a.IsSetableProperty())
+                .ToList();
 
             var setPropertyNames = new HashSet<string>(setProperties.Select(x => x.Name));
             var unsetPropertyNames = new HashSet<string>(unsetProperties.Select(x => x.Name));
@@ -26,24 +27,23 @@ namespace Buildenator.Extensions
             while (baseType != null)
             {
                 var newProperties = baseType.GetMembers().OfType<IPropertySymbol>().Split(a => a.IsSetableProperty());
-                setProperties = TakeNotCoverProperties(setProperties, setPropertyNames, newProperties.Item1);
-                unsetProperties = TakeNotCoverProperties(unsetProperties, unsetPropertyNames, newProperties.Item2);
+                TakeNotCoverProperties(ref setProperties, setPropertyNames, newProperties.Item1);
+                TakeNotCoverProperties(ref unsetProperties, unsetPropertyNames, newProperties.Item2);
 
                 baseType = baseType.BaseType;
             }
 
             return (setProperties, unsetProperties);
 
-            static IEnumerable<IPropertySymbol> TakeNotCoverProperties(
-                IEnumerable<IPropertySymbol> properties, HashSet<string> propertyNames, IEnumerable<IPropertySymbol> newProperties)
+            static void TakeNotCoverProperties(
+                ref List<IPropertySymbol> properties, ISet<string> propertyNames, IEnumerable<IPropertySymbol> newProperties)
             {
                 var newSetProperties = newProperties.Where(x => !propertyNames.Contains(x.Name)).ToList();
 
 #pragma warning disable RS1024 // Symbols should be compared for equality
-                properties = properties.Union(newSetProperties);
+                properties = properties.Union(newSetProperties).ToList();
 #pragma warning restore RS1024 // Symbols should be compared for equality
                 propertyNames.UnionWith(newSetProperties.Select(x => x.Name));
-                return properties;
             }
         }
     }

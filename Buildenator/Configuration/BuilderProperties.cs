@@ -19,7 +19,7 @@ namespace Buildenator.Configuration
             BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix ?? DefaultConstants.BuildingMethodsPrefix;
             NullableStrategy = attributeData.NullableStrategy ?? NullableStrategy.Default;
             StaticCreator = attributeData.DefaultStaticCreator ?? true;
-            ShouldGenerateMethodsForUnreachableProperties = attributeData.GenerateMethodsForUnrechableProperties ?? false;
+            ShouldGenerateMethodsForUnreachableProperties = attributeData.GenerateMethodsForUnreachableProperties ?? false;
 
             if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
                 throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");

@@ -2,12 +2,13 @@
 
 namespace Buildenator.Abstraction
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Assembly, Inherited = false)]
     public abstract class MockingConfigurationAttribute : Attribute
     {
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="strategy"></param>
         /// <param name="typeDeclarationFormat"></param>
         /// <param name="fieldDeafultValueAssigmentFormat"></param>
         /// <param name="returnObjectFormat"></param>

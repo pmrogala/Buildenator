@@ -4,4 +4,4 @@ using Buildenator.Abstraction.Moq;
 
 [assembly: AutoFixtureConfiguration(fixtureTypeName: "Buildenator.IntegrationTests.Source.Fixtures.CustomFixture")]
 [assembly: BuildenatorConfiguration(nullableStrategy: NullableStrategy.Default)]
-[assembly: MoqConfiguration()]
+[assembly: MoqConfiguration]

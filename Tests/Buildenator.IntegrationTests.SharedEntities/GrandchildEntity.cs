@@ -15,6 +15,7 @@ namespace Buildenator.IntegrationTests.SharedEntities
         {
         }
 
+        // ReSharper disable once RedundantOverriddenMember
         protected override List<string> ProtectedProperty => base.ProtectedProperty;
 
         public IInterfaceType InterfaceType { get; set; }
@@ -29,6 +30,7 @@ namespace Buildenator.IntegrationTests.SharedEntities
             SecondGeneric = secondGeneric;
         }
 
+        // ReSharper disable once RedundantOverriddenMember
         protected override List<string> ProtectedProperty => base.ProtectedProperty;
 
         public T GenericType { get; set; }

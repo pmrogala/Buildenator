@@ -8,11 +8,11 @@ namespace Buildenator.Generators
     {
         internal static string GenerateConstructor(
             string builderName,
-            IEntityToBuild _entity,
-            IFixtureProperties? _fixtureConfiguration)
+            IEntityToBuild entity,
+            IFixtureProperties? fixtureConfiguration)
         {
             var hasAnyBody = false;
-            var parameters = _entity.GetAllUniqueSettablePropertiesAndParameters();
+            var parameters = entity.GetAllUniqueSettablePropertiesAndParameters();
 
             var output = new StringBuilder();
             output.AppendLine($@"{CommentsGenerator.GenerateSummaryOverrideComment()}
@@ -24,9 +24,9 @@ namespace Buildenator.Generators
                 hasAnyBody = true;
             }
 
-            if (_fixtureConfiguration is not null && _fixtureConfiguration.NeedsAdditionalConfiguration())
+            if (fixtureConfiguration is not null && fixtureConfiguration.NeedsAdditionalConfiguration())
             {
-                output.AppendLine($@"            {_fixtureConfiguration.GenerateAdditionalConfiguration()};");
+                output.AppendLine($@"            {fixtureConfiguration.GenerateAdditionalConfiguration()};");
                 hasAnyBody = true;
             }
 

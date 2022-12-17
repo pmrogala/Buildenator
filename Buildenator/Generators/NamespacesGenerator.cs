@@ -1,5 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-using System;
+﻿using System;
 using System.Linq;
 using System.Text;
 
@@ -9,7 +8,7 @@ namespace Buildenator.Generators
     {
         internal static string GenerateNamespaces(params IAdditionalNamespacesProvider?[] additionalNamespacesProviders)
         {
-            var list = new string[]
+            var list = new[]
             {
                 "System",
                 "System.Linq",

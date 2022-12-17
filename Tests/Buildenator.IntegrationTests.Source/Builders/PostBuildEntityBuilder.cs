@@ -1,9 +1,9 @@
 ﻿using Buildenator.Abstraction;
 using Buildenator.IntegrationTests.SharedEntities;
 
-namespace Buildenator.IntegrationTests.Builders
+namespace Buildenator.IntegrationTests.Source.Builders
 {
-    [MakeBuilder(typeof(PostBuildEntity), defaultStaticCreator: false, generateMethodsForUnrechableProperties: true)]
+    [MakeBuilder(typeof(PostBuildEntity), defaultStaticCreator: false, generateMethodsForUnreachableProperties: true)]
     public partial class PostBuildEntityBuilder
     {
         public void PostBuild(PostBuildEntity buildResult)

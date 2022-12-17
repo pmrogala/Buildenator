@@ -70,11 +70,10 @@ namespace {_builder.ContainingNamespace}
         private string GeneratePropertiesCode()
         {
             var properties = _entity.GetAllUniqueSettablePropertiesAndParameters();
-            var unsettableProperties = Enumerable.Empty<TypedSymbol>();
 
             if (_builder.ShouldGenerateMethodsForUnreachableProperties)
             {
-                properties = properties.Concat(_entity.GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch());
+                properties = properties.Concat(_entity.GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch()).ToList();
             }
 
             var output = new StringBuilder();
@@ -94,7 +93,7 @@ namespace {_builder.ContainingNamespace}
 
             return output.ToString();
 
-            bool IsNotYetDeclaredField(ITypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out var field);
+            bool IsNotYetDeclaredField(ITypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out _);
 
             bool IsNotYetDeclaredMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
                                  || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
@@ -132,10 +131,10 @@ namespace {_builder.ContainingNamespace}
         {
             var (parameters, properties) = GetParametersAndProperties();
 
-            string disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+            var disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
                 ? "#pragma warning disable CS8604\n"
                 : string.Empty;
-            string restoreWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+            var restoreWarning = _builder.NullableStrategy == NullableStrategy.Enabled
                 ? "#pragma warning restore CS8604\n"
                 : string.Empty;
 
@@ -161,17 +160,17 @@ namespace {_builder.ContainingNamespace}
         {
             var (parameters, properties) = GetParametersAndProperties();
 
-            string methodParameters = parameters
+            var methodParameters = parameters
                 .Concat(properties)
                 .Select(s =>
                 {
                     var fieldType = GenerateFieldType(s);
                     return $"{fieldType} {s.UnderScoreName} = default({fieldType})";
                 }).ComaJoin();
-            string disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+            var disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
                 ? "#pragma warning disable CS8625\n"
                 : string.Empty;
-            string restoreWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+            var restoreWarning = _builder.NullableStrategy == NullableStrategy.Enabled
                 ? "#pragma warning restore CS8625\n"
                 : string.Empty;
 
@@ -183,16 +182,16 @@ namespace {_builder.ContainingNamespace}
 
         }
 
-        private (IEnumerable<ITypedSymbol> Parameters, IEnumerable<ITypedSymbol> Properties) GetParametersAndProperties()
+        private (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties()
         {
             var parameters = _entity.ConstructorParameters;
             var properties = _entity.SettableProperties.Where(x => !parameters.ContainsKey(x.SymbolName));
-            return (parameters.Values, properties);
+            return (parameters.Values.ToList(), properties.ToList());
         }
 
         private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
-            string propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateLazyFieldValueReturn(property)}").ComaJoin();
+            var propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateLazyFieldValueReturn(property)}").ComaJoin();
             return @$"var result = new {_entity.FullName}({parameters.Select(GenerateLazyFieldValueReturn).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
@@ -215,7 +214,7 @@ namespace {_builder.ContainingNamespace}
 
         private string GenerateBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
-            string propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateFieldValueReturn(property)}").ComaJoin();
+            var propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateFieldValueReturn(property)}").ComaJoin();
             return @$"return new {_entity.FullName}({parameters.Select(GenerateFieldValueReturn).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}

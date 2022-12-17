@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Buildenator.Extensions
 {
@@ -24,6 +25,9 @@ namespace Buildenator.Extensions
 
             return (left, right);
         }
+
+        public static (List<T>, List<T>) ToList<T>(this (IEnumerable<T>, IEnumerable<T>) source)
+            => (source.Item1.ToList(), source.Item2.ToList());
     }
 
 }
