@@ -2,7 +2,6 @@
 using Buildenator.Configuration.Contract;
 using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
-using System;
 using System.Linq;
 
 namespace Buildenator.CodeAnalysis
@@ -30,10 +29,10 @@ namespace Buildenator.CodeAnalysis
         private ISymbol Symbol { get; }
         private ITypeSymbol Type { get; }
 
-        private string? _underscoreName = null;
+        private string? _underscoreName;
         public string UnderScoreName => _underscoreName ??= Symbol.UnderScoreName();
 
-        private string? _typeFullName = null;
+        private string? _typeFullName;
         public string TypeFullName => _typeFullName ??= Type.ToDisplayString();
 
         public string TypeName => Type.Name;
@@ -42,7 +41,7 @@ namespace Buildenator.CodeAnalysis
         public string SymbolName => Symbol.Name;
 
         private readonly IMockingProperties? _mockingProperties;
-        private bool? _isMockable = null;
+        private bool? _isMockable;
         public bool IsMockable()
             => _isMockable ??= _mockingProperties?.Strategy switch
             {
@@ -55,9 +54,9 @@ namespace Buildenator.CodeAnalysis
 
 
         private readonly FixtureInterfacesStrategy? _fixtureConfiguration;
-        private bool? _IsFakeable = null;
+        private bool? _isFakeable;
         public bool IsFakeable()
-            => _IsFakeable ??= _fixtureConfiguration switch
+            => _isFakeable ??= _fixtureConfiguration switch
             {
                 null => false,
                 FixtureInterfacesStrategy.None

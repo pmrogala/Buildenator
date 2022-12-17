@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Buildenator
 {
-    [Generator()]
+    [Generator]
     public class BuildersGenerator : ISourceGenerator
     {
         public void Initialize(GeneratorInitializationContext context)
@@ -61,22 +61,22 @@ namespace Buildenator
                 foreach (var classSyntax in syntaxTree.GetRoot(context.CancellationToken).DescendantNodesAndSelf().OfType<ClassDeclarationSyntax>())
                 {
                     var classSymbol = semanticModel.GetDeclaredSymbol(classSyntax, context.CancellationToken);
-                    if (classSymbol is not INamedTypeSymbol namedClassSymbol)
+                    if (classSymbol is not { } namedClassSymbol)
                         continue;
 
-                    var attribute = namedClassSymbol.GetAttributes().Where(x => x.AttributeClass?.Name == nameof(MakeBuilderAttribute)).SingleOrDefault();
+                    var attribute = namedClassSymbol.GetAttributes().SingleOrDefault(x => x.AttributeClass?.Name == nameof(MakeBuilderAttribute));
                     if (attribute is null)
                         continue;
 
-                    var makebuilderAttribute = CreateMakeBuilderAttributeInternal(attribute);
+                    var makeBuilderAttribute = CreateMakeBuilderAttributeInternal(attribute);
 
-                    if (makebuilderAttribute.TypeForBuilder.IsAbstract)
+                    if (makeBuilderAttribute.TypeForBuilder.IsAbstract)
                     {
                         context.ReportDiagnostic(Diagnostic.Create(AbstractDiagnostic, classSymbol.Locations.First(), classSymbol.Name));
                         continue;
                     }
 
-                    result.Add((namedClassSymbol, makebuilderAttribute));
+                    result.Add((namedClassSymbol, makeBuilderAttribute));
                 }
             }
 

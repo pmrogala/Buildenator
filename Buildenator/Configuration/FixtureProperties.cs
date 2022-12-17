@@ -30,7 +30,8 @@ namespace Buildenator.Configuration
         public FixtureInterfacesStrategy Strategy { get; }
         public string[] AdditionalNamespaces { get; }
 
-        public string GenerateAdditionalConfiguration() => string.Format(AdditionalConfiguration, FixtureLiteral, Name);
+        public string GenerateAdditionalConfiguration()
+            => AdditionalConfiguration is null ? string.Empty : string.Format(AdditionalConfiguration, FixtureLiteral, Name);
 
         public bool NeedsAdditionalConfiguration() => AdditionalConfiguration is not null;
     }

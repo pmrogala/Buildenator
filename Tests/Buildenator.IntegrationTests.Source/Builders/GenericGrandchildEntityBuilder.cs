@@ -5,7 +5,7 @@ using Buildenator.IntegrationTests.SharedEntities;
 namespace Buildenator.IntegrationTests.Source.Builders
 {
     [MakeBuilder(typeof(GrandchildEntity<,>))]
-    [AutoFixtureConfiguration()]
+    [AutoFixtureConfiguration]
     public partial class GenericGrandchildEntityBuilder<T, TK>
     {
     }

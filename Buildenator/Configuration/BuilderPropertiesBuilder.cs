@@ -11,7 +11,7 @@ namespace Buildenator.Configuration
         private readonly string? _defaultNameWith;
         private readonly bool? _defaultStaticBuilder;
         private readonly NullableStrategy? _nullableStrategy;
-        private readonly bool? _generateMethodsForUnrechableProperties;
+        private readonly bool? _generateMethodsForUnreachableProperties;
 
         public BuilderPropertiesBuilder(IAssemblySymbol context)
         {
@@ -21,7 +21,7 @@ namespace Buildenator.Configuration
                 _defaultNameWith = globalAttributes.Value.GetOrThrow<string>(0, nameof(MakeBuilderAttributeInternal.BuildingMethodsPrefix));
                 _defaultStaticBuilder = globalAttributes.Value.GetOrThrow<bool>(1, nameof(MakeBuilderAttributeInternal.DefaultStaticCreator));
                 _nullableStrategy = globalAttributes.Value.GetOrThrow<NullableStrategy>(2, nameof(MakeBuilderAttributeInternal.NullableStrategy));
-                _generateMethodsForUnrechableProperties = globalAttributes.Value.GetOrThrow<bool>(3, nameof(MakeBuilderAttributeInternal.GenerateMethodsForUnrechableProperties));
+                _generateMethodsForUnreachableProperties = globalAttributes.Value.GetOrThrow<bool>(3, nameof(MakeBuilderAttributeInternal.GenerateMethodsForUnreachableProperties));
             }
         }
 
@@ -34,13 +34,13 @@ namespace Buildenator.Configuration
                     builderAttribute.BuildingMethodsPrefix ?? _defaultNameWith,
                     builderAttribute.DefaultStaticCreator ?? _defaultStaticBuilder,
                     builderAttribute.NullableStrategy ?? _nullableStrategy,
-                    builderAttribute.GenerateMethodsForUnrechableProperties ?? _generateMethodsForUnrechableProperties));
+                    builderAttribute.GenerateMethodsForUnreachableProperties ?? _generateMethodsForUnreachableProperties));
         }
 
         private static ImmutableArray<TypedConstant>? GetConfigurationOrDefault(ISymbol context)
         {
             var attributeDatas = context.GetAttributes();
-            var attribute = attributeDatas.Where(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute))).SingleOrDefault();
+            var attribute = attributeDatas.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute)));
             return attribute?.ConstructorArguments;
         }
     }

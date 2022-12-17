@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 
 namespace Buildenator.Extensions
 {
-    public static class AttributeContructorParametersExtensions
+    public static class AttributeConstructorParametersExtensions
     {
         public static T GetOrThrow<T>(this in ImmutableArray<TypedConstant> attributeParameters, int index, string propertyName)
             => (T)(attributeParameters[index].Value ?? throw new ConfigurationException($"{propertyName} cannot be null."));

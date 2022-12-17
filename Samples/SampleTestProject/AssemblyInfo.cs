@@ -1,3 +1,3 @@
 ﻿using Buildenator.Abstraction.AutoFixture;
 
-[assembly: AutoFixtureConfiguration()]
+[assembly: AutoFixtureConfiguration]

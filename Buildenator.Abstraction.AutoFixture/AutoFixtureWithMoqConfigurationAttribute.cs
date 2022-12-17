@@ -2,7 +2,7 @@
 
 namespace Buildenator.Abstraction.AutoFixture
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Assembly, Inherited = false)]
     public class AutoFixtureWithMoqConfigurationAttribute : FixtureConfigurationAttribute
     {
         /// <summary>

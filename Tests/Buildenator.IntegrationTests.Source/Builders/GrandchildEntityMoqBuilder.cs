@@ -5,7 +5,7 @@ using Buildenator.IntegrationTests.SharedEntities;
 namespace Buildenator.IntegrationTests.Source.Builders
 {
     [MakeBuilder(typeof(GrandchildEntity))]
-    [AutoFixtureWithMoqConfiguration()]
+    [AutoFixtureWithMoqConfiguration]
     public partial class GrandchildEntityMoqBuilder
     {
     }

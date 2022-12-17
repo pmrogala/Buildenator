@@ -5,7 +5,7 @@ using Buildenator.IntegrationTests.SharedEntities;
 namespace Buildenator.IntegrationTests.Source.Builders
 {
     [MakeBuilder(typeof(SettableEntityWithConstructor), nullableStrategy: NullableStrategy.Enabled)]
-    [AutoFixtureConfiguration()]
+    [AutoFixtureConfiguration]
     public partial class SettableEntityWithConstructorBuilder
     {
     }

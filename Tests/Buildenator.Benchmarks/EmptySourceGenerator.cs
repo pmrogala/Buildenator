@@ -6,12 +6,10 @@ namespace Buildenator.Benchmarks
     {
         public void Execute(GeneratorExecutionContext context)
         {
-            return;
         }
 
         public void Initialize(GeneratorInitializationContext context)
         {
-            return;
         }
     }
 }
