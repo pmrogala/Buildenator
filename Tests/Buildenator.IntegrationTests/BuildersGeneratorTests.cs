@@ -33,7 +33,7 @@ namespace Buildenator.IntegrationTests
         [Fact]
         public void BuildersGenerator_HasImplicitCast()
         {
-            var builder = EntityBuilder.Entity;
+            var builder = ImplicitCastBuilder.Entity;
             Entity result = builder;
 
             result.Should().NotBeNull();
