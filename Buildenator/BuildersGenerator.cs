@@ -21,7 +21,7 @@ namespace Buildenator
 
         public void Execute(GeneratorExecutionContext context)
         {
-            Debugger.Launch();
+            // Debugger.Launch();
             var classSymbols = GetBuilderSymbolAndItsAttribute(context);
 
             var compilation = context.Compilation;
