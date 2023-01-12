@@ -19,7 +19,8 @@ namespace Buildenator.Abstraction
             string? buildingMethodsPrefix = "With",
             object? defaultStaticCreator = null,
             object? nullableStrategy = null,
-            object? generateMethodsForUnreachableProperties = null
+            object? generateMethodsForUnreachableProperties = null,
+            object? implicitCast = null
             )
         {
         }

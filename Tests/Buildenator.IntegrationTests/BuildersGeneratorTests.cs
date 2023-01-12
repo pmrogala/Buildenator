@@ -31,6 +31,15 @@ namespace Buildenator.IntegrationTests
         }
 
         [Fact]
+        public void BuildersGenerator_HasImplicitCast()
+        {
+            var builder = EntityBuilder.Entity;
+            Entity result = builder;
+
+            result.Should().NotBeNull();
+        }
+
+        [Fact]
         public void BuildersGenerator_BuilderNameNotReflectingTargetClassName_ShouldCompile()
         {
             var builder = DifferentNameBuilder.Entity;

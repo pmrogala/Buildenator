@@ -6,18 +6,20 @@ namespace Buildenator
     internal sealed class MakeBuilderAttributeInternal
     {
         public MakeBuilderAttributeInternal(
-            INamedTypeSymbol typeForBuilder, string? buildingMethodsPrefix, bool? staticCreator, NullableStrategy? nullableStrategy, bool? generateMethodsForUnreachableProperties)
+            INamedTypeSymbol typeForBuilder, string? buildingMethodsPrefix, bool? staticCreator, NullableStrategy? nullableStrategy, bool? generateMethodsForUnreachableProperties, bool? implicitCast)
         {
             TypeForBuilder = typeForBuilder;
             BuildingMethodsPrefix = buildingMethodsPrefix;
             DefaultStaticCreator = staticCreator;
             NullableStrategy = nullableStrategy;
             GenerateMethodsForUnreachableProperties = generateMethodsForUnreachableProperties;
+            ImplicitCast = implicitCast;
         }
 
         public INamedTypeSymbol TypeForBuilder { get; }
         public string? BuildingMethodsPrefix { get; }
         public bool? DefaultStaticCreator { get; }
+        public bool? ImplicitCast { get; }
         public NullableStrategy? NullableStrategy { get; }
         public bool? GenerateMethodsForUnreachableProperties { get; }
     }

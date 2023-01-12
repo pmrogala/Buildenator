@@ -19,6 +19,7 @@ namespace Buildenator.Configuration
             BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix ?? DefaultConstants.BuildingMethodsPrefix;
             NullableStrategy = attributeData.NullableStrategy ?? NullableStrategy.Default;
             StaticCreator = attributeData.DefaultStaticCreator ?? true;
+            ImplicitCast = attributeData.ImplicitCast ?? false;
             ShouldGenerateMethodsForUnreachableProperties = attributeData.GenerateMethodsForUnreachableProperties ?? false;
 
             if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
@@ -51,6 +52,7 @@ namespace Buildenator.Configuration
         public string BuildingMethodsPrefix { get; }
         public NullableStrategy NullableStrategy { get; }
         public bool StaticCreator { get; }
+        public bool ImplicitCast { get; }
         public bool IsPostBuildMethodOverriden { get; }
         public bool IsDefaultContructorOverriden { get; }
         public bool ShouldGenerateMethodsForUnreachableProperties { get; }

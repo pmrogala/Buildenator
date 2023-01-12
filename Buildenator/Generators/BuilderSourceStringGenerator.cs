@@ -46,6 +46,7 @@ namespace {_builder.ContainingNamespace}
 {GenerateBuildsCode()}
 {GenerateBuildManyCode()}
 {(_builder.StaticCreator ? GenerateStaticBuildsCode() : string.Empty)}
+{(_builder.ImplicitCast ? GenerateImplicitCastCode() : string.Empty)}
 {GeneratePostBuildMethod()}
     }}
 }}";
@@ -180,6 +181,11 @@ namespace {_builder.ContainingNamespace}
         }}
 {restoreWarning}";
 
+        }
+        
+        private string GenerateImplicitCastCode()
+        {
+            return $@"        public static implicit operator {_entity.FullName}({_builder.FullName} builder) => builder.Build();";
         }
 
         private (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties()

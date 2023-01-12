@@ -90,7 +90,8 @@ namespace Buildenator
                            (string?)attribute.ConstructorArguments[1].Value,
                            (bool?)attribute.ConstructorArguments[2].Value,
                            attribute.ConstructorArguments[3].Value is null ? null : (NullableStrategy)attribute.ConstructorArguments[3].Value!,
-                           (bool?)attribute.ConstructorArguments[4].Value);
+                           (bool?)attribute.ConstructorArguments[4].Value,
+                           (bool?)attribute.ConstructorArguments[5].Value);
         }
 
         private static readonly DiagnosticDescriptor AbstractDiagnostic = new ("BDN001", "Cannot generate a builder for an abstract class", "Cannot generate a builder for the {0} abstract class", "Buildenator", DiagnosticSeverity.Error, true);
