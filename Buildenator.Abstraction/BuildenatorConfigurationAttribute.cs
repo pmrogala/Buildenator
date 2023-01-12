@@ -17,7 +17,8 @@ namespace Buildenator.Abstraction
             string buildingMethodsPrefix = "With",
             bool defaultStaticCreator = true,
             NullableStrategy nullableStrategy = NullableStrategy.Default,
-            bool generateMethodsForUnreachableProperties = false)
+            bool generateMethodsForUnreachableProperties = false,
+            bool implicitCast = false)
         {
         }
     }
