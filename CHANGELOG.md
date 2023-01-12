@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## 5.2.0 - 2023-01-12
+
+### Added
+
+- `implicitCast` - possibility to generate implicit cast operator.
+
 
 ## 5.1.0 - 2022-12-16
 
