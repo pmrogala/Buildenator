@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 
+## 5.2.2 - 2023-02-04
+
+### Changed
+
+- Fixed problem with having two builders with the same name but in different namespaces, ending up with the filename conflict.
+    - Duplicates will receive numbers at the end of the file names. The incremental is shared among all builders.
+    - Therefore ascending-sorting by names of builders and then by namespaces has been added, to make it deterministic
+
 ## 5.2.1 - 2023-01-12
 
 ### Hotfix
