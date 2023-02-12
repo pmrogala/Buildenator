@@ -46,14 +46,14 @@ namespace Buildenator.Configuration
             (SettableProperties, UnsettableProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration?.Strategy);
         }
 
-        public IReadOnlyList<TypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
+        public IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
         {
             return _uniqueTypedSymbols ??= SettableProperties
                 .Where(x => !ConstructorParameters.ContainsKey(x.SymbolName))
                 .Concat(ConstructorParameters.Values).ToList();
         }
 
-        public IReadOnlyList<TypedSymbol> GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch()
+        public IReadOnlyList<ITypedSymbol> GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch()
         {
             return _uniqueUnsettableTypedSymbols ??= UnsettableProperties
                 .Where(x => !ConstructorParameters.ContainsKey(x.SymbolName)).ToList();

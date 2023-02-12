@@ -24,7 +24,7 @@ namespace Buildenator.CodeAnalysis
             _fixtureConfiguration = fixtureConfiguration;
         }
 
-        internal bool NeedsFieldInit() => IsMockable();
+        public bool NeedsFieldInit() => IsMockable();
 
         private ISymbol Symbol { get; }
         private ITypeSymbol Type { get; }

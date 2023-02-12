@@ -11,5 +11,6 @@
         string? GenerateFieldInitialization();
         bool IsFakeable();
         bool IsMockable();
+        bool NeedsFieldInit();
     }
 }
