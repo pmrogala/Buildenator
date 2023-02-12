@@ -17,7 +17,7 @@ on:
         type: boolean
   create:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+-?[0-9a-z]*'
+      - 'v[0-9]+*'
 jobs:
   publish:
     name: build, pack & publish
