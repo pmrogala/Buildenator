@@ -10,8 +10,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 #endif
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Buildenator.Extensions;
+
+[assembly: InternalsVisibleTo("Buildenator.UnitTests")]
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace Buildenator
 {
@@ -25,7 +29,7 @@ namespace Buildenator
         public void Execute(GeneratorExecutionContext context)
         {
 #if DEBUG
-            Debugger.Launch();
+            // Debugger.Launch();
 #endif
             var classSymbols = GetSortedBuilderSymbolAndItsAttribute(context);
 
@@ -73,7 +77,7 @@ namespace Buildenator
                     if (attribute is null)
                         continue;
 
-                    var makeBuilderAttribute = CreateMakeBuilderAttributeInternal(attribute);
+                    var makeBuilderAttribute = new MakeBuilderAttributeInternal(attribute);
 
                     if (makeBuilderAttribute.TypeForBuilder.IsAbstract)
                     {
@@ -85,27 +89,9 @@ namespace Buildenator
                 }
             }
 
-            MakeDeterministicOrderByName(result);
+            NamedTypeSymbolListExtensions.MakeDeterministicOrderByName(result);
             return result;
-
-            static void MakeDeterministicOrderByName(List<(INamedTypeSymbol Builder, MakeBuilderAttributeInternal)> result) =>
-	            result.Sort((x, y) =>
-	            {
-		            var nameCompare = string.CompareOrdinal(x.Builder.Name, y.Builder.Name);
-		            return nameCompare != 0
-			            ? nameCompare
-			            : string.CompareOrdinal(x.Builder.ContainingNamespace.Name, y.Builder.ContainingNamespace.Name);
-	            });
         }
-
-        private static MakeBuilderAttributeInternal CreateMakeBuilderAttributeInternal(AttributeData attribute) =>
-	        new(
-		        (INamedTypeSymbol)attribute.ConstructorArguments[0].Value!,
-		        (string?)attribute.ConstructorArguments[1].Value,
-		        (bool?)attribute.ConstructorArguments[2].Value,
-		        attribute.ConstructorArguments[3].Value is null ? null : (NullableStrategy)attribute.ConstructorArguments[3].Value!,
-		        (bool?)attribute.ConstructorArguments[4].Value,
-		        (bool?)attribute.ConstructorArguments[5].Value);
 
         private static readonly DiagnosticDescriptor AbstractDiagnostic = new ("BDN001", "Cannot generate a builder for an abstract class", "Cannot generate a builder for the {0} abstract class", "Buildenator", DiagnosticSeverity.Error, true);
     }

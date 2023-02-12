@@ -19,7 +19,7 @@ namespace Buildenator.Extensions
             var (setProperties, unsetProperties) = entityToBuildSymbol.GetMembers().OfType<IPropertySymbol>()
                 .Where(a => a.GetMethod is not null && a.GetMethod.DeclaredAccessibility != Accessibility.Private && a.GetMethod.DeclaredAccessibility != Accessibility.Protected)
                 .Split(a => a.IsSetableProperty())
-                .ToList();
+                .ToLists();
 
             var setPropertyNames = new HashSet<string>(setProperties.Select(x => x.Name));
             var unsetPropertyNames = new HashSet<string>(unsetProperties.Select(x => x.Name));

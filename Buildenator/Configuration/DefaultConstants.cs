@@ -2,7 +2,7 @@
 {
     internal static class DefaultConstants
     {
-        public static string BuildingMethodsPrefix = "With";
-        public static string PostBuildMethodName = "PostBuild";
+        public const string BuildingMethodsPrefix = "With";
+        public const string PostBuildMethodName = "PostBuild";
     }
 }

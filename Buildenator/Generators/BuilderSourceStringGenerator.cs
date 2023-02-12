@@ -100,14 +100,14 @@ namespace {_builder.ContainingNamespace}
                                  || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
         }
 
-        private string GenerateMethodDefinition(TypedSymbol typedSymbol)
+        private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
             => $@"{GenerateMethodDefinitionHeader(typedSymbol)}
         {{
-            {GenerateValueAssigment(typedSymbol)};
+            {GenerateValueAssignment(typedSymbol)};
             return this;
         }}";
 
-        private string GenerateValueAssigment(ITypedSymbol typedSymbol)
+        private static string GenerateValueAssignment(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable()
                 ? $"{SetupActionLiteral}({typedSymbol.UnderScoreName})"
                 : $"{typedSymbol.UnderScoreName} = new Nullbox<{typedSymbol.TypeFullName}>({ValueLiteral})";
@@ -197,10 +197,10 @@ namespace {_builder.ContainingNamespace}
 
         private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
-            var propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateLazyFieldValueReturn(property)}").ComaJoin();
+            var propertiesAssignment = properties.Select(property => $"{property.SymbolName} = {GenerateLazyFieldValueReturn(property)}").ComaJoin();
             return @$"var result = new {_entity.FullName}({parameters.Select(GenerateLazyFieldValueReturn).ComaJoin()})
             {{
-{(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
+{(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
             }};
             {(_builder.ShouldGenerateMethodsForUnreachableProperties ? GenerateUnreachableProperties(): "")}
             PostBuild(result);
@@ -220,10 +220,10 @@ namespace {_builder.ContainingNamespace}
 
         private string GenerateBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
-            var propertiesAssigment = properties.Select(property => $"{property.SymbolName} = {GenerateFieldValueReturn(property)}").ComaJoin();
+            var propertiesAssignment = properties.Select(property => $"{property.SymbolName} = {GenerateFieldValueReturn(property)}").ComaJoin();
             return @$"return new {_entity.FullName}({parameters.Select(GenerateFieldValueReturn).ComaJoin()})
             {{
-{(string.IsNullOrEmpty(propertiesAssigment) ? string.Empty : $"                {propertiesAssigment}")}
+{(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
             }};";
         }
 
