@@ -4,7 +4,7 @@ namespace Buildenator.Extensions
 {
     internal static class PropertySymbolExtensions
     {
-        public static bool IsSetableProperty(this IPropertySymbol x)
+        public static bool IsSettableProperty(this IPropertySymbol x)
             => x.SetMethod is not null && x.SetMethod.DeclaredAccessibility == Accessibility.Public && x.CanBeReferencedByName;
     }
 }

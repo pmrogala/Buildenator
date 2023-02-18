@@ -18,7 +18,7 @@ namespace Buildenator.Extensions
         {
             var (setProperties, unsetProperties) = entityToBuildSymbol.GetMembers().OfType<IPropertySymbol>()
                 .Where(a => a.GetMethod is not null && a.GetMethod.DeclaredAccessibility != Accessibility.Private && a.GetMethod.DeclaredAccessibility != Accessibility.Protected)
-                .Split(a => a.IsSetableProperty())
+                .Split(a => a.IsSettableProperty())
                 .ToLists();
 
             var setPropertyNames = new HashSet<string>(setProperties.Select(x => x.Name));
@@ -26,7 +26,7 @@ namespace Buildenator.Extensions
             var baseType = entityToBuildSymbol.BaseType;
             while (baseType != null)
             {
-                var newProperties = baseType.GetMembers().OfType<IPropertySymbol>().Split(a => a.IsSetableProperty());
+                var newProperties = baseType.GetMembers().OfType<IPropertySymbol>().Split(a => a.IsSettableProperty());
                 TakeNotCoverProperties(ref setProperties, setPropertyNames, newProperties.Item1);
                 TakeNotCoverProperties(ref unsetProperties, unsetPropertyNames, newProperties.Item2);
 

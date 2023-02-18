@@ -42,8 +42,8 @@ namespace Buildenator.Configuration
 
         private static ImmutableArray<TypedConstant>? GetConfigurationOrDefault(ISymbol context)
         {
-            var attributeDatas = context.GetAttributes();
-            var attribute = attributeDatas.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute)));
+            var attributeData = context.GetAttributes();
+            var attribute = attributeData.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute)));
             return attribute?.ConstructorArguments;
         }
     }

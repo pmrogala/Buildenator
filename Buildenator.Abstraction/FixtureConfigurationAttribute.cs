@@ -11,7 +11,7 @@ namespace Buildenator.Abstraction
         /// </summary>
         /// <param name="fixtureTypeName"></param>
         /// <param name="strategy"></param>
-        /// <param name="additionalUsings">List all the additional namespaces that are important for the fixture; separate them by comma ','. 
+        /// <param name="additionalNamespaces">List all the additional namespaces that are important for the fixture; separate them by comma ','. 
         /// An example: "Namespace1,Namespace2.Subspace"</param>
         /// <param name="constructorParameters"></param>
         /// <param name="additionalConfiguration">You can make additional configuration of your fixture instance. 
@@ -27,13 +27,13 @@ namespace Buildenator.Abstraction
             string? constructorParameters = null,
             string? additionalConfiguration = null,
             FixtureInterfacesStrategy strategy = FixtureInterfacesStrategy.OnlyGenericCollections,
-            string? additionalUsings = null)
+            string? additionalNamespaces = null)
         {
             Strategy = strategy;
-            AdditionalUsings = additionalUsings?.Split(',') ?? Array.Empty<string>();
+            AdditionalNamespaces = additionalNamespaces?.Split(',') ?? Array.Empty<string>();
         }
 
         public FixtureInterfacesStrategy Strategy { get; }
-        public string[] AdditionalUsings { get; }
+        public string[] AdditionalNamespaces { get; }
     }
 }

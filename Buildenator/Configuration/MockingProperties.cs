@@ -1,5 +1,4 @@
 ﻿using Buildenator.Abstraction;
-using Buildenator.CodeAnalysis;
 using Buildenator.Configuration.Contract;
 
 namespace Buildenator.Configuration
@@ -9,24 +8,22 @@ namespace Buildenator.Configuration
         public MockingProperties(
             MockingInterfacesStrategy strategy,
             string typeDeclarationFormat,
-            string fieldDeafultValueAssigmentFormat,
+            string fieldDefaultValueAssignmentFormat,
             string returnObjectFormat,
             string[] additionalNamespaces)
         {
             Strategy = strategy;
             TypeDeclarationFormat = typeDeclarationFormat;
-            FieldDeafultValueAssigmentFormat = fieldDeafultValueAssigmentFormat;
+            FieldDefaultValueAssignmentFormat = fieldDefaultValueAssignmentFormat;
             ReturnObjectFormat = returnObjectFormat;
             AdditionalNamespaces = additionalNamespaces;
         }
 
         public MockingInterfacesStrategy Strategy { get; }
         public string TypeDeclarationFormat { get; }
-        public string FieldDeafultValueAssigmentFormat { get; }
+        public string FieldDefaultValueAssignmentFormat { get; }
         public string ReturnObjectFormat { get; }
         public string[] AdditionalNamespaces { get; }
-
-        public string GenerateMockableFieldType(ITypedSymbol type) => string.Format(TypeDeclarationFormat, type.TypeFullName);
 
     }
 }

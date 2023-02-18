@@ -10,28 +10,28 @@ namespace Buildenator.Abstraction
         /// </summary>
         /// <param name="strategy"></param>
         /// <param name="typeDeclarationFormat"></param>
-        /// <param name="fieldDeafultValueAssigmentFormat"></param>
+        /// <param name="fieldDefaultValueAssignmentFormat"></param>
         /// <param name="returnObjectFormat"></param>
-        /// <param name="additionalUsings">List all the additional namespaces that are important for the fixture; separate them by comma ','. 
+        /// <param name="additionalNamespaces">List all the additional namespaces that are important for the fixture; separate them by comma ','. 
         /// An example: "Namespace1,Namespace2.Subspace"</param>
         public MockingConfigurationAttribute(
             MockingInterfacesStrategy strategy,
             string typeDeclarationFormat,
-            string fieldDeafultValueAssigmentFormat,
+            string fieldDefaultValueAssignmentFormat,
             string returnObjectFormat,
-            string? additionalUsings = null)
+            string? additionalNamespaces = null)
         {
             TypeDeclarationFormat = typeDeclarationFormat;
-            FieldDeafultValueAssigmentFormat = fieldDeafultValueAssigmentFormat;
+            FieldDefaultValueAssignmentFormat = fieldDefaultValueAssignmentFormat;
             ReturnObjectFormat = returnObjectFormat;
             Strategy = strategy;
-            AdditionalUsings = additionalUsings;
+            AdditionalNamespaces = additionalNamespaces;
         }
 
         public string TypeDeclarationFormat { get; }
-        public string FieldDeafultValueAssigmentFormat { get; }
+        public string FieldDefaultValueAssignmentFormat { get; }
         public string ReturnObjectFormat { get; }
         public MockingInterfacesStrategy Strategy { get; }
-        public string? AdditionalUsings { get; }
+        public string? AdditionalNamespaces { get; }
     }
 }

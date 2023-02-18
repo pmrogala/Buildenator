@@ -38,8 +38,8 @@ namespace Buildenator.Configuration
 
         private static ImmutableArray<TypedConstant>? GetFixtureConfigurationOrDefault(ISymbol context)
         {
-            var attributeDatas = context.GetAttributes();
-            var attribute = attributeDatas.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(FixtureConfigurationAttribute)));
+            var attributeData = context.GetAttributes();
+            var attribute = attributeData.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(FixtureConfigurationAttribute)));
             return attribute?.ConstructorArguments;
         }
     }

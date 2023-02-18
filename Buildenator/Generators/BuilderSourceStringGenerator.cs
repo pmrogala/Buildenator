@@ -5,6 +5,7 @@ using Buildenator.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Buildenator.Configuration;
 using static Buildenator.Generators.NamespacesGenerator;
 using static Buildenator.Generators.ConstructorsGenerator;
 
@@ -41,7 +42,7 @@ namespace {_builder.ContainingNamespace}
 {GenerateGlobalNullable()}{GenerateBuilderDefinition()}
     {{
 {(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
-{(_builder.IsDefaultContructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration))}
+{(_builder.IsDefaultConstructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration))}
 {_propertiesStringGenerator.GeneratePropertiesCode()}
 {GenerateBuildsCode()}
 {GenerateBuildManyCode()}
@@ -170,7 +171,7 @@ namespace {_builder.ContainingNamespace}
         private string GenerateLazyFieldValueReturn(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable()
                 ? string.Format(_mockingConfiguration!.ReturnObjectFormat, typedSymbol.UnderScoreName)
-                : @$"({typedSymbol.UnderScoreName}.HasValue ? {typedSymbol.UnderScoreName}.Value : new Nullbox<{typedSymbol.TypeFullName}>({(typedSymbol.IsFakeable()
+                : @$"({typedSymbol.UnderScoreName}.HasValue ? {typedSymbol.UnderScoreName}.Value : new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({(typedSymbol.IsFakeable()
                     ? $"{string.Format(_fixtureConfiguration!.CreateSingleFormat, typedSymbol.TypeFullName, typedSymbol.SymbolName, FixtureLiteral)}"
                     : $"default({typedSymbol.TypeFullName})")})).Object";
 

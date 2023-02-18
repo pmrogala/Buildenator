@@ -8,7 +8,7 @@ namespace Buildenator.IntegrationTests.Source.Builders
     [MakeBuilder(typeof(GrandchildEntity))]
     public partial class EntityBuilderWithCustomMethods
     {
-        private Nullbox<int>? _propertyIntGetter;
+        private NullBox<int>? _propertyIntGetter;
         public EntityBuilderWithCustomMethods WithPropertyIntGetter(int value)
         {
             _propertyIntGetter = value / 2;

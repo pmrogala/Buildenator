@@ -62,7 +62,7 @@ internal sealed class PropertiesStringGenerator
 	private static string GenerateValueAssignment(ITypedSymbol typedSymbol)
 		=> typedSymbol.IsMockable()
 			? $"{DefaultConstants.SetupActionLiteral}({typedSymbol.UnderScoreName})"
-			: $"{typedSymbol.UnderScoreName} = new Nullbox<{typedSymbol.TypeFullName}>({DefaultConstants.ValueLiteral})";
+			: $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({DefaultConstants.ValueLiteral})";
 
 	private string CreateMethodName(ITypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
 }

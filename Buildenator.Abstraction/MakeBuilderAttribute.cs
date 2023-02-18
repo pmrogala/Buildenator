@@ -13,6 +13,7 @@ namespace Buildenator.Abstraction
         /// <param name="buildingMethodsPrefix">How the builder methods should be named.</param>
         /// <param name="defaultStaticCreator">The resulting builder will have a special static building method with default parameters. true/false/null</param>
         /// <param name="nullableStrategy">Change nullable context behaviour. Use the <see cref="NullableStrategy"/> enum.</param>
+        /// <param name="implicitCast">Should the builder have implicit cast to the target type.</param>
         /// <param name="generateMethodsForUnreachableProperties"></param>
         public MakeBuilderAttribute(
             Type typeForBuilder,

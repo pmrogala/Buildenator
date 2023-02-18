@@ -68,14 +68,14 @@ namespace Buildenator.CodeAnalysis
             };
 
         public string GenerateFieldInitialization()
-            => _mockingProperties is null ? string.Empty : $"{UnderScoreName} = {string.Format(_mockingProperties.FieldDeafultValueAssigmentFormat, TypeFullName)};";
+            => _mockingProperties is null ? string.Empty : $"{UnderScoreName} = {string.Format(_mockingProperties.FieldDefaultValueAssignmentFormat, TypeFullName)};";
 
         
         public string GenerateFieldType()
 	        => IsMockable() ? GenerateMockableFieldType() : TypeFullName;
         
         public string GenerateLazyFieldType()
-	        => IsMockable() ? GenerateMockableFieldType() : $"Nullbox<{TypeFullName}>?";
+	        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{TypeFullName}>?";
 
         public string GenerateMethodParameterDefinition()
 	        => IsMockable() ? $"Action<{GenerateMockableFieldType()}> {DefaultConstants.SetupActionLiteral}" : $"{TypeFullName} {DefaultConstants.ValueLiteral}";

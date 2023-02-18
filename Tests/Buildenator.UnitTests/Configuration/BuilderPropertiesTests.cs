@@ -63,12 +63,12 @@ namespace Buildenator.UnitTests.Configuration
 			properties.Name.Should().NotBeNullOrEmpty();
 			properties.FullName.Should().NotBeNullOrEmpty();
 			properties.BuildingMethodsPrefix.Should().Be(attributeDataMock.BuildingMethodsPrefix);
-			properties.NullableStrategy.Should().Be(attributeDataMock.NullableStrategy.Value);
-			properties.StaticCreator.Should().Be(attributeDataMock.DefaultStaticCreator.Value);
-			properties.ImplicitCast.Should().Be(attributeDataMock.ImplicitCast.Value);
-			properties.ShouldGenerateMethodsForUnreachableProperties.Should().Be(attributeDataMock.GenerateMethodsForUnreachableProperties.Value);
+			properties.NullableStrategy.Should().Be(attributeDataMock.NullableStrategy!.Value);
+			properties.StaticCreator.Should().Be(attributeDataMock.DefaultStaticCreator!.Value);
+			properties.ImplicitCast.Should().Be(attributeDataMock.ImplicitCast!.Value);
+			properties.ShouldGenerateMethodsForUnreachableProperties.Should().Be(attributeDataMock.GenerateMethodsForUnreachableProperties!.Value);
 			properties.IsPostBuildMethodOverriden.Should().BeFalse();
-			properties.IsDefaultContructorOverriden.Should().BeFalse();
+			properties.IsDefaultConstructorOverriden.Should().BeFalse();
 			properties.BuildingMethods.Should().ContainKey(methodSymbolMock.Object.Name).And.ContainValue(methodSymbolMock.Object);
 			properties.Fields.Should().BeEmpty();
 		}
@@ -124,7 +124,7 @@ namespace Buildenator.UnitTests.Configuration
 		}
 
 		[Fact]
-		public void Constructor_ShouldSetIsDefaultContructorOverridenToTrue_WhenTheDefaultConstructorHasTheSameNameAsThePrefix()
+		public void Constructor_ShouldSetIsDefaultConstructorOverridenToTrue_WhenTheDefaultConstructorHasTheSameNameAsThePrefix()
 		{
 			// Arrange
 			var typeSymbolMock = new Mock<INamedTypeSymbol>();
@@ -142,11 +142,11 @@ namespace Buildenator.UnitTests.Configuration
 			var properties = new BuilderProperties(_builderSymbolMock.Object, attributeDataMock);
 
 			// Assert
-			properties.IsDefaultContructorOverriden.Should().BeTrue();
+			properties.IsDefaultConstructorOverriden.Should().BeTrue();
 		}
 
 		[Fact]
-		public void Constructor_ShouldSetIsDefaultContructorOverridenToTrue_WhenDefaultConstructorIsFound()
+		public void Constructor_ShouldSetIsDefaultConstructorOverridenToTrue_WhenDefaultConstructorIsFound()
 		{
 			// Arrange
 			var typeSymbolMock = new Mock<INamedTypeSymbol>();
@@ -164,7 +164,7 @@ namespace Buildenator.UnitTests.Configuration
 			var properties = new BuilderProperties(_builderSymbolMock.Object, attributeDataMock);
 
 			// Assert
-			properties.IsDefaultContructorOverriden.Should().BeTrue();
+			properties.IsDefaultConstructorOverriden.Should().BeTrue();
 		}
 
 		[Fact]
