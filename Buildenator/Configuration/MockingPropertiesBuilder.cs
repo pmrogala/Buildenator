@@ -22,22 +22,22 @@ namespace Buildenator.Configuration
 
             var strategy = attributeParameters.GetOrThrow<MockingInterfacesStrategy>(0, nameof(MockingProperties.Strategy));
             var typeDeclarationFormat = attributeParameters.GetOrThrow(1, nameof(MockingProperties.TypeDeclarationFormat));
-            var fieldDeafultValueAssigmentFormat = attributeParameters.GetOrThrow(2, nameof(MockingProperties.FieldDeafultValueAssigmentFormat));
+            var defaultValueAssignmentFormat = attributeParameters.GetOrThrow(2, nameof(MockingProperties.FieldDefaultValueAssignmentFormat));
             var returnObjectFormat = attributeParameters.GetOrThrow(3, nameof(MockingProperties.ReturnObjectFormat));
             var additionalNamespaces = (string?)attributeParameters[4].Value;
 
             return new MockingProperties(
                 strategy,
                 typeDeclarationFormat,
-                fieldDeafultValueAssigmentFormat,
+                defaultValueAssignmentFormat,
                 returnObjectFormat,
                 additionalNamespaces?.Split(',') ?? Array.Empty<string>());
         }
 
         private static ImmutableArray<TypedConstant>? GetMockingConfigurationOrDefault(ISymbol context)
         {
-            var attributeDatas = context.GetAttributes();
-            var attribute = attributeDatas.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(MockingConfigurationAttribute)));
+            var attributeData = context.GetAttributes();
+            var attribute = attributeData.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(MockingConfigurationAttribute)));
             return attribute?.ConstructorArguments;
         }
     }

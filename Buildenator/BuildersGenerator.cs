@@ -7,7 +7,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Generic;
 #if DEBUG
-using System.Diagnostics;
 #endif
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -19,7 +18,8 @@ using Buildenator.Extensions;
 
 namespace Buildenator
 {
-    [Generator]
+	/// <inheritdoc />
+	[Generator]
     public class BuildersGenerator : ISourceGenerator
     {
         public void Initialize(GeneratorInitializationContext context)
@@ -89,7 +89,7 @@ namespace Buildenator
                 }
             }
 
-            NamedTypeSymbolListExtensions.MakeDeterministicOrderByName(result);
+            result.MakeDeterministicOrderByName();
             return result;
         }
 

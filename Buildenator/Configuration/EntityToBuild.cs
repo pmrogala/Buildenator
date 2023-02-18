@@ -16,7 +16,7 @@ namespace Buildenator.Configuration
         public string FullNameWithConstraints { get; }
         public IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
         public IEnumerable<TypedSymbol> SettableProperties { get; }
-        public IEnumerable<TypedSymbol> UnsettableProperties { get; }
+        public IEnumerable<TypedSymbol> NotSettableProperties { get; }
         public string[] AdditionalNamespaces { get; }
 
         public EntityToBuild(INamedTypeSymbol typeForBuilder, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
@@ -43,7 +43,7 @@ namespace Buildenator.Configuration
             _mockingConfiguration = mockingConfiguration;
             _fixtureConfiguration = fixtureConfiguration;
             ConstructorParameters = GetConstructorParameters(entityToBuildSymbol);
-            (SettableProperties, UnsettableProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration?.Strategy);
+            (SettableProperties, NotSettableProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration?.Strategy);
         }
 
         public IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
@@ -55,7 +55,7 @@ namespace Buildenator.Configuration
 
         public IReadOnlyList<ITypedSymbol> GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch()
         {
-            return _uniqueUnsettableTypedSymbols ??= UnsettableProperties
+            return _uniqueNotSettableTypedSymbols ??= NotSettableProperties
                 .Where(x => !ConstructorParameters.ContainsKey(x.SymbolName)).ToList();
         }
 
@@ -75,7 +75,7 @@ namespace Buildenator.Configuration
         }
 
         private IReadOnlyList<TypedSymbol>? _uniqueTypedSymbols;
-        private IReadOnlyList<TypedSymbol>? _uniqueUnsettableTypedSymbols;
+        private IReadOnlyList<TypedSymbol>? _uniqueNotSettableTypedSymbols;
         private readonly MockingProperties? _mockingConfiguration;
         private readonly FixtureProperties? _fixtureConfiguration;
     }

@@ -1,9 +1,9 @@
 ﻿namespace Buildenator.IntegrationTests.SharedEntities
 {
 #nullable enable
-    public class UnsettableEntityWithConstructor
+    public class NotSettableEntityWithConstructor
     {
-        public UnsettableEntityWithConstructor(
+        public NotSettableEntityWithConstructor(
             int propertyInt,
             string property)
         {

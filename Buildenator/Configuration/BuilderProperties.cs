@@ -39,7 +39,7 @@ namespace Buildenator.Configuration
 						IsPostBuildMethodOverriden = true;
 						break;
 					case IMethodSymbol { MethodKind: MethodKind.Constructor, Parameters.Length: 0, IsImplicitlyDeclared: false }:
-						IsDefaultContructorOverriden = true;
+						IsDefaultConstructorOverriden = true;
 						break;
 					case IFieldSymbol field:
 						_fields.Add(field.Name, field);
@@ -56,7 +56,7 @@ namespace Buildenator.Configuration
 		public bool StaticCreator { get; }
 		public bool ImplicitCast { get; }
 		public bool IsPostBuildMethodOverriden { get; }
-		public bool IsDefaultContructorOverriden { get; }
+		public bool IsDefaultConstructorOverriden { get; }
 		public bool ShouldGenerateMethodsForUnreachableProperties { get; }
 
 		public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;

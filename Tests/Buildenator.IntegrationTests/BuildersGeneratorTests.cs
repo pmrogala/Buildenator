@@ -23,7 +23,7 @@ namespace Buildenator.IntegrationTests
         }
 
         [Fact]
-        public void BuildersGenerator_HasStaticBulderFactory()
+        public void BuildersGenerator_HasStaticBuilderFactory()
         {
             var builder = EntityBuilder.Entity;
 
@@ -61,7 +61,7 @@ namespace Buildenator.IntegrationTests
 
         [Theory]
         [AutoData]
-        public void BuildersGenerator_OneConstructorWithoutSettableProperties_CreatedWithMethodsByContructorParametersNames(int value, string str)
+        public void BuildersGenerator_OneConstructorWithoutSettableProperties_CreatedWithMethodsByConstructorParametersNames(int value, string str)
         {
             var builder = EntityBuilder.Entity;
 
@@ -95,15 +95,15 @@ namespace Buildenator.IntegrationTests
         [Theory]
         [AutoData]
         public void BuildersGenerator_OneConstructorWithSettableProperties_CreatedWithMethodsBySettablePropertiesNamesIfInBothPlaces(
-            int value, string str, string[] strs, int[] arr)
+            int value, string str, string[] strings, int[] arr)
         {
             var builder = SettableEntityWithConstructorBuilder.SettableEntityWithConstructor;
 
             var entity = builder.WithPropertyInt(value).WithProperty(str)
-                .WithNoConstructorProperty(strs).WithPrivateField(arr).Build();
+                .WithNoConstructorProperty(strings).WithPrivateField(arr).Build();
             entity.PropertyInt.Should().Be(value);
             entity.Property.Should().Be(str);
-            entity.NoConstructorProperty.Should().BeSameAs(strs);
+            entity.NoConstructorProperty.Should().BeSameAs(strings);
             entity.GetPrivateField().Should().BeSameAs(arr);
         }
 
@@ -267,9 +267,9 @@ namespace Buildenator.IntegrationTests
 
         [Theory]
         [CustomAutoData]
-        public void BuildersGenerator_UnsettableProperty_ShouldCreateMethodForSettingItsValue(int[] privateField)
+        public void BuildersGenerator_NotSettableProperty_ShouldCreateMethodForSettingItsValue(int[] privateField)
         {
-            var builder = UnsettableEntityWithConstructorBuilder.UnsettableEntityWithConstructor;
+            var builder = NotSettableEntityWithConstructorBuilder.NotSettableEntityWithConstructor;
             builder.WithPrivateField(privateField);
             builder.Build().PrivateField.Should().BeEquivalentTo(privateField);
         }
