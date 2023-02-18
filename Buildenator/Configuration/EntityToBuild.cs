@@ -16,7 +16,7 @@ namespace Buildenator.Configuration
         public string FullNameWithConstraints { get; }
         public IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
         public IEnumerable<TypedSymbol> SettableProperties { get; }
-        public IEnumerable<TypedSymbol> NotSettableProperties { get; }
+        public IEnumerable<TypedSymbol> ReadOnlyProperties { get; }
         public string[] AdditionalNamespaces { get; }
 
         public EntityToBuild(INamedTypeSymbol typeForBuilder, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
@@ -43,7 +43,7 @@ namespace Buildenator.Configuration
             _mockingConfiguration = mockingConfiguration;
             _fixtureConfiguration = fixtureConfiguration;
             ConstructorParameters = GetConstructorParameters(entityToBuildSymbol);
-            (SettableProperties, NotSettableProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration?.Strategy);
+            (SettableProperties, ReadOnlyProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration?.Strategy);
         }
 
         public IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
@@ -53,9 +53,9 @@ namespace Buildenator.Configuration
                 .Concat(ConstructorParameters.Values).ToList();
         }
 
-        public IReadOnlyList<ITypedSymbol> GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch()
+        public IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch()
         {
-            return _uniqueNotSettableTypedSymbols ??= NotSettableProperties
+            return _uniqueReadOnlyTypedSymbols ??= ReadOnlyProperties
                 .Where(x => !ConstructorParameters.ContainsKey(x.SymbolName)).ToList();
         }
 
@@ -65,17 +65,17 @@ namespace Buildenator.Configuration
                 .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, _mockingConfiguration, _fixtureConfiguration?.Strategy));
         }
 
-        private static (TypedSymbol[] Settable, TypedSymbol[] NotSettable) DividePropertiesBySetability(
+        private static (TypedSymbol[] Settable, TypedSymbol[] ReadOnly) DividePropertiesBySetability(
             INamedTypeSymbol entityToBuildSymbol, IMockingProperties? mockingConfiguration, FixtureInterfacesStrategy? fixtureConfiguration)
         {
             var properties = entityToBuildSymbol.DividePublicPropertiesBySetability();
             return (
                 properties.Settable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray(),
-                properties.NotSettable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray());
+                properties.ReadOnly.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray());
         }
 
         private IReadOnlyList<TypedSymbol>? _uniqueTypedSymbols;
-        private IReadOnlyList<TypedSymbol>? _uniqueNotSettableTypedSymbols;
+        private IReadOnlyList<TypedSymbol>? _uniqueReadOnlyTypedSymbols;
         private readonly MockingProperties? _mockingConfiguration;
         private readonly FixtureProperties? _fixtureConfiguration;
     }

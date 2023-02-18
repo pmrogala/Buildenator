@@ -13,7 +13,7 @@ namespace Buildenator.Extensions
         public static string UnderScoreName(this ISymbol symbol)
             => $"_{symbol.CamelCaseName()}";
 
-        public static (IEnumerable<IPropertySymbol> Settable, IEnumerable<IPropertySymbol> NotSettable)
+        public static (IEnumerable<IPropertySymbol> Settable, IEnumerable<IPropertySymbol> ReadOnly)
             DividePublicPropertiesBySetability(this INamedTypeSymbol entityToBuildSymbol)
         {
             var (setProperties, unsetProperties) = entityToBuildSymbol.GetMembers().OfType<IPropertySymbol>()

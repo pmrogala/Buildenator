@@ -267,9 +267,9 @@ namespace Buildenator.IntegrationTests
 
         [Theory]
         [CustomAutoData]
-        public void BuildersGenerator_NotSettableProperty_ShouldCreateMethodForSettingItsValue(int[] privateField)
+        public void BuildersGenerator_ReadOnlyProperty_ShouldCreateMethodForSettingItsValue(int[] privateField)
         {
-            var builder = NotSettableEntityWithConstructorBuilder.NotSettableEntityWithConstructor;
+            var builder = ReadOnlyEntityWithConstructorBuilder.ReadOnlyEntityWithConstructor;
             builder.WithPrivateField(privateField);
             builder.Build().PrivateField.Should().BeEquivalentTo(privateField);
         }

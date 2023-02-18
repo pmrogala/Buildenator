@@ -23,7 +23,7 @@ internal sealed class PropertiesStringGenerator
 
 		if (_builder.ShouldGenerateMethodsForUnreachableProperties)
 		{
-			properties = properties.Concat(_entity.GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch()).ToList();
+			properties = properties.Concat(_entity.GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch()).ToList();
 		}
 
 		var output = new StringBuilder();

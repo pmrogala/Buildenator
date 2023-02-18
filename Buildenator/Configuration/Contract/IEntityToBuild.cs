@@ -13,7 +13,7 @@ namespace Buildenator.Configuration.Contract
         string Name { get; }
         IEnumerable<TypedSymbol> SettableProperties { get; }
 
-        IReadOnlyList<ITypedSymbol> GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch();
+        IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch();
         IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters();
     }
 }
