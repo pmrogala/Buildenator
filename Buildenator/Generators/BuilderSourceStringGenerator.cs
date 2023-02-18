@@ -151,7 +151,7 @@ namespace {_builder.ContainingNamespace}
             {
                 var output = new StringBuilder();
                 output.AppendLine($"var t = typeof({_entity.FullName});");
-                foreach (var a in _entity.GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch())
+                foreach (var a in _entity.GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch())
                 {
                     output.AppendLine($"t.GetProperty(\"{a.SymbolName}\").SetValue(result, {GenerateLazyFieldValueReturn(a)}, System.Reflection.BindingFlags.NonPublic, null, null, null);");
                 }

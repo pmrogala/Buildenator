@@ -4,9 +4,9 @@ using Buildenator.IntegrationTests.SharedEntities;
 
 namespace Buildenator.IntegrationTests.Source.Builders
 {
-    [MakeBuilder(typeof(NotSettableEntityWithConstructor), nullableStrategy: NullableStrategy.Enabled, generateMethodsForUnreachableProperties: true)]
+    [MakeBuilder(typeof(ReadOnlyEntityWithConstructor), nullableStrategy: NullableStrategy.Enabled, generateMethodsForUnreachableProperties: true)]
     [AutoFixtureConfiguration()]
-    public partial class NotSettableEntityWithConstructorBuilder
+    public partial class ReadOnlyEntityWithConstructorBuilder
     {
     }
 }
