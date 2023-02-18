@@ -10,14 +10,13 @@ using static Buildenator.Generators.ConstructorsGenerator;
 
 namespace Buildenator.Generators
 {
-    internal sealed class BuilderSourceStringGenerator
+	internal sealed class BuilderSourceStringGenerator
     {
         private readonly IBuilderProperties _builder;
         private readonly IEntityToBuild _entity;
         private readonly IFixtureProperties? _fixtureConfiguration;
         private readonly IMockingProperties? _mockingConfiguration;
-        private const string SetupActionLiteral = "setupAction";
-        private const string ValueLiteral = "value";
+        private readonly PropertiesStringGenerator _propertiesStringGenerator;
         private const string FixtureLiteral = "_fixture";
 
         public BuilderSourceStringGenerator(
@@ -30,6 +29,7 @@ namespace Buildenator.Generators
             _entity = entity;
             _fixtureConfiguration = fixtureConfiguration;
             _mockingConfiguration = mockingConfiguration;
+            _propertiesStringGenerator = new PropertiesStringGenerator(_builder, _entity);
         }
 
         public string CreateBuilderCode()
@@ -42,7 +42,7 @@ namespace {_builder.ContainingNamespace}
     {{
 {(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
 {(_builder.IsDefaultContructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration))}
-{GeneratePropertiesCode()}
+{_propertiesStringGenerator.GeneratePropertiesCode()}
 {GenerateBuildsCode()}
 {GenerateBuildManyCode()}
 {(_builder.StaticCreator ? GenerateStaticBuildsCode() : string.Empty)}
@@ -66,67 +66,7 @@ namespace {_builder.ContainingNamespace}
             };
 
         private string GenerateBuilderDefinition()
-            => @$"    public partial class {_entity.FullNameWithConstraints.Replace(_entity.Name, _builder.Name)}";
-
-        private string GeneratePropertiesCode()
-        {
-            var properties = _entity.GetAllUniqueSettablePropertiesAndParameters();
-
-            if (_builder.ShouldGenerateMethodsForUnreachableProperties)
-            {
-                properties = properties.Concat(_entity.GetAllUniqueNotSettablePropertiesWithoutConstructorsParametersMatch()).ToList();
-            }
-
-            var output = new StringBuilder();
-
-            foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
-            {
-                output.AppendLine($@"        private {GenerateLazyFieldType(typedSymbol)} {typedSymbol.UnderScoreName};");
-            }
-
-            foreach (var typedSymbol in properties.Where(IsNotYetDeclaredMethod))
-            {
-                output.AppendLine($@"
-
-        {GenerateMethodDefinition(typedSymbol)}");
-
-            }
-
-            return output.ToString();
-
-            bool IsNotYetDeclaredField(ITypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out _);
-
-            bool IsNotYetDeclaredMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
-                                 || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
-        }
-
-        private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
-            => $@"{GenerateMethodDefinitionHeader(typedSymbol)}
-        {{
-            {GenerateValueAssignment(typedSymbol)};
-            return this;
-        }}";
-
-        private static string GenerateValueAssignment(ITypedSymbol typedSymbol)
-            => typedSymbol.IsMockable()
-                ? $"{SetupActionLiteral}({typedSymbol.UnderScoreName})"
-                : $"{typedSymbol.UnderScoreName} = new Nullbox<{typedSymbol.TypeFullName}>({ValueLiteral})";
-
-        private string CreateMethodName(ITypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
-
-        private string GenerateMethodDefinitionHeader(ITypedSymbol typedSymbol)
-            => $"public {_builder.FullName} {CreateMethodName(typedSymbol)}({GenerateMethodParameterDefinition(typedSymbol)})";
-
-        private string GenerateMethodParameterDefinition(ITypedSymbol typedSymbol)
-            => typedSymbol.IsMockable() ? $"Action<{CreateMockableFieldType(typedSymbol)}> {SetupActionLiteral}" : $"{typedSymbol.TypeFullName} {ValueLiteral}";
-
-        private string GenerateLazyFieldType(ITypedSymbol typedSymbol)
-            => typedSymbol.IsMockable() ? CreateMockableFieldType(typedSymbol) : $"Nullbox<{typedSymbol.TypeFullName}>?";
-
-        private string GenerateFieldType(ITypedSymbol typedSymbol)
-            => typedSymbol.IsMockable() ? CreateMockableFieldType(typedSymbol) : typedSymbol.TypeFullName;
-
-        private string CreateMockableFieldType(ITypedSymbol type) => string.Format(_mockingConfiguration!.TypeDeclarationFormat, type.TypeFullName);
+	        => @$"    public partial class {_entity.FullNameWithConstraints.Replace(_entity.Name, _builder.Name)}";
 
         private string GenerateBuildsCode()
         {
@@ -165,7 +105,7 @@ namespace {_builder.ContainingNamespace}
                 .Concat(properties)
                 .Select(s =>
                 {
-                    var fieldType = GenerateFieldType(s);
+                    var fieldType = s.GenerateFieldType();
                     return $"{fieldType} {s.UnderScoreName} = default({fieldType})";
                 }).ComaJoin();
             var disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled

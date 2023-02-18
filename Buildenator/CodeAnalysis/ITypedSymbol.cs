@@ -8,7 +8,10 @@
         string TypeName { get; }
         string UnderScoreName { get; }
 
-        string? GenerateFieldInitialization();
+        string GenerateFieldInitialization();
+        string GenerateFieldType();
+        string GenerateLazyFieldType();
+        string GenerateMethodParameterDefinition();
         bool IsFakeable();
         bool IsMockable();
         bool NeedsFieldInit();

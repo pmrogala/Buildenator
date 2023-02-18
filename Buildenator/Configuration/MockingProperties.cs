@@ -1,4 +1,5 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.CodeAnalysis;
 using Buildenator.Configuration.Contract;
 
 namespace Buildenator.Configuration
@@ -24,6 +25,8 @@ namespace Buildenator.Configuration
         public string FieldDeafultValueAssigmentFormat { get; }
         public string ReturnObjectFormat { get; }
         public string[] AdditionalNamespaces { get; }
+
+        public string GenerateMockableFieldType(ITypedSymbol type) => string.Format(TypeDeclarationFormat, type.TypeFullName);
 
     }
 }

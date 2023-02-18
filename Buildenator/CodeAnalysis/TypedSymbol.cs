@@ -3,6 +3,7 @@ using Buildenator.Configuration.Contract;
 using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
 using System.Linq;
+using Buildenator.Configuration;
 
 namespace Buildenator.CodeAnalysis
 {
@@ -67,6 +68,18 @@ namespace Buildenator.CodeAnalysis
             };
 
         public string GenerateFieldInitialization()
-            => $"{UnderScoreName} = {string.Format(_mockingProperties!.FieldDeafultValueAssigmentFormat, TypeFullName)};";
+            => _mockingProperties is null ? string.Empty : $"{UnderScoreName} = {string.Format(_mockingProperties.FieldDeafultValueAssigmentFormat, TypeFullName)};";
+
+        
+        public string GenerateFieldType()
+	        => IsMockable() ? GenerateMockableFieldType() : TypeFullName;
+        
+        public string GenerateLazyFieldType()
+	        => IsMockable() ? GenerateMockableFieldType() : $"Nullbox<{TypeFullName}>?";
+
+        public string GenerateMethodParameterDefinition()
+	        => IsMockable() ? $"Action<{GenerateMockableFieldType()}> {DefaultConstants.SetupActionLiteral}" : $"{TypeFullName} {DefaultConstants.ValueLiteral}";
+
+        private string GenerateMockableFieldType() => string.Format(_mockingProperties!.TypeDeclarationFormat, TypeFullName);
     }
 }
