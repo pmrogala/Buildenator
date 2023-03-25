@@ -7,7 +7,6 @@ public static class MoqFixture
 {
     public static IFixture Create() => new Fixture().Customize(new AutoMoqCustomization
         {
-            ConfigureMembers = true,
             GenerateDelegates = true
         });
 }
