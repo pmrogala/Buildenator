@@ -1,14 +1,10 @@
-﻿using AutoFixture;
-using AutoFixture.AutoMoq;
-using AutoFixture.Xunit2;
+﻿using AutoFixture.Xunit2;
 
-namespace Buildenator.UnitTests
+namespace Buildenator.UnitTests;
+
+public class AutoMoqDataAttribute : AutoDataAttribute
 {
-    public class AutoMoqDataAttribute : AutoDataAttribute
+    public AutoMoqDataAttribute() : base(MoqFixture.Create)
     {
-        public AutoMoqDataAttribute()
-            : base(() => new Fixture().Customize(new AutoMoqCustomization()))
-        {
-        }
     }
 }
