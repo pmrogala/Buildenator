@@ -7,7 +7,6 @@ namespace Buildenator.Configuration.Contract
     internal interface IEntityToBuild : IAdditionalNamespacesProvider
     {
         IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
-        string ContainingNamespace { get; }
         string FullName { get; }
         string FullNameWithConstraints { get; }
         string Name { get; }

@@ -10,7 +10,6 @@ namespace Buildenator.Configuration
 {
     internal sealed class EntityToBuild : IEntityToBuild
     {
-        public string ContainingNamespace { get; }
         public string Name { get; }
         public string FullName { get; }
         public string FullNameWithConstraints { get; }
@@ -19,7 +18,7 @@ namespace Buildenator.Configuration
         public IEnumerable<TypedSymbol> ReadOnlyProperties { get; }
         public string[] AdditionalNamespaces { get; }
 
-        public EntityToBuild(INamedTypeSymbol typeForBuilder, MockingProperties? mockingConfiguration, FixtureProperties? fixtureConfiguration)
+        public EntityToBuild(INamedTypeSymbol typeForBuilder, IMockingProperties? mockingConfiguration, IFixtureProperties? fixtureConfiguration)
         {
             INamedTypeSymbol? entityToBuildSymbol;
             var additionalNamespaces = Enumerable.Empty<string>();
@@ -34,8 +33,8 @@ namespace Buildenator.Configuration
             {
                 entityToBuildSymbol = typeForBuilder;
             }
-            ContainingNamespace = entityToBuildSymbol.ContainingNamespace.ToDisplayString();
-            AdditionalNamespaces = additionalNamespaces.Concat(new[] { ContainingNamespace }).ToArray();
+
+            AdditionalNamespaces = additionalNamespaces.Concat(new[] { entityToBuildSymbol.ContainingNamespace.ToDisplayString() }).ToArray();
             Name = entityToBuildSymbol.Name;
             FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters, typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
             FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
@@ -68,15 +67,15 @@ namespace Buildenator.Configuration
         private static (TypedSymbol[] Settable, TypedSymbol[] ReadOnly) DividePropertiesBySetability(
             INamedTypeSymbol entityToBuildSymbol, IMockingProperties? mockingConfiguration, FixtureInterfacesStrategy? fixtureConfiguration)
         {
-            var properties = entityToBuildSymbol.DividePublicPropertiesBySetability();
-            return (
-                properties.Settable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray(),
-                properties.ReadOnly.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray());
+	        var (settable, readOnly) = entityToBuildSymbol.DividePublicPropertiesBySetability();
+	        return (
+                settable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray(),
+                readOnly.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray());
         }
 
         private IReadOnlyList<TypedSymbol>? _uniqueTypedSymbols;
         private IReadOnlyList<TypedSymbol>? _uniqueReadOnlyTypedSymbols;
-        private readonly MockingProperties? _mockingConfiguration;
-        private readonly FixtureProperties? _fixtureConfiguration;
+        private readonly IMockingProperties? _mockingConfiguration;
+        private readonly IFixtureProperties? _fixtureConfiguration;
     }
 }
