@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Immutable;
-using AutoFixture;
 using Buildenator.Abstraction;
 using Buildenator.Configuration;
 using FluentAssertions;
@@ -12,12 +11,10 @@ namespace Buildenator.UnitTests.Configuration;
 
 public class BuilderPropertiesTests
 {
-    private readonly Fixture _fixture;
     private readonly Mock<INamedTypeSymbol> _builderSymbolMock;
 
     public BuilderPropertiesTests()
     {
-        _fixture = new Fixture();
         _builderSymbolMock = new Mock<INamedTypeSymbol>();
         var namespaceSymbol = new Mock<INamespaceSymbol>();
         namespaceSymbol.Setup(x => x.ToDisplayString(It.IsAny<SymbolDisplayFormat>())).Returns("Test");
@@ -74,24 +71,24 @@ public class BuilderPropertiesTests
     }
 
     [Theory]
-    [InlineData("Build", MethodKind.Ordinary, 1, false, Accessibility.Public)]
-    [InlineData("Build", MethodKind.Ordinary, 0, false, Accessibility.Public)]
-    [InlineData("With", MethodKind.Ordinary, 1, false, Accessibility.Public)]
-    [InlineData("Build", MethodKind.Ordinary, 0, true, Accessibility.Public)]
-    [InlineData("Build", MethodKind.Ordinary, 1, false, Accessibility.Private)]
-    [InlineData("Build", MethodKind.Ordinary, 0, false, Accessibility.Private)]
-    [InlineData("With", MethodKind.Ordinary, 1, false, Accessibility.Private)]
-    [InlineData("Build", MethodKind.Ordinary, 0, true, Accessibility.Private)]
-    [InlineData("Build", MethodKind.Ordinary, 1, false, Accessibility.Protected)]
-    [InlineData("Build", MethodKind.Ordinary, 0, false, Accessibility.Protected)]
-    [InlineData("With", MethodKind.Ordinary, 1, false, Accessibility.Protected)]
-    [InlineData("Build", MethodKind.Ordinary, 0, true, Accessibility.Protected)]
-    [InlineData("Build", MethodKind.Ordinary, 1, false, Accessibility.Internal)]
-    [InlineData("Build", MethodKind.Ordinary, 0, false, Accessibility.Internal)]
-    [InlineData("With", MethodKind.Ordinary, 1, false, Accessibility.Internal)]
-    [InlineData("Build", MethodKind.Ordinary, 0, true, Accessibility.Internal)]
-    public void Constructor_ShouldPopulateBuildingMethodsDictionary_WhenBuildingMethodIsFound(
-        string prefix, MethodKind methodKind, int parametersLength, bool isImplicitlyDeclared, Accessibility accessibility)
+    [InlineData("Build", 1, false, Accessibility.Public)]
+    [InlineData("Build", 0, false, Accessibility.Public)]
+    [InlineData("With", 1, false, Accessibility.Public)]
+    [InlineData("Build", 0, true, Accessibility.Public)]
+    [InlineData("Build", 1, false, Accessibility.Private)]
+    [InlineData("Build", 0, false, Accessibility.Private)]
+    [InlineData("With", 1, false, Accessibility.Private)]
+    [InlineData("Build", 0, true, Accessibility.Private)]
+    [InlineData("Build", 1, false, Accessibility.Protected)]
+    [InlineData("Build", 0, false, Accessibility.Protected)]
+    [InlineData("With", 1, false, Accessibility.Protected)]
+    [InlineData("Build", 0, true, Accessibility.Protected)]
+    [InlineData("Build", 1, false, Accessibility.Internal)]
+    [InlineData("Build", 0, false, Accessibility.Internal)]
+    [InlineData("With", 1, false, Accessibility.Internal)]
+    [InlineData("Build", 0, true, Accessibility.Internal)]
+    public void Constructor_ShouldOnlyPopulateBuildingMethodsDictionary_WhenOrdinaryBuildingMethodIsFound(
+        string prefix, int parametersLength, bool isImplicitlyDeclared, Accessibility accessibility)
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
@@ -99,7 +96,7 @@ public class BuilderPropertiesTests
 
         var methodSymbolMock = new Mock<IMethodSymbol>();
         methodSymbolMock.SetupGet(x => x.Name).Returns($"{prefix}Method");
-        methodSymbolMock.SetupGet(x => x.MethodKind).Returns(methodKind);
+        methodSymbolMock.SetupGet(x => x.MethodKind).Returns(MethodKind.Ordinary);
         methodSymbolMock.SetupGet(x => x.DeclaredAccessibility).Returns(accessibility);
         if (parametersLength == 0)
             methodSymbolMock.SetupGet(x => x.Parameters).Returns(ImmutableArray<IParameterSymbol>.Empty);
@@ -115,10 +112,13 @@ public class BuilderPropertiesTests
 
         // Assert
         properties.BuildingMethods.Should().ContainKey(methodSymbolMock.Object.Name).And.ContainValue(methodSymbolMock.Object);
+        properties.Fields.Should().BeEmpty();
+        properties.IsDefaultConstructorOverriden.Should().BeFalse();
+        properties.IsPostBuildMethodOverriden.Should().BeFalse();
     }
 
     [Fact]
-    public void Constructor_ShouldSetIsPostBuildMethodOverridenToTrue_WhenPostBuildMethodIsFound()
+    public void Constructor_ShouldOnlySetIsPostBuildMethodOverridenToTrue_WhenPostBuildMethodIsFound()
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
@@ -135,10 +135,13 @@ public class BuilderPropertiesTests
 
         // Assert
         properties.IsPostBuildMethodOverriden.Should().BeTrue();
+        properties.BuildingMethods.Should().BeEmpty();
+        properties.Fields.Should().BeEmpty();
+        properties.IsDefaultConstructorOverriden.Should().BeFalse();
     }
 
     [Fact]
-    public void Constructor_ShouldSetIsDefaultConstructorOverridenToTrue_WhenTheDefaultConstructorHasTheSameNameAsThePrefix()
+    public void Constructor_ShouldOnlySetIsDefaultConstructorOverridenToTrue_WhenTheDefaultConstructorHasTheSameNameAsThePrefix()
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
@@ -157,10 +160,13 @@ public class BuilderPropertiesTests
 
         // Assert
         properties.IsDefaultConstructorOverriden.Should().BeTrue();
+        properties.IsPostBuildMethodOverriden.Should().BeFalse();
+        properties.BuildingMethods.Should().BeEmpty();
+        properties.Fields.Should().BeEmpty();
     }
 
     [Fact]
-    public void Constructor_ShouldSetIsDefaultConstructorOverridenToTrue_WhenDefaultConstructorIsFound()
+    public void Constructor_ShouldOnlySetIsDefaultConstructorOverridenToTrue_WhenDefaultConstructorIsFound()
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
@@ -179,10 +185,13 @@ public class BuilderPropertiesTests
 
         // Assert
         properties.IsDefaultConstructorOverriden.Should().BeTrue();
+        properties.IsPostBuildMethodOverriden.Should().BeFalse();
+        properties.BuildingMethods.Should().BeEmpty();
+        properties.Fields.Should().BeEmpty();
     }
 
     [Fact]
-    public void Constructor_ShouldAddFieldToFieldsDictionary_WhenFieldIsFound()
+    public void Constructor_ShouldOnlyAddFieldToFieldsDictionary_WhenFieldIsFound()
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
@@ -198,5 +207,8 @@ public class BuilderPropertiesTests
 
         // Assert
         properties.Fields.Should().ContainKey(fieldSymbolMock.Object.Name).And.ContainValue(fieldSymbolMock.Object);
+        properties.IsDefaultConstructorOverriden.Should().BeFalse();
+        properties.IsPostBuildMethodOverriden.Should().BeFalse();
+        properties.BuildingMethods.Should().BeEmpty();
     }
 }
