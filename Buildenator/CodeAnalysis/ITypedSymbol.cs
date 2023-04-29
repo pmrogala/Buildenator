@@ -10,7 +10,9 @@
 
         string GenerateFieldInitialization();
         string GenerateFieldType();
+        string GenerateFieldValueReturn();
         string GenerateLazyFieldType();
+        string GenerateLazyFieldValueReturn();
         string GenerateMethodParameterDefinition();
         bool IsFakeable();
         bool IsMockable();

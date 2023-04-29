@@ -9,20 +9,20 @@ namespace Buildenator.CodeAnalysis
 {
     internal sealed class TypedSymbol : ITypedSymbol
     {
-        public TypedSymbol(IPropertySymbol symbol, IMockingProperties? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
+        public TypedSymbol(IPropertySymbol symbol, IMockingProperties? mockingProperties, IFixtureProperties? fixtureProperties)
         {
             Symbol = symbol;
             Type = symbol.Type;
-            _mockingProperties = mockingInterfaceStrategy;
-            _fixtureConfiguration = fixtureConfiguration;
+            _mockingProperties = mockingProperties;
+            _fixtureProperties = fixtureProperties;
         }
 
-        public TypedSymbol(IParameterSymbol symbol, IMockingProperties? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
+        public TypedSymbol(IParameterSymbol symbol, IMockingProperties? mockingProperties, IFixtureProperties? fixtureProperties)
         {
             Symbol = symbol;
             Type = symbol.Type;
-            _mockingProperties = mockingInterfaceStrategy;
-            _fixtureConfiguration = fixtureConfiguration;
+            _mockingProperties = mockingProperties;
+            _fixtureProperties = fixtureProperties;
         }
 
         public bool NeedsFieldInit() => IsMockable();
@@ -54,10 +54,10 @@ namespace Buildenator.CodeAnalysis
             };
 
 
-        private readonly FixtureInterfacesStrategy? _fixtureConfiguration;
+        private readonly IFixtureProperties? _fixtureProperties;
         private bool? _isFakeable;
         public bool IsFakeable()
-            => _isFakeable ??= _fixtureConfiguration switch
+            => _isFakeable ??= _fixtureProperties?.Strategy switch
             {
                 null => false,
                 FixtureInterfacesStrategy.None
@@ -76,6 +76,18 @@ namespace Buildenator.CodeAnalysis
         
         public string GenerateLazyFieldType()
 	        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{TypeFullName}>?";
+
+        public string GenerateLazyFieldValueReturn()
+            => IsMockable()
+                ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
+                : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{TypeFullName}>({(IsFakeable()
+                    ? $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
+                    : $"default({TypeFullName})")})).Object";
+
+        public string GenerateFieldValueReturn()
+            => IsMockable()
+                ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
+                : UnderScoreName;
 
         public string GenerateMethodParameterDefinition()
 	        => IsMockable() ? $"Action<{GenerateMockableFieldType()}> {DefaultConstants.SetupActionLiteral}" : $"{TypeFullName} {DefaultConstants.ValueLiteral}";
