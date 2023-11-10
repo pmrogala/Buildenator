@@ -10,14 +10,15 @@ namespace Buildenator.Configuration
     internal sealed class FixturePropertiesBuilder
     {
         private readonly ImmutableArray<TypedConstant>? _globalParameters;
-        public FixturePropertiesBuilder(IAssemblySymbol context)
+
+        public FixturePropertiesBuilder(ImmutableArray<AttributeData> attributeDatas)
         {
-            _globalParameters = GetFixtureConfigurationOrDefault(context);
+            _globalParameters = GetFixtureConfigurationOrDefault(attributeDatas);
         }
 
         public FixtureProperties? Build(ISymbol builderSymbol)
         {
-            if ((GetFixtureConfigurationOrDefault(builderSymbol) ?? _globalParameters) is not { } attributeParameters)
+            if ((GetFixtureConfigurationOrDefault(builderSymbol.GetAttributes()) ?? _globalParameters) is not { } attributeParameters)
                 return null;
 
             var i = 0;
@@ -36,9 +37,8 @@ namespace Buildenator.Configuration
                 additionalNamespaces?.Split(',') ?? Array.Empty<string>());
         }
 
-        private static ImmutableArray<TypedConstant>? GetFixtureConfigurationOrDefault(ISymbol context)
+        private static ImmutableArray<TypedConstant>? GetFixtureConfigurationOrDefault(ImmutableArray<AttributeData> attributeData)
         {
-            var attributeData = context.GetAttributes();
             var attribute = attributeData.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(FixtureConfigurationAttribute)));
             return attribute?.ConstructorArguments;
         }

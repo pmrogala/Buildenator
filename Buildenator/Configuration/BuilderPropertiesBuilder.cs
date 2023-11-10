@@ -14,9 +14,9 @@ namespace Buildenator.Configuration
         private readonly NullableStrategy? _nullableStrategy;
         private readonly bool? _generateMethodsForUnreachableProperties;
 
-        public BuilderPropertiesBuilder(IAssemblySymbol context)
+        public BuilderPropertiesBuilder(ImmutableArray<AttributeData> attributeDatas)
         {
-            var globalAttributes = GetConfigurationOrDefault(context);
+            var globalAttributes = GetConfigurationOrDefault(attributeDatas);
             if (globalAttributes.HasValue)
             {
                 _defaultNameWith = globalAttributes.Value.GetOrThrow<string>(0, nameof(MakeBuilderAttributeInternal.BuildingMethodsPrefix));
@@ -40,9 +40,8 @@ namespace Buildenator.Configuration
                     builderAttribute.ImplicitCast ?? _implicitCast));
         }
 
-        private static ImmutableArray<TypedConstant>? GetConfigurationOrDefault(ISymbol context)
+        private static ImmutableArray<TypedConstant>? GetConfigurationOrDefault(ImmutableArray<AttributeData> attributeData)
         {
-            var attributeData = context.GetAttributes();
             var attribute = attributeData.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute)));
             return attribute?.ConstructorArguments;
         }

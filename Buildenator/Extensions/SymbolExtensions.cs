@@ -17,7 +17,10 @@ namespace Buildenator.Extensions
             DividePublicPropertiesBySetability(this INamedTypeSymbol entityToBuildSymbol)
         {
             var (setProperties, unsetProperties) = entityToBuildSymbol.GetMembers().OfType<IPropertySymbol>()
-                .Where(a => a.GetMethod is not null && a.GetMethod.DeclaredAccessibility != Accessibility.Private && a.GetMethod.DeclaredAccessibility != Accessibility.Protected)
+                .Where(a => 
+                    a.GetMethod is not null 
+                    && a.GetMethod.DeclaredAccessibility != Accessibility.Private
+                    && a.GetMethod.DeclaredAccessibility != Accessibility.Protected)
                 .Split(a => a.IsSettableProperty())
                 .ToLists();
 
@@ -27,15 +30,15 @@ namespace Buildenator.Extensions
             while (baseType != null)
             {
                 var newProperties = baseType.GetMembers().OfType<IPropertySymbol>().Split(a => a.IsSettableProperty());
-                TakeNotCoverProperties(ref setProperties, setPropertyNames, newProperties.Item1);
-                TakeNotCoverProperties(ref unsetProperties, unsetPropertyNames, newProperties.Item2);
+                TakeNotCoveredProperties(ref setProperties, setPropertyNames, newProperties.Left);
+                TakeNotCoveredProperties(ref unsetProperties, unsetPropertyNames, newProperties.Right);
 
                 baseType = baseType.BaseType;
             }
 
             return (setProperties, unsetProperties);
 
-            static void TakeNotCoverProperties(
+            static void TakeNotCoveredProperties(
                 ref List<IPropertySymbol> properties, ISet<string> propertyNames, IEnumerable<IPropertySymbol> newProperties)
             {
                 var newSetProperties = newProperties.Where(x => !propertyNames.Contains(x.Name)).ToList();

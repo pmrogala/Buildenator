@@ -10,14 +10,15 @@ namespace Buildenator.Configuration
     internal class MockingPropertiesBuilder
     {
         private readonly ImmutableArray<TypedConstant>? _globalParameters;
-        public MockingPropertiesBuilder(IAssemblySymbol context)
+
+        public MockingPropertiesBuilder(ImmutableArray<AttributeData> attributeDatas)
         {
-            _globalParameters = GetMockingConfigurationOrDefault(context);
+            _globalParameters = GetMockingConfigurationOrDefault(attributeDatas);
         }
 
         public MockingProperties? Build(ISymbol builderSymbol)
         {
-            if ((GetMockingConfigurationOrDefault(builderSymbol) ?? _globalParameters) is not { } attributeParameters)
+            if ((GetMockingConfigurationOrDefault(builderSymbol.GetAttributes()) ?? _globalParameters) is not { } attributeParameters)
                 return null;
 
             var strategy = attributeParameters.GetOrThrow<MockingInterfacesStrategy>(0, nameof(MockingProperties.Strategy));
@@ -34,9 +35,8 @@ namespace Buildenator.Configuration
                 additionalNamespaces?.Split(',') ?? Array.Empty<string>());
         }
 
-        private static ImmutableArray<TypedConstant>? GetMockingConfigurationOrDefault(ISymbol context)
+        private static ImmutableArray<TypedConstant>? GetMockingConfigurationOrDefault(ImmutableArray<AttributeData> attributeData)
         {
-            var attributeData = context.GetAttributes();
             var attribute = attributeData.SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(MockingConfigurationAttribute)));
             return attribute?.ConstructorArguments;
         }

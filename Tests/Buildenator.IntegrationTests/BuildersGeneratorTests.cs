@@ -90,6 +90,7 @@ namespace Buildenator.IntegrationTests
             var entity = builder.WithPropertyIntGetter(value).WithPropertyGetter(str).Build();
             entity.PropertyIntGetter.Should().Be(value);
             entity.PropertyGetter.Should().Be(str);
+
         }
 
         [Theory]

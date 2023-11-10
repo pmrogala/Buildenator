@@ -11,7 +11,7 @@ namespace Buildenator.Configuration
 		private readonly Dictionary<string, IMethodSymbol> _buildingMethods;
 		private readonly Dictionary<string, IFieldSymbol> _fields;
 
-		public BuilderProperties(INamedTypeSymbol builderSymbol, MakeBuilderAttributeInternal attributeData)
+		public BuilderProperties(INamespaceOrTypeSymbol builderSymbol, MakeBuilderAttributeInternal attributeData)
 		{
 			ContainingNamespace = builderSymbol.ContainingNamespace.ToDisplayString();
 			Name = builderSymbol.Name;

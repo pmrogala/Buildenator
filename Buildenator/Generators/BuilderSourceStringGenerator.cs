@@ -33,6 +33,8 @@ namespace Buildenator.Generators
             _propertiesStringGenerator = new PropertiesStringGenerator(_builder, _entity);
         }
 
+        public string FileName => _builder.Name;
+
         public string CreateBuilderCode()
              => $@"{AutoGenerationComment}
 {GenerateNamespaces(_fixtureConfiguration, _mockingConfiguration, _entity)}

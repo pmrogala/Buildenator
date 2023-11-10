@@ -10,6 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## 6.1.0 - 2023-11-10
+
+### Changed
+
+- Changed to the incremental generator. Should improve overall performance. Additionally it's a forced standard from .net 8 forward.
+
+
 ## 6.0.0 - 2023-03-25
 
 ### Added
@@ -20,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - *Breaking change* It's not compatible with the .net 5 sdk anymore. Only .net 6+
 - *Breaking change* Fixed many typos, and renaming of some properties names
-- Restructurized the code to smaller chunks so it's easier to unit test
+- Restructured the code to smaller chunks so it's easier to unit test
 
 ## 5.2.2 - 2023-02-04
 
