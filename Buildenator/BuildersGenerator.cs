@@ -2,97 +2,106 @@
 using Buildenator.Configuration;
 using Buildenator.Generators;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using System.Collections.Generic;
 #if DEBUG
+using System.Diagnostics;
 #endif
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Buildenator.Extensions;
+using System;
 
 [assembly: InternalsVisibleTo("Buildenator.UnitTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
 
 namespace Buildenator
 {
-	/// <inheritdoc />
-	[Generator]
-    public class BuildersGenerator : ISourceGenerator
+    /// <inheritdoc />
+    [Generator]
+    public class BuildersGenerator : IIncrementalGenerator
     {
-        public void Initialize(GeneratorInitializationContext context)
-        {
-        }
-
-        public void Execute(GeneratorExecutionContext context)
+        public void Initialize(IncrementalGeneratorInitializationContext context)
         {
 #if DEBUG
             // Debugger.Launch();
 #endif
-            var classSymbols = GetSortedBuilderSymbolAndItsAttribute(context);
+            var syntaxTrees = context.CompilationProvider
+                .SelectMany(static (c, _) => c.SyntaxTrees);
 
-            var compilation = context.Compilation;
-            var assembly = compilation.Assembly;
-            var fixtureConfigurationBuilder = new FixturePropertiesBuilder(assembly);
-            var mockingConfigurationBuilder = new MockingPropertiesBuilder(assembly);
-            var builderPropertiesBuilder = new BuilderPropertiesBuilder(assembly);
+            var symbolsAndAttributes = syntaxTrees
+                .Combine(context.CompilationProvider)
+                .Select(static (tuple, _) => (compilation: tuple.Left, SemanticModel: tuple.Right.GetSemanticModel(tuple.Left)))
+                .Select(static (tuple, ct) => (Root: tuple.compilation.GetRoot(ct), tuple.SemanticModel))
+                .SelectMany(static (tuple, _) => tuple.Root.DescendantNodesAndSelf().Select(node => (node, tuple.SemanticModel)))
+                .Where(static tuple => tuple.node is ClassDeclarationSyntax)
+                .Select(static (tuple, token) => tuple.SemanticModel.GetDeclaredSymbol(tuple.node, token))
+                .Where(static symbol => symbol is INamedTypeSymbol)
+                .Select(static (symbol, _) => (INamedTypeSymbol)symbol!)
+                .Select(static (symbol, _) => (symbol, attributes: symbol!.GetAttributes()))
+                .Select(static (symbol, _) 
+                    => (symbol.symbol, attribute: symbol.attributes.SingleOrDefault(x => x.AttributeClass?.Name == nameof(MakeBuilderAttribute))))
+                .Where(static tuple => tuple.attribute is not null)
+                .Select(static (tuple, _) => (tuple.symbol, new MakeBuilderAttributeInternal(tuple.attribute!)));
 
-            foreach (var (builder, attribute) in classSymbols)
-            {
-                var mockingConfiguration = mockingConfigurationBuilder.Build(builder);
-                var fixtureConfiguration = fixtureConfigurationBuilder.Build(builder);
-                var generator = new BuilderSourceStringGenerator(
-                builderPropertiesBuilder.Build(builder, attribute),
-                new EntityToBuild(attribute.TypeForBuilder, mockingConfiguration, fixtureConfiguration),
-                    fixtureConfiguration,
-                    mockingConfiguration);
+            var classSymbols = symbolsAndAttributes
+                .Where(tuple => !tuple.Item2.TypeForBuilder.IsAbstract);
 
-                context.AddCsSourceFile(builder.Name, SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
 
-                if (context.CancellationToken.IsCancellationRequested)
-                    break;
-            }
-        }
-
-        private static IReadOnlyCollection<(INamedTypeSymbol Builder, MakeBuilderAttributeInternal Attribute)> 
-            GetSortedBuilderSymbolAndItsAttribute(GeneratorExecutionContext context)
-        {
-            var result = new List<(INamedTypeSymbol Builder, MakeBuilderAttributeInternal)>();
-
-            var compilation = context.Compilation;
-
-            foreach (var syntaxTree in compilation.SyntaxTrees)
-            {
-                var semanticModel = compilation.GetSemanticModel(syntaxTree);
-
-                foreach (var classSyntax in syntaxTree.GetRoot(context.CancellationToken).DescendantNodesAndSelf().OfType<ClassDeclarationSyntax>())
+            var configurationBuilders = context.CompilationProvider
+                .Select(static (c, _) => c.Assembly)
+                .Select(static (assembly, _) => assembly.GetAttributes())
+                .Select(static (assembly, _) =>
                 {
-                    var classSymbol = semanticModel.GetDeclaredSymbol(classSyntax, context.CancellationToken);
-                    if (classSymbol is not { } namedClassSymbol)
-                        continue;
+                    var fixtureConfigurationBuilder = new FixturePropertiesBuilder(assembly);
+                    var mockingConfigurationBuilder = new MockingPropertiesBuilder(assembly);
+                    var builderPropertiesBuilder = new BuilderPropertiesBuilder(assembly);
+                    return (fixtureConfigurationBuilder, mockingConfigurationBuilder, builderPropertiesBuilder);
+                });
 
-                    var attribute = namedClassSymbol.GetAttributes().SingleOrDefault(x => x.AttributeClass?.Name == nameof(MakeBuilderAttribute));
-                    if (attribute is null)
-                        continue;
+            var generators = classSymbols.Combine(configurationBuilders)
+                .Select(static (leftRight, _) =>
+                {
+                    var (builder, attribute) = leftRight.Left;
+                    var (fixtureConfigurationBuilder, mockingConfigurationBuilder, builderPropertiesBuilder) =
+                        leftRight.Right;
+                    var mockingConfiguration = mockingConfigurationBuilder.Build(builder);
+                    var fixtureConfiguration = fixtureConfigurationBuilder.Build(builder);
+                    var builderProperties = builderPropertiesBuilder.Build(builder, attribute);
 
-                    var makeBuilderAttribute = new MakeBuilderAttributeInternal(attribute);
+                    return (fixtureConfiguration, mockingConfiguration, builderProperties, attribute.TypeForBuilder);
+                })
+                .Select(static (properties, _) =>
+                {
+                    var (fixtureConfiguration, mockingConfiguration, builderProperties, typeForBuilder) = properties;
+                    return new BuilderSourceStringGenerator(builderProperties,
+                         new EntityToBuild(typeForBuilder, mockingConfiguration, fixtureConfiguration),
+                         fixtureConfiguration,
+                         mockingConfiguration);
+                });
 
-                    if (makeBuilderAttribute.TypeForBuilder.IsAbstract)
-                    {
-                        context.ReportDiagnostic(Diagnostic.Create(AbstractDiagnostic, classSymbol.Locations.First(), classSymbol.Name));
-                        continue;
-                    }
+            context.RegisterSourceOutput(generators, static (productionContext, generator) =>
+            {
+                productionContext.AddCsSourceFile(generator.FileName,
+                    SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
+            });
 
-                    result.Add((namedClassSymbol, makeBuilderAttribute));
-                }
-            }
+            
+            var abstractClassSymbols = symbolsAndAttributes
+                .Where(tuple => tuple.Item2.TypeForBuilder.IsAbstract)
+                .Select((tuple, _) => tuple.symbol);
+            
+            context.RegisterSourceOutput(abstractClassSymbols, (productionContext, classSymbol) 
+                =>
+            {
+                productionContext.ReportDiagnostic(Diagnostic.Create(AbstractDiagnostic, classSymbol.Locations.First(),
+                    classSymbol.Name));
+            });
 
-            result.MakeDeterministicOrderByName();
-            return result;
         }
 
-        private static readonly DiagnosticDescriptor AbstractDiagnostic = new ("BDN001", "Cannot generate a builder for an abstract class", "Cannot generate a builder for the {0} abstract class", "Buildenator", DiagnosticSeverity.Error, true);
+        private static readonly DiagnosticDescriptor AbstractDiagnostic = new("BDN001", "Cannot generate a builder for an abstract class", "Cannot generate a builder for the {0} abstract class", "Buildenator", DiagnosticSeverity.Error, true);
+
     }
 }
