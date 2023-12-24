@@ -17,12 +17,12 @@ public class ConstructorsGeneratorTests
         var entityMock = new Mock<IEntityToBuild>();
         var fixtureConfigurationMock = new Mock<IFixtureProperties>();
         var typedSymbolMock = new Mock<ITypedSymbol>();
-        typedSymbolMock.Setup(ts => ts.NeedsFieldInit()).Returns(true);
-        typedSymbolMock.Setup(ts => ts.GenerateFieldInitialization()).Returns("TestFieldInitialization");
-        entityMock.Setup(e => e.GetAllUniqueSettablePropertiesAndParameters())
+        _ = typedSymbolMock.Setup(ts => ts.NeedsFieldInit()).Returns(true);
+        _ = typedSymbolMock.Setup(ts => ts.GenerateFieldInitialization()).Returns("TestFieldInitialization");
+        _ = entityMock.Setup(e => e.GetAllUniqueSettablePropertiesAndParameters())
             .Returns(new[] { typedSymbolMock.Object });
-        fixtureConfigurationMock.Setup(fc => fc.NeedsAdditionalConfiguration()).Returns(true);
-        fixtureConfigurationMock.Setup(fc => fc.GenerateAdditionalConfiguration())
+        _ = fixtureConfigurationMock.Setup(fc => fc.NeedsAdditionalConfiguration()).Returns(true);
+        _ = fixtureConfigurationMock.Setup(fc => fc.GenerateAdditionalConfiguration())
             .Returns("TestAdditionalConfiguration");
 
         // Act
@@ -31,11 +31,11 @@ public class ConstructorsGeneratorTests
                 fixtureConfigurationMock.Object);
 
         // Assert
-        result.Should().NotBeNullOrEmpty();
-        result.Should().Contain(builderName);
-        result.Should().Contain("public TestBuilder()");
-        result.Should().Contain("TestFieldInitialization");
-        result.Should().Contain("TestAdditionalConfiguration");
+        _ = result.Should().NotBeNullOrEmpty();
+        _ = result.Should().Contain(builderName);
+        _ = result.Should().Contain("public TestBuilder()");
+        _ = result.Should().Contain("TestFieldInitialization");
+        _ = result.Should().Contain("TestAdditionalConfiguration");
     }
 
     [Fact]
@@ -46,9 +46,9 @@ public class ConstructorsGeneratorTests
         var entityMock = new Mock<IEntityToBuild>();
         IFixtureProperties? fixtureConfiguration = null;
         var typedSymbolMock = new Mock<ITypedSymbol>();
-        typedSymbolMock.Setup(ts => ts.NeedsFieldInit()).Returns(true);
-        typedSymbolMock.Setup(ts => ts.GenerateFieldInitialization()).Returns("TestFieldInitialization");
-        entityMock.Setup(e => e.GetAllUniqueSettablePropertiesAndParameters())
+        _ = typedSymbolMock.Setup(ts => ts.NeedsFieldInit()).Returns(true);
+        _ = typedSymbolMock.Setup(ts => ts.GenerateFieldInitialization()).Returns("TestFieldInitialization");
+        _ = entityMock.Setup(e => e.GetAllUniqueSettablePropertiesAndParameters())
             .Returns(new[] { typedSymbolMock.Object });
 
         // Act
@@ -56,11 +56,11 @@ public class ConstructorsGeneratorTests
             ConstructorsGenerator.GenerateConstructor(builderName, entityMock.Object, fixtureConfiguration);
 
         // Assert
-        result.Should().NotBeNullOrEmpty();
-        result.Should().Contain(builderName);
-        result.Should().Contain("public TestBuilder()");
-        result.Should().Contain("TestFieldInitialization");
-        result.Should().NotContain("TestAdditionalConfiguration");
+        _ = result.Should().NotBeNullOrEmpty();
+        _ = result.Should().Contain(builderName);
+        _ = result.Should().Contain("public TestBuilder()");
+        _ = result.Should().Contain("TestFieldInitialization");
+        _ = result.Should().NotContain("TestAdditionalConfiguration");
     }
 
     [Fact]
@@ -71,10 +71,10 @@ public class ConstructorsGeneratorTests
         var entityMock = new Mock<IEntityToBuild>();
         var fixtureConfigurationMock = new Mock<IFixtureProperties>();
         var typedSymbolMock = new Mock<ITypedSymbol>();
-        typedSymbolMock.Setup(ts => ts.NeedsFieldInit()).Returns(false);
-        entityMock.Setup(e => e.GetAllUniqueSettablePropertiesAndParameters())
+        _ = typedSymbolMock.Setup(ts => ts.NeedsFieldInit()).Returns(false);
+        _ = entityMock.Setup(e => e.GetAllUniqueSettablePropertiesAndParameters())
             .Returns(new[] { typedSymbolMock.Object });
-        fixtureConfigurationMock.Setup(fc => fc.NeedsAdditionalConfiguration()).Returns(false);
+        _ = fixtureConfigurationMock.Setup(fc => fc.NeedsAdditionalConfiguration()).Returns(false);
 
         // Act
         var result =
@@ -82,6 +82,6 @@ public class ConstructorsGeneratorTests
                 fixtureConfigurationMock.Object);
 
         // Assert
-        result.Should().BeEmpty();
+        _ = result.Should().BeEmpty();
     }
 }

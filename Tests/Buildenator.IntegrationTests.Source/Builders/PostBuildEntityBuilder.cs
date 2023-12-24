@@ -1,14 +1,13 @@
 ﻿using Buildenator.Abstraction;
 using Buildenator.IntegrationTests.SharedEntities;
 
-namespace Buildenator.IntegrationTests.Source.Builders
+namespace Buildenator.IntegrationTests.Source.Builders;
+
+[MakeBuilder(typeof(PostBuildEntity), defaultStaticCreator: false, generateMethodsForUnreachableProperties: true)]
+public partial class PostBuildEntityBuilder
 {
-    [MakeBuilder(typeof(PostBuildEntity), defaultStaticCreator: false, generateMethodsForUnreachableProperties: true)]
-    public partial class PostBuildEntityBuilder
+    public void PostBuild(PostBuildEntity buildResult)
     {
-        public void PostBuild(PostBuildEntity buildResult)
-        {
             buildResult.Entry = -1;
         }
-    }
 }

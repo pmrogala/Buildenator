@@ -36,10 +36,10 @@ jobs:
           echo Version number extracted from ${GITHUB_REF} is invalid
           exit 1
       - uses: actions/checkout@v2
-      - name: Setup .NET Core 7
+      - name: Setup .NET Core 8
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 7.0.101
+          dotnet-version: 8.0.x
       - name: Install dependencies
         run: dotnet restore
       - name: Build
@@ -47,5 +47,5 @@ jobs:
       - name: Pack
         run: dotnet pack --configuration Release --no-build --no-restore -v normal -o ./nupkgs -p:Version=${{steps.get_version.outputs.match}}
       - name: Push
-        run: dotnet nuget push *.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate -n
+        run: dotnet nuget push *.nupkg -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate -n true
         working-directory: ./nupkgs

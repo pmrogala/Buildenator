@@ -1,7 +1,6 @@
-﻿namespace Buildenator.IntegrationTests.Source.Fixtures
+﻿namespace Buildenator.IntegrationTests.Source.Fixtures;
+
+public class CustomFixture
 {
-    public class CustomFixture
-    {
-        public T Create<T>() => default;
-    }
+    public T Create<T>() => default;
 }

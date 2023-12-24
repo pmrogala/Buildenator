@@ -1,8 +1,7 @@
-﻿namespace Buildenator.IntegrationTests.SharedEntities
+﻿namespace Buildenator.IntegrationTests.SharedEntities;
+
+public class SettableEntityWithoutConstructor
 {
-    public class SettableEntityWithoutConstructor
-    {
-        public int PropertyIntGetter { get; set; }
-        public string PropertyGetter { get; set; }
-    }
+    public int PropertyIntGetter { get; set; }
+    public string PropertyGetter { get; set; }
 }

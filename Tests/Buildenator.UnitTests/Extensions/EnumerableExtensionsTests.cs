@@ -20,9 +20,9 @@ public class EnumerableExtensionsTests
 		// Act
 		var result = source.AsEnumerable().Split(x => x % 2 == 0);
 
-		// Assert
-		result.Left.Should().BeEquivalentTo(expectedLeft);
-		result.Right.Should().BeEquivalentTo(expectedRight);
+        // Assert
+        _ = result.Left.Should().BeEquivalentTo(expectedLeft);
+        _ = result.Right.Should().BeEquivalentTo(expectedRight);
 	}
 
 	[Fact]
@@ -38,8 +38,8 @@ public class EnumerableExtensionsTests
 		// Act
 		var result = input.ToLists();
 
-		// Assert
-		result.Left.Should().BeEquivalentTo(expectedLeft);
-		result.Right.Should().BeEquivalentTo(expectedRight);
+        // Assert
+        _ = result.Left.Should().BeEquivalentTo(expectedLeft);
+        _ = result.Right.Should().BeEquivalentTo(expectedRight);
 	}
 }

@@ -1,7 +1,6 @@
-﻿namespace Buildenator.IntegrationTests.SharedEntities.DifferentNamespace
-{
-    public class EntityInDifferentNamespace
-    {
+﻿namespace Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 
-    }
+public class EntityInDifferentNamespace
+{
+
 }

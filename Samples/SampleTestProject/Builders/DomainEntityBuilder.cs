@@ -1,10 +1,9 @@
 ﻿using Buildenator.Abstraction;
 using SampleProject;
 
-namespace SampleTestProject.Builders
+namespace SampleTestProject.Builders;
+
+[MakeBuilder(typeof(DomainEntity))]
+public partial class DomainEntityBuilder
 {
-    [MakeBuilder(typeof(DomainEntity))]
-    public partial class DomainEntityBuilder
-    {
-    }
 }

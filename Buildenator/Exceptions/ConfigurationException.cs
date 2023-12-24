@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace Buildenator.Exceptions
+namespace Buildenator.Exceptions;
+
+public class ConfigurationException : Exception
 {
-    public class ConfigurationException : Exception
-    {
-        public ConfigurationException(string message) : base(message) { }
-    }
+    public ConfigurationException(string message) : base(message) { }
 }

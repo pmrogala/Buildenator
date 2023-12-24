@@ -1,9 +1,8 @@
-﻿namespace Buildenator.IntegrationTests.SharedEntities
-{
-    public class PostBuildEntity
-    {
-        public int Entry { get; set; } = 1;
+﻿namespace Buildenator.IntegrationTests.SharedEntities;
 
-        public string NotReachableProperty { get; private set; } = string.Empty;
-    }
+public class PostBuildEntity
+{
+    public int Entry { get; set; } = 1;
+
+    public string NotReachableProperty { get; private set; } = string.Empty;
 }
