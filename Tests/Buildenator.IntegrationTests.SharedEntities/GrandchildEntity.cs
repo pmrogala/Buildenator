@@ -1,39 +1,38 @@
 ﻿using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 using System.Collections.Generic;
 
-namespace Buildenator.IntegrationTests.SharedEntities
+namespace Buildenator.IntegrationTests.SharedEntities;
+
+public class GrandchildEntity : ChildEntity
 {
-    public class GrandchildEntity : ChildEntity
+    public GrandchildEntity(
+        int propertyIntGetter,
+        string propertyStringGetter,
+        EntityInDifferentNamespace entityInDifferentNamespace,
+        List<string> protectedProperty,
+        IEnumerable<int> privateField)
+        : base(propertyIntGetter, propertyStringGetter, entityInDifferentNamespace, protectedProperty, privateField)
     {
-        public GrandchildEntity(
-            int propertyIntGetter,
-            string propertyStringGetter,
-            EntityInDifferentNamespace entityInDifferentNamespace,
-            List<string> protectedProperty,
-            IEnumerable<int> privateField)
-            : base(propertyIntGetter, propertyStringGetter, entityInDifferentNamespace, protectedProperty, privateField)
-        {
         }
 
-        // ReSharper disable once RedundantOverriddenMember
-        protected override List<string> ProtectedProperty => base.ProtectedProperty;
+    // ReSharper disable once RedundantOverriddenMember
+    protected override List<string> ProtectedProperty => base.ProtectedProperty;
 
-        public IInterfaceType InterfaceType { get; set; }
-    }
+    public IInterfaceType InterfaceType { get; set; }
+}
 
-    public class GrandchildEntity<T, TK> : ChildEntity
-        where T : struct
-        where TK : notnull, EntityInDifferentNamespace, new()
+public class GrandchildEntity<T, TK> : ChildEntity
+    where T : struct
+    where TK : notnull, EntityInDifferentNamespace, new()
+{
+    public GrandchildEntity(int propertyIntGetter, string propertyStringGetter, EntityInDifferentNamespace entityInDifferentNamespace, List<string> protectedProperty, IEnumerable<int> privateField, TK secondGeneric) : base(propertyIntGetter, propertyStringGetter, entityInDifferentNamespace, protectedProperty, privateField)
     {
-        public GrandchildEntity(int propertyIntGetter, string propertyStringGetter, EntityInDifferentNamespace entityInDifferentNamespace, List<string> protectedProperty, IEnumerable<int> privateField, TK secondGeneric) : base(propertyIntGetter, propertyStringGetter, entityInDifferentNamespace, protectedProperty, privateField)
-        {
             SecondGeneric = secondGeneric;
         }
 
-        // ReSharper disable once RedundantOverriddenMember
-        protected override List<string> ProtectedProperty => base.ProtectedProperty;
+    // ReSharper disable once RedundantOverriddenMember
+    protected override List<string> ProtectedProperty => base.ProtectedProperty;
 
-        public T GenericType { get; set; }
-        public TK SecondGeneric { get; }
-    }
+    public T GenericType { get; set; }
+    public TK SecondGeneric { get; }
 }

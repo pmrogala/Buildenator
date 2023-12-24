@@ -1,9 +1,8 @@
-﻿namespace Buildenator.Abstraction
+﻿namespace Buildenator.Abstraction;
+
+public enum MockingInterfacesStrategy
 {
-    public enum MockingInterfacesStrategy
-    {
-        None = 0,
-        All = 1,
-        WithoutGenericCollection = 2
-    }
+    None = 0,
+    All = 1,
+    WithoutGenericCollection = 2
 }

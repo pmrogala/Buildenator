@@ -1,13 +1,12 @@
-﻿namespace Buildenator.IntegrationTests.SharedEntities
+﻿namespace Buildenator.IntegrationTests.SharedEntities;
+
+public class DefaultConstructor
 {
-    public class DefaultConstructor
+    public DefaultConstructor(string stringEntry)
     {
-        public DefaultConstructor(string stringEntry)
-        {
             StringEntry = stringEntry;
         }
 
-        public string StringEntry { get; }
-        public int Entry { get; set; }
-    }
+    public string StringEntry { get; }
+    public int Entry { get; set; }
 }

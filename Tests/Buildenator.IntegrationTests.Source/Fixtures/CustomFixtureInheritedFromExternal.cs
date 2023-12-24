@@ -1,6 +1,5 @@
-﻿namespace Buildenator.IntegrationTests.Source.Fixtures
+﻿namespace Buildenator.IntegrationTests.Source.Fixtures;
+
+public class CustomFixtureInheritedFromExternal : AutoFixture.Fixture
 {
-    public class CustomFixtureInheritedFromExternal : AutoFixture.Fixture
-    {
-    }
 }

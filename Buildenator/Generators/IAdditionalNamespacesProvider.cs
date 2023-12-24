@@ -1,7 +1,6 @@
-﻿namespace Buildenator.Generators
+﻿namespace Buildenator.Generators;
+
+internal interface IAdditionalNamespacesProvider
 {
-    internal interface IAdditionalNamespacesProvider
-    {
-        string[] AdditionalNamespaces { get; }
-    }
+    string[] AdditionalNamespaces { get; }
 }

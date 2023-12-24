@@ -10,12 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
-## 6.1.0 - 2023-11-10
+## 8.0.0 - 2023-12-24
 
 ### Changed
 
 - Changed to the incremental generator. Should improve overall performance. Additionally it's a forced standard from .net 8 forward.
-
+- IT'S COMPATIBLE ONLY WITH .NET8+
 
 ## 6.0.0 - 2023-03-25
 

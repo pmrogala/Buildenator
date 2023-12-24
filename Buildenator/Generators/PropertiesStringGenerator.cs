@@ -30,12 +30,12 @@ internal sealed class PropertiesStringGenerator
 
 		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
 		{
-			output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName};");
+            output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName};");
 		}
 
 		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredMethod))
 		{
-			output.AppendLine($@"
+            output = output.AppendLine($@"
 
         {GenerateMethodDefinition(typedSymbol)}");
 

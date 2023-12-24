@@ -1,7 +1,6 @@
-﻿namespace Buildenator.IntegrationTests.SharedEntities
+﻿namespace Buildenator.IntegrationTests.SharedEntities;
+
+public interface IInterfaceType
 {
-    public interface IInterfaceType
-    {
-        string Property { get; set; }
-    }
+    string Property { get; set; }
 }

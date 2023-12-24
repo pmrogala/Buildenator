@@ -1,12 +1,11 @@
-﻿namespace Buildenator.Abstraction
+﻿namespace Buildenator.Abstraction;
+
+public enum NullableStrategy
 {
-    public enum NullableStrategy
-    {
-        /// <summary>
-        /// Context is inherited from the project settings.
-        /// </summary>
-        Default = 0,
-        Enabled = 1,
-        Disabled = 2
-    }
+    /// <summary>
+    /// Context is inherited from the project settings.
+    /// </summary>
+    Default = 0,
+    Enabled = 1,
+    Disabled = 2
 }
