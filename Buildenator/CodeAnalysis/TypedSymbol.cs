@@ -9,20 +9,36 @@ namespace Buildenator.CodeAnalysis
 {
     internal sealed class TypedSymbol : ITypedSymbol
     {
-        public TypedSymbol(IPropertySymbol symbol, IMockingProperties? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
+        public TypedSymbol(
+            IPropertySymbol symbol,
+            IMockingProperties? mockingInterfaceStrategy,
+            IFixtureProperties? fixtureConfiguration,
+            NullableStrategy nullableStrategy)
+            : this(symbol, symbol.Type, mockingInterfaceStrategy, fixtureConfiguration, nullableStrategy)
         {
-            Symbol = symbol;
-            Type = symbol.Type;
-            _mockingProperties = mockingInterfaceStrategy;
-            _fixtureConfiguration = fixtureConfiguration;
         }
 
-        public TypedSymbol(IParameterSymbol symbol, IMockingProperties? mockingInterfaceStrategy, FixtureInterfacesStrategy? fixtureConfiguration)
+        public TypedSymbol(
+            IParameterSymbol symbol,
+            IMockingProperties? mockingInterfaceStrategy,
+            IFixtureProperties? fixtureConfiguration,
+            NullableStrategy nullableStrategy)
+            : this(symbol, symbol.Type, mockingInterfaceStrategy, fixtureConfiguration, nullableStrategy)
+        {
+        }
+
+        private TypedSymbol(
+            ISymbol symbol,
+            ITypeSymbol typeSymbol,
+            IMockingProperties? mockingInterfaceStrategy,
+            IFixtureProperties? fixtureConfiguration,
+            NullableStrategy nullableStrategy)
         {
             Symbol = symbol;
-            Type = symbol.Type;
+            Type = typeSymbol;
             _mockingProperties = mockingInterfaceStrategy;
             _fixtureConfiguration = fixtureConfiguration;
+            _nullableStrategy = nullableStrategy;
         }
 
         public bool NeedsFieldInit() => IsMockable();
@@ -54,10 +70,11 @@ namespace Buildenator.CodeAnalysis
             };
 
 
-        private readonly FixtureInterfacesStrategy? _fixtureConfiguration;
+        private readonly IFixtureProperties? _fixtureConfiguration;
+        private readonly NullableStrategy _nullableStrategy;
         private bool? _isFakeable;
         public bool IsFakeable()
-            => _isFakeable ??= _fixtureConfiguration switch
+            => _isFakeable ??= _fixtureConfiguration?.Strategy switch
             {
                 null => false,
                 FixtureInterfacesStrategy.None
@@ -79,6 +96,15 @@ namespace Buildenator.CodeAnalysis
 
         public string GenerateMethodParameterDefinition()
 	        => IsMockable() ? $"Action<{GenerateMockableFieldType()}> {DefaultConstants.SetupActionLiteral}" : $"{TypeFullName} {DefaultConstants.ValueLiteral}";
+
+        
+        public string GenerateLazyFieldValueReturn()
+            => IsMockable()
+                ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
+                : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{TypeFullName}>({(IsFakeable()
+                    ? $"{string.Format(_fixtureConfiguration!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
+                        + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "")
+                    : $"default({TypeFullName})")})).Object";
 
         private string GenerateMockableFieldType() => string.Format(_mockingProperties!.TypeDeclarationFormat, TypeFullName);
     }

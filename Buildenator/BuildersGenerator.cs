@@ -43,9 +43,10 @@ namespace Buildenator
             {
                 var mockingConfiguration = mockingConfigurationBuilder.Build(builder);
                 var fixtureConfiguration = fixtureConfigurationBuilder.Build(builder);
+                var builderProperties = builderPropertiesBuilder.Build(builder, attribute);
                 var generator = new BuilderSourceStringGenerator(
-                builderPropertiesBuilder.Build(builder, attribute),
-                new EntityToBuild(attribute.TypeForBuilder, mockingConfiguration, fixtureConfiguration),
+                builderProperties,
+                new EntityToBuild(attribute.TypeForBuilder, mockingConfiguration, fixtureConfiguration, builderProperties.NullableStrategy),
                     fixtureConfiguration,
                     mockingConfiguration);
 

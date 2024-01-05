@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator", "Buildenator\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{22C7A91F-E4EC-4822-9D73-2B1A641FBF0A}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		global.json = global.json
 	EndProjectSection
 EndProject
@@ -40,6 +41,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.IntegrationTests.SharedEntities", "Tests\Buildenator.IntegrationTests.SharedEntities\Buildenator.IntegrationTests.SharedEntities.csproj", "{A9E79A1B-8E38-4815-AC1A-129CCE999BE1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.UnitTests", "Tests\Buildenator.UnitTests\Buildenator.UnitTests.csproj", "{635AFFCA-8ACF-4F92-924C-FB7463D17C3C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.IntegrationTests.SourceNullable", "Tests\Buildenator.IntegrationTests.SourceNullable\Buildenator.IntegrationTests.SourceNullable.csproj", "{5F93F84C-D4C2-43DD-B979-083BD7951FF7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildenator.IntegrationTests.SharedEntitiesNullable", "Tests\Buildenator.IntegrationTests.SharedEntitiesNullable\Buildenator.IntegrationTests.SharedEntitiesNullable.csproj", "{0AA5BA5D-7119-4E80-8943-F29EA495F752}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -95,6 +100,14 @@ Global
 		{635AFFCA-8ACF-4F92-924C-FB7463D17C3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{635AFFCA-8ACF-4F92-924C-FB7463D17C3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{635AFFCA-8ACF-4F92-924C-FB7463D17C3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F93F84C-D4C2-43DD-B979-083BD7951FF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F93F84C-D4C2-43DD-B979-083BD7951FF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F93F84C-D4C2-43DD-B979-083BD7951FF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F93F84C-D4C2-43DD-B979-083BD7951FF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0AA5BA5D-7119-4E80-8943-F29EA495F752}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0AA5BA5D-7119-4E80-8943-F29EA495F752}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0AA5BA5D-7119-4E80-8943-F29EA495F752}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0AA5BA5D-7119-4E80-8943-F29EA495F752}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -108,6 +121,8 @@ Global
 		{63A6F9E6-56D5-4AF9-8725-54E2EC09E7F4} = {34D14563-E89B-4337-B751-C50D9149C827}
 		{A9E79A1B-8E38-4815-AC1A-129CCE999BE1} = {34D14563-E89B-4337-B751-C50D9149C827}
 		{635AFFCA-8ACF-4F92-924C-FB7463D17C3C} = {34D14563-E89B-4337-B751-C50D9149C827}
+		{5F93F84C-D4C2-43DD-B979-083BD7951FF7} = {34D14563-E89B-4337-B751-C50D9149C827}
+		{0AA5BA5D-7119-4E80-8943-F29EA495F752} = {34D14563-E89B-4337-B751-C50D9149C827}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {04953D1F-3E96-4E7A-B1C8-C71198D797F6}

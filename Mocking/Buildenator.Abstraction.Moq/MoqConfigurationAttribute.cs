@@ -9,7 +9,7 @@ namespace Buildenator.Abstraction.Moq
             MockingInterfacesStrategy mockingInterfacesStrategy = MockingInterfacesStrategy.WithoutGenericCollection, 
             string typeDeclarationFormat = "Mock<{0}>",
             string fieldDefaultValueAssignmentFormat = "new Mock<{0}>()",                  
-            string returnObjectFormat = "{0}?.Object",
+            string returnObjectFormat = "{0}.Object",
             string additionalNamespaces = "Moq")
             : base(mockingInterfacesStrategy, typeDeclarationFormat, fieldDefaultValueAssignmentFormat, returnObjectFormat, additionalNamespaces)
         {

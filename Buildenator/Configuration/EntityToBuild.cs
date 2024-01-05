@@ -18,7 +18,11 @@ namespace Buildenator.Configuration
         public IEnumerable<TypedSymbol> ReadOnlyProperties { get; }
         public string[] AdditionalNamespaces { get; }
 
-        public EntityToBuild(INamedTypeSymbol typeForBuilder, IMockingProperties? mockingConfiguration, IFixtureProperties? fixtureConfiguration)
+        public EntityToBuild(
+            INamedTypeSymbol typeForBuilder,
+            IMockingProperties? mockingConfiguration,
+            IFixtureProperties? fixtureConfiguration,
+            NullableStrategy nullableStrategy)
         {
             INamedTypeSymbol? entityToBuildSymbol;
             var additionalNamespaces = Enumerable.Empty<string>();
@@ -41,8 +45,9 @@ namespace Buildenator.Configuration
                 genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters | SymbolDisplayGenericsOptions.IncludeTypeConstraints | SymbolDisplayGenericsOptions.IncludeVariance));
             _mockingConfiguration = mockingConfiguration;
             _fixtureConfiguration = fixtureConfiguration;
+            _nullableStrategy = nullableStrategy;
             ConstructorParameters = GetConstructorParameters(entityToBuildSymbol);
-            (SettableProperties, ReadOnlyProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration?.Strategy);
+            (SettableProperties, ReadOnlyProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy);
         }
 
         public IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
@@ -61,21 +66,23 @@ namespace Buildenator.Configuration
         private IReadOnlyDictionary<string, TypedSymbol> GetConstructorParameters(INamedTypeSymbol entityToBuildSymbol)
         {
             return entityToBuildSymbol.Constructors.OrderByDescending(x => x.Parameters.Length).First().Parameters
-                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, _mockingConfiguration, _fixtureConfiguration?.Strategy));
+                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, _mockingConfiguration, _fixtureConfiguration, _nullableStrategy));
         }
 
         private static (TypedSymbol[] Settable, TypedSymbol[] ReadOnly) DividePropertiesBySetability(
-            INamedTypeSymbol entityToBuildSymbol, IMockingProperties? mockingConfiguration, FixtureInterfacesStrategy? fixtureConfiguration)
+            INamedTypeSymbol entityToBuildSymbol, IMockingProperties? mockingConfiguration,
+            IFixtureProperties? fixtureConfiguration, NullableStrategy nullableStrategy)
         {
 	        var (settable, readOnly) = entityToBuildSymbol.DividePublicPropertiesBySetability();
 	        return (
-                settable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray(),
-                readOnly.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray());
+                settable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration, nullableStrategy)).ToArray(),
+                readOnly.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration, nullableStrategy)).ToArray());
         }
 
         private IReadOnlyList<TypedSymbol>? _uniqueTypedSymbols;
         private IReadOnlyList<TypedSymbol>? _uniqueReadOnlyTypedSymbols;
         private readonly IMockingProperties? _mockingConfiguration;
         private readonly IFixtureProperties? _fixtureConfiguration;
+        private readonly NullableStrategy _nullableStrategy;
     }
 }
