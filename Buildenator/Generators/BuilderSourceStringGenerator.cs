@@ -124,7 +124,7 @@ namespace {_builder.ContainingNamespace}
 {restoreWarning}";
 
     }
-        
+
     private string GenerateImplicitCastCode()
     {
         return $@"        public static implicit operator {_entity.FullName}({_builder.FullName} builder) => builder.Build();";
@@ -140,21 +140,23 @@ namespace {_builder.ContainingNamespace}
     private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
     {
         var propertiesAssignment = properties.Select(property => $"{property.SymbolName} = {property.GenerateLazyFieldValueReturn()}").ComaJoin();
-        return @$"var result = new {_entity.FullName}({parameters.Select(a => a.GenerateLazyFieldValueReturn()).ComaJoin()})
+        return @$"var result = new {_entity.FullName}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
             }};
-            {(_builder.ShouldGenerateMethodsForUnreachableProperties ? GenerateUnreachableProperties(): "")}
+            {(_builder.ShouldGenerateMethodsForUnreachableProperties ? GenerateUnreachableProperties() : "")}
             PostBuild(result);
             return result;";
 
         string GenerateUnreachableProperties()
         {
             var output = new StringBuilder();
-            output = output.AppendLine($"var t = typeof({_entity.FullName});");
+            output.AppendLine($"var t = typeof({_entity.FullName});");
             foreach (var a in _entity.GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch())
             {
-                output = output.AppendLine($"t.GetProperty(\"{a.SymbolName}\").SetValue(result, {a.GenerateLazyFieldValueReturn()}, System.Reflection.BindingFlags.NonPublic, null, null, null);");
+                output.Append($"            t.GetProperty(\"{a.SymbolName}\")")
+                    .Append(_builder.NullableStrategy == NullableStrategy.Enabled ? "!" : "")
+                    .AppendLine($".SetValue(result, {a.GenerateLazyFieldValueReturn()}, System.Reflection.BindingFlags.NonPublic, null, null, null);");
             }
             return output.ToString();
         }

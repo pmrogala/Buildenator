@@ -6,23 +6,38 @@ using System.Linq;
 using Buildenator.Configuration;
 
 namespace Buildenator.CodeAnalysis;
-
 internal sealed class TypedSymbol : ITypedSymbol
 {
-    public TypedSymbol(IPropertySymbol symbol, IMockingProperties? mockingProperties, IFixtureProperties? fixtureProperties)
+    public TypedSymbol(
+        IPropertySymbol symbol,
+        IMockingProperties? mockingInterfaceStrategy,
+        IFixtureProperties? fixtureConfiguration,
+        NullableStrategy nullableStrategy)
+        : this(symbol, symbol.Type, mockingInterfaceStrategy, fixtureConfiguration, nullableStrategy)
     {
-        Symbol = symbol;
-        Type = symbol.Type;
-        _mockingProperties = mockingProperties;
-        _fixtureProperties = fixtureProperties;
     }
 
-    public TypedSymbol(IParameterSymbol symbol, IMockingProperties? mockingProperties, IFixtureProperties? fixtureProperties)
+    public TypedSymbol(
+        IParameterSymbol symbol,
+        IMockingProperties? mockingInterfaceStrategy,
+        IFixtureProperties? fixtureConfiguration,
+        NullableStrategy nullableStrategy)
+        : this(symbol, symbol.Type, mockingInterfaceStrategy, fixtureConfiguration, nullableStrategy)
+    {
+    }
+
+    private TypedSymbol(
+        ISymbol symbol,
+        ITypeSymbol typeSymbol,
+        IMockingProperties? mockingInterfaceStrategy,
+        IFixtureProperties? fixtureConfiguration,
+        NullableStrategy nullableStrategy)
     {
         Symbol = symbol;
-        Type = symbol.Type;
-        _mockingProperties = mockingProperties;
-        _fixtureProperties = fixtureProperties;
+        Type = typeSymbol;
+        _mockingProperties = mockingInterfaceStrategy;
+        _fixtureProperties = fixtureConfiguration;
+        _nullableStrategy = nullableStrategy;
     }
 
     public bool NeedsFieldInit() => IsMockable();
@@ -55,6 +70,7 @@ internal sealed class TypedSymbol : ITypedSymbol
 
 
     private readonly IFixtureProperties? _fixtureProperties;
+    private readonly NullableStrategy? _nullableStrategy;
     private bool? _isFakeable;
     public bool IsFakeable()
         => _isFakeable ??= _fixtureProperties?.Strategy switch
@@ -70,10 +86,10 @@ internal sealed class TypedSymbol : ITypedSymbol
     public string GenerateFieldInitialization()
         => _mockingProperties is null ? string.Empty : $"{UnderScoreName} = {string.Format(_mockingProperties.FieldDefaultValueAssignmentFormat, TypeFullName)};";
 
-        
+
     public string GenerateFieldType()
         => IsMockable() ? GenerateMockableFieldType() : TypeFullName;
-        
+
     public string GenerateLazyFieldType()
         => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{TypeFullName}>?";
 
@@ -82,6 +98,7 @@ internal sealed class TypedSymbol : ITypedSymbol
             ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
             : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{TypeFullName}>({(IsFakeable()
                 ? $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
+                  + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "")
                 : $"default({TypeFullName})")})).Object";
 
     public string GenerateFieldValueReturn()
