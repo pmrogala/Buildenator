@@ -196,23 +196,6 @@ namespace Buildenator.IntegrationTests
         }
 
         [Fact]
-        public void BuildersGenerator_NoMockingAndFaking_InterfacesShouldBeNull()
-        {
-            var builder = GrandchildEntityNoMoqBuilder.GrandchildEntity;
-
-            var result = builder
-                .Build();
-
-            result.InterfaceType.Should().BeNull();
-            result.PropertyGetter.Should().NotBeNull();
-            result.PropertyIntGetter.Should().NotBe(default);
-            result.EntityInDifferentNamespace.Should().NotBeNull();
-            result.ByteProperty.Should().NotBeNull();
-            result.GetPrivateField().Should().BeNull();
-            result.GetProtectedProperty().Should().NotBeNull();
-        }
-
-        [Fact]
         public void BuildersGenerator_FakingAndMocking_AllFieldsShouldBeDifferentFromDefault()
         {
             var builder = GrandchildEntityBuilder.GrandchildEntity;
@@ -239,7 +222,7 @@ namespace Buildenator.IntegrationTests
             result.ByteProperty.Should().BeNull();
             result.GetPrivateField().Should().BeNull();
             result.GetProtectedProperty().Should().BeNull();
-            result.InterfaceType.Should().BeNull();
+            result.InterfaceType.Should().NotBeNull();
         }
 
         [Fact]

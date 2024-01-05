@@ -8,6 +8,7 @@ using System.Text;
 using Buildenator.Configuration;
 using static Buildenator.Generators.NamespacesGenerator;
 using static Buildenator.Generators.ConstructorsGenerator;
+using Microsoft.CodeAnalysis;
 
 namespace Buildenator.Generators;
 
@@ -102,6 +103,12 @@ namespace {_builder.ContainingNamespace}
     private string GenerateStaticBuildsCode()
     {
         var (parameters, properties) = GetParametersAndProperties();
+        var moqInit = parameters
+            .Concat(properties)
+            .Where(symbol => symbol.IsMockable())
+            .Select(s => $@"            {s.GenerateFieldInitialization()}")
+            .Aggregate(new StringBuilder(), (builder, s) => builder.AppendLine(s))
+            .ToString();
 
         var methodParameters = parameters
             .Concat(properties)
@@ -119,6 +126,7 @@ namespace {_builder.ContainingNamespace}
 
         return $@"{disableWarning}        public static {_entity.FullName} BuildDefault({methodParameters})
         {{
+            {moqInit}
             {GenerateBuildEntityString(parameters, properties)}
         }}
 {restoreWarning}";
