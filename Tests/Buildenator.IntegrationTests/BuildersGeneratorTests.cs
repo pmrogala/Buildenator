@@ -240,7 +240,7 @@ public class BuildersGeneratorTests
         _ = result.ByteProperty.Should().BeNull();
         _ = result.GetPrivateField().Should().BeNull();
         _ = result.GetProtectedProperty().Should().BeNull();
-        _ = result.InterfaceType.Should().BeNull();
+        _ = result.InterfaceType.Should().NotBeNull();
     }
 
     [Fact]
