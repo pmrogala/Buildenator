@@ -8,6 +8,7 @@ using System.Text;
 using Buildenator.Configuration;
 using static Buildenator.Generators.NamespacesGenerator;
 using static Buildenator.Generators.ConstructorsGenerator;
+using Microsoft.CodeAnalysis;
 
 namespace Buildenator.Generators
 {
@@ -18,7 +19,6 @@ namespace Buildenator.Generators
         private readonly IFixtureProperties? _fixtureConfiguration;
         private readonly IMockingProperties? _mockingConfiguration;
         private readonly PropertiesStringGenerator _propertiesStringGenerator;
-        private const string FixtureLiteral = "_fixture";
 
         public BuilderSourceStringGenerator(
             IBuilderProperties builder,
@@ -41,7 +41,7 @@ namespace {_builder.ContainingNamespace}
 {{
 {GenerateGlobalNullable()}{GenerateBuilderDefinition()}
     {{
-{(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
+{(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {DefaultConstants.FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
 {(_builder.IsDefaultConstructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration))}
 {_propertiesStringGenerator.GeneratePropertiesCode()}
 {GenerateBuildsCode()}
@@ -101,7 +101,12 @@ namespace {_builder.ContainingNamespace}
         private string GenerateStaticBuildsCode()
         {
             var (parameters, properties) = GetParametersAndProperties();
-
+            var moqInit = parameters
+                .Concat(properties)
+                .Where(symbol => symbol.IsMockable())
+                .Select(s => $@"            {s.GenerateFieldInitialization()}")
+                .Aggregate(new StringBuilder(), (builder, s) => builder.AppendLine(s))
+                .ToString();
             var methodParameters = parameters
                 .Concat(properties)
                 .Select(s =>
@@ -118,10 +123,10 @@ namespace {_builder.ContainingNamespace}
 
             return $@"{disableWarning}        public static {_entity.FullName} BuildDefault({methodParameters})
         {{
+            {moqInit}
             {GenerateBuildEntityString(parameters, properties)}
         }}
 {restoreWarning}";
-
         }
         
         private string GenerateImplicitCastCode()
@@ -138,8 +143,8 @@ namespace {_builder.ContainingNamespace}
 
         private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {
-            var propertiesAssignment = properties.Select(property => $"{property.SymbolName} = {GenerateLazyFieldValueReturn(property)}").ComaJoin();
-            return @$"var result = new {_entity.FullName}({parameters.Select(GenerateLazyFieldValueReturn).ComaJoin()})
+            var propertiesAssignment = properties.Select(property => $"{property.SymbolName} = {property.GenerateLazyFieldValueReturn()}").ComaJoin();
+            return @$"var result = new {_entity.FullName}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
             }};
@@ -153,7 +158,9 @@ namespace {_builder.ContainingNamespace}
                 output.AppendLine($"var t = typeof({_entity.FullName});");
                 foreach (var a in _entity.GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch())
                 {
-                    output.AppendLine($"t.GetProperty(\"{a.SymbolName}\").SetValue(result, {GenerateLazyFieldValueReturn(a)}, System.Reflection.BindingFlags.NonPublic, null, null, null);");
+                    output.Append($"            t.GetProperty(\"{a.SymbolName}\")")
+                        .Append(_builder.NullableStrategy == NullableStrategy.Enabled ? "!" : "")
+                        .AppendLine($".SetValue(result, {a.GenerateLazyFieldValueReturn()}, System.Reflection.BindingFlags.NonPublic, null, null, null);");
                 }
                 return output.ToString();
             }
@@ -167,13 +174,6 @@ namespace {_builder.ContainingNamespace}
 {(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
             }};";
         }
-
-        private string GenerateLazyFieldValueReturn(ITypedSymbol typedSymbol)
-            => typedSymbol.IsMockable()
-                ? string.Format(_mockingConfiguration!.ReturnObjectFormat, typedSymbol.UnderScoreName)
-                : @$"({typedSymbol.UnderScoreName}.HasValue ? {typedSymbol.UnderScoreName}.Value : new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({(typedSymbol.IsFakeable()
-                    ? $"{string.Format(_fixtureConfiguration!.CreateSingleFormat, typedSymbol.TypeFullName, typedSymbol.SymbolName, FixtureLiteral)}"
-                    : $"default({typedSymbol.TypeFullName})")})).Object";
 
         private string GenerateFieldValueReturn(ITypedSymbol typedSymbol)
             => typedSymbol.IsMockable()
@@ -190,5 +190,4 @@ namespace {_builder.ContainingNamespace}
 // </auto-generated>
 // ------------------------------------------------------------------------------";
     }
-
 }

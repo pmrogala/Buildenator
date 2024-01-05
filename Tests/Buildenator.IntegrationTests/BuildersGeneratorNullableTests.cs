@@ -1,16 +1,16 @@
 using AutoFixture.Xunit2;
-using Buildenator.IntegrationTests.SharedEntities;
-using Buildenator.IntegrationTests.Source.Builders;
-using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
+using Buildenator.IntegrationTests.SharedEntitiesNullable;
+using Buildenator.IntegrationTests.SourceNullable.Builders;
+using Buildenator.IntegrationTests.SharedEntitiesNullable.DifferentNamespace;
 using FluentAssertions;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
-using PostBuildEntityBuilder = Buildenator.IntegrationTests.Source.Builders.PostBuildEntityBuilder;
+using PostBuildEntityBuilder = Buildenator.IntegrationTests.SourceNullable.Builders.PostBuildEntityBuilder;
 
 namespace Buildenator.IntegrationTests
 {
-    public class BuildersGeneratorTests
+    public class BuildersGeneratorNullableTests
     {
         [Fact]
         public void BuildersGenerator_GeneratesPostBuildMethod()
@@ -193,23 +193,6 @@ namespace Buildenator.IntegrationTests
             result.PropertyIntGetter.Should().Be(grandchildEntity.PropertyIntGetter);
             result.PropertyGetter.Should().Be(grandchildEntity.PropertyGetter);
             result.InterfaceType.Should().Be(grandchildEntity.InterfaceType);
-        }
-
-        [Fact]
-        public void BuildersGenerator_NoMockingAndFaking_InterfacesShouldBeNull()
-        {
-            var builder = GrandchildEntityNoMoqBuilder.GrandchildEntity;
-
-            var result = builder
-                .Build();
-
-            result.InterfaceType.Should().BeNull();
-            result.PropertyGetter.Should().NotBeNull();
-            result.PropertyIntGetter.Should().NotBe(default);
-            result.EntityInDifferentNamespace.Should().NotBeNull();
-            result.ByteProperty.Should().NotBeNull();
-            result.GetPrivateField().Should().BeNull();
-            result.GetProtectedProperty().Should().NotBeNull();
         }
 
         [Fact]

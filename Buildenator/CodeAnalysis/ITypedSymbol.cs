@@ -12,6 +12,8 @@
         string GenerateFieldType();
         string GenerateLazyFieldType();
         string GenerateMethodParameterDefinition();
+        string GenerateLazyFieldValueReturn();
+        
         bool IsFakeable();
         bool IsMockable();
         bool NeedsFieldInit();
