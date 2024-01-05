@@ -1,0 +1,7 @@
+﻿<Project>
+  <!-- Project type conventions. -->
+  <PropertyGroup>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+  </PropertyGroup>
+  <!-- /Project type conventions. -->
+</Project>

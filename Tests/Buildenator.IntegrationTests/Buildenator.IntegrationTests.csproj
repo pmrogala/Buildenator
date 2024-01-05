@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Buildenator.IntegrationTests.SourceNullable\Buildenator.IntegrationTests.SourceNullable.csproj" />
     <ProjectReference Include="..\Buildenator.IntegrationTests.Source\Buildenator.IntegrationTests.Source.csproj" />
   </ItemGroup>
 

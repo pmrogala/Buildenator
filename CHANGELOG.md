@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## 6.1.0 & 8.1.0 - 2024-01-05
+
+### Changed
+
+- Fixing code generation for some scenarios for the `NullableStrategy.Enabled` in the nullable context enabled project.
+
 ## 8.0.0 - 2023-12-24
 
 ### Changed
