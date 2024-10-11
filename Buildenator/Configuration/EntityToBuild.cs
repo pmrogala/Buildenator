@@ -13,9 +13,9 @@ namespace Buildenator.Configuration
         public string Name { get; }
         public string FullName { get; }
         public string FullNameWithConstraints { get; }
-        public IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
-        public IEnumerable<TypedSymbol> SettableProperties { get; }
-        public IEnumerable<TypedSymbol> ReadOnlyProperties { get; }
+        public Constructor? ConstructorToBuild { get; }
+        public IReadOnlyList<TypedSymbol> SettableProperties { get; }
+        public IReadOnlyList<TypedSymbol> ReadOnlyProperties { get; }
         public string[] AdditionalNamespaces { get; }
 
         public EntityToBuild(INamedTypeSymbol typeForBuilder, IMockingProperties? mockingConfiguration, IFixtureProperties? fixtureConfiguration)
@@ -39,43 +39,64 @@ namespace Buildenator.Configuration
             FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters, typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
             FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
                 genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters | SymbolDisplayGenericsOptions.IncludeTypeConstraints | SymbolDisplayGenericsOptions.IncludeVariance));
-            _mockingConfiguration = mockingConfiguration;
-            _fixtureConfiguration = fixtureConfiguration;
-            ConstructorParameters = GetConstructorParameters(entityToBuildSymbol);
+            ConstructorToBuild = Constructor.CreateConstructorOrDefault(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration);
             (SettableProperties, ReadOnlyProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration?.Strategy);
         }
 
         public IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
         {
+            if (ConstructorToBuild is null)
+            {
+                return _uniqueTypedSymbols ??= SettableProperties;
+            }
+
             return _uniqueTypedSymbols ??= SettableProperties
-                .Where(x => !ConstructorParameters.ContainsKey(x.SymbolName))
-                .Concat(ConstructorParameters.Values).ToList();
+                .Where(x => !ConstructorToBuild.ContainsParameter(x.SymbolName))
+                .Concat(ConstructorToBuild.Parameters).ToList();
         }
 
         public IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch()
         {
-            return _uniqueReadOnlyTypedSymbols ??= ReadOnlyProperties
-                .Where(x => !ConstructorParameters.ContainsKey(x.SymbolName)).ToList();
-        }
+            if (ConstructorToBuild is null)
+            {
+                return _uniqueReadOnlyTypedSymbols ??= ReadOnlyProperties;
+            }
 
-        private IReadOnlyDictionary<string, TypedSymbol> GetConstructorParameters(INamedTypeSymbol entityToBuildSymbol)
-        {
-            return entityToBuildSymbol.Constructors.OrderByDescending(x => x.Parameters.Length).First().Parameters
-                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, _mockingConfiguration, _fixtureConfiguration?.Strategy));
+            return _uniqueReadOnlyTypedSymbols ??= ReadOnlyProperties
+                .Where(x => !ConstructorToBuild.ContainsParameter(x.SymbolName)).ToList();
         }
 
         private static (TypedSymbol[] Settable, TypedSymbol[] ReadOnly) DividePropertiesBySetability(
             INamedTypeSymbol entityToBuildSymbol, IMockingProperties? mockingConfiguration, FixtureInterfacesStrategy? fixtureConfiguration)
         {
-	        var (settable, readOnly) = entityToBuildSymbol.DividePublicPropertiesBySetability();
-	        return (
+            var (settable, readOnly) = entityToBuildSymbol.DividePublicPropertiesBySetability();
+            return (
                 settable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray(),
                 readOnly.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration)).ToArray());
         }
 
         private IReadOnlyList<TypedSymbol>? _uniqueTypedSymbols;
         private IReadOnlyList<TypedSymbol>? _uniqueReadOnlyTypedSymbols;
-        private readonly IMockingProperties? _mockingConfiguration;
-        private readonly IFixtureProperties? _fixtureConfiguration;
+
+        internal sealed class Constructor
+        {
+            public static Constructor? CreateConstructorOrDefault(
+                INamedTypeSymbol entityToBuildSymbol,
+                IMockingProperties? mockingConfiguration,
+                IFixtureProperties? fixtureConfiguration)
+                => entityToBuildSymbol.Constructors.Length > 0
+                ? new Constructor(entityToBuildSymbol.Constructors.OrderByDescending(x => x.Parameters.Length).First().Parameters
+                    .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, mockingConfiguration, fixtureConfiguration?.Strategy)))
+                : default;
+            private Constructor(IReadOnlyDictionary<string, TypedSymbol> constructorParameters)
+            {
+                ConstructorParameters = constructorParameters;
+            }
+
+            public IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
+
+            public bool ContainsParameter(string parameterName) => ConstructorParameters.ContainsKey(parameterName);
+            public IEnumerable<TypedSymbol> Parameters => ConstructorParameters.Values;
+        }
     }
 }

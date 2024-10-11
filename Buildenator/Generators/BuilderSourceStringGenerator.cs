@@ -71,16 +71,19 @@ namespace {_builder.ContainingNamespace}
         private string GenerateBuilderDefinition()
 	        => @$"    public partial class {_entity.FullNameWithConstraints.Replace(_entity.Name, _builder.Name)}";
 
-        private string GenerateBuildsCode()
-        {
-            var (parameters, properties) = GetParametersAndProperties();
+    private string GenerateBuildsCode()
+    {
+        if (_entity.ConstructorToBuild is null)
+            return "";
 
-            var disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
-                ? "#pragma warning disable CS8604\n"
-                : string.Empty;
-            var restoreWarning = _builder.NullableStrategy == NullableStrategy.Enabled
-                ? "#pragma warning restore CS8604\n"
-                : string.Empty;
+        var (parameters, properties) = GetParametersAndProperties(_entity.ConstructorToBuild);
+
+        var disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+            ? "#pragma warning disable CS8604\n"
+            : string.Empty;
+        var restoreWarning = _builder.NullableStrategy == NullableStrategy.Enabled
+            ? "#pragma warning restore CS8604\n"
+            : string.Empty;
 
             return $@"{disableWarning}        public {_entity.FullName} Build()
         {{
@@ -102,7 +105,10 @@ namespace {_builder.ContainingNamespace}
         }
         private string GenerateStaticBuildsCode()
         {
-            var (parameters, properties) = GetParametersAndProperties();
+            if (_entity.ConstructorToBuild is null)
+                return "";
+
+            var (parameters, properties) = GetParametersAndProperties(_entity.ConstructorToBuild);
 
             var methodParameters = parameters
                 .Concat(properties)
@@ -131,12 +137,16 @@ namespace {_builder.ContainingNamespace}
             return $@"        public static implicit operator {_entity.FullName}({_builder.FullName} builder) => builder.Build();";
         }
 
-        private (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties()
+    private (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties(EntityToBuild.Constructor constructorToBuild)
+    {
+        var parameters = constructorToBuild.Parameters;
+        var properties = _entity.SettableProperties.AsEnumerable();
+        if (_entity.ConstructorToBuild is not null)
         {
-            var parameters = _entity.ConstructorParameters;
-            var properties = _entity.SettableProperties.Where(x => !parameters.ContainsKey(x.SymbolName));
-            return (parameters.Values.ToList(), properties.ToList());
+            properties = properties.Where(x => !constructorToBuild.ContainsParameter(x.SymbolName));
         }
+        return (parameters.ToList(), properties.ToList());
+    }
 
         private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
         {

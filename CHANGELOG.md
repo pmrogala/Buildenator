@@ -10,7 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
-## 6.1.0 - 2023-11-10
+## 6.1.1 & 8.1.1 - 2024-10-11
+
+### Changed
+
+- Fixing code generation for the scenario with an entity having only private constructors. For now it will not generate automatically the build methods.
+   - In other words, an user must define their own Build method without parameters returning the entity. In the future, more meaningful error will be added.
+
+## 6.1.0 & 8.1.0 - 2024-01-05
 
 ### Changed
 
