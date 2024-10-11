@@ -6,11 +6,12 @@ namespace Buildenator.Configuration.Contract;
 
 internal interface IEntityToBuild : IAdditionalNamespacesProvider
 {
-    IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
     string FullName { get; }
     string FullNameWithConstraints { get; }
     string Name { get; }
-    IEnumerable<TypedSymbol> SettableProperties { get; }
+    IReadOnlyList<TypedSymbol> SettableProperties { get; }
+    IReadOnlyList<TypedSymbol> ReadOnlyProperties { get; }
+    EntityToBuild.Constructor? ConstructorToBuild { get; }
 
     IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch();
     IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters();
