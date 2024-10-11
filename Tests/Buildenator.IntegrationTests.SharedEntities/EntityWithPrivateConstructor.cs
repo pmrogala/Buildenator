@@ -2,9 +2,9 @@
 
 namespace Buildenator.IntegrationTests.SharedEntities;
 
-public class Entity
+public class EntityWithPrivateConstructor
 {
-    public Entity(int propertyIntGetter, string propertyStringGetter, EntityInDifferentNamespace entityInDifferentNamespace)
+    private EntityWithPrivateConstructor(int propertyIntGetter, string propertyStringGetter, EntityInDifferentNamespace entityInDifferentNamespace)
     {
             PropertyIntGetter = propertyIntGetter;
             PropertyGetter = propertyStringGetter;

@@ -96,7 +96,7 @@ public class BuilderPropertiesTests
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
-        var attributeDataMock = new MakeBuilderAttributeInternal(typeSymbolMock.Object, prefix, false, NullableStrategy.Enabled, false, true);
+        var attributeDataMock = GenerateAttributeInternal(typeSymbolMock, prefix);
 
         var methodSymbolMock = new Mock<IMethodSymbol>();
         _ = methodSymbolMock.SetupGet(x => x.Name).Returns($"{prefix}Method");
@@ -126,7 +126,7 @@ public class BuilderPropertiesTests
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
-        var attributeDataMock = new MakeBuilderAttributeInternal(typeSymbolMock.Object, "Build", false, NullableStrategy.Enabled, false, true);
+        var attributeDataMock = GenerateAttributeInternal(typeSymbolMock);
 
         var methodSymbolMock = new Mock<IMethodSymbol>();
         _ = methodSymbolMock.SetupGet(x => x.Name).Returns(DefaultConstants.PostBuildMethodName);
@@ -149,7 +149,7 @@ public class BuilderPropertiesTests
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
-        var attributeDataMock = new MakeBuilderAttributeInternal(typeSymbolMock.Object, "Build", false, NullableStrategy.Enabled, false, true);
+        var attributeDataMock = GenerateAttributeInternal(typeSymbolMock);
 
         var methodSymbolMock = new Mock<IMethodSymbol>();
         _ = methodSymbolMock.SetupGet(x => x.MethodKind).Returns(MethodKind.Constructor);
@@ -174,7 +174,7 @@ public class BuilderPropertiesTests
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
-        var attributeDataMock = new MakeBuilderAttributeInternal(typeSymbolMock.Object, "Build", false, NullableStrategy.Enabled, false, true);
+        var attributeDataMock = GenerateAttributeInternal(typeSymbolMock);
 
         var methodSymbolMock = new Mock<IMethodSymbol>();
         _ = methodSymbolMock.SetupGet(x => x.MethodKind).Returns(MethodKind.Constructor);
@@ -199,7 +199,7 @@ public class BuilderPropertiesTests
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
-        var attributeDataMock = new MakeBuilderAttributeInternal(typeSymbolMock.Object, "Build", false, NullableStrategy.Enabled, false, true);
+        var attributeDataMock = GenerateAttributeInternal(typeSymbolMock);
 
         var fieldSymbolMock = new Mock<IFieldSymbol>();
         _ = fieldSymbolMock.SetupGet(x => x.Name).Returns("SomeField");
@@ -215,4 +215,7 @@ public class BuilderPropertiesTests
         _ = properties.IsPostBuildMethodOverriden.Should().BeFalse();
         _ = properties.BuildingMethods.Should().BeEmpty();
     }
+
+    private static MakeBuilderAttributeInternal GenerateAttributeInternal(Mock<INamedTypeSymbol> typeSymbolMock, string prefix = "Build")
+        => new (typeSymbolMock.Object, prefix, false, NullableStrategy.Enabled, false, true);
 }

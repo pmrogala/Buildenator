@@ -73,7 +73,10 @@ namespace {_builder.ContainingNamespace}
 
     private string GenerateBuildsCode()
     {
-        var (parameters, properties) = GetParametersAndProperties();
+        if (_entity.ConstructorToBuild is null)
+            return "";
+
+        var (parameters, properties) = GetParametersAndProperties(_entity.ConstructorToBuild);
 
         var disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
             ? "#pragma warning disable CS8604\n"
@@ -100,9 +103,13 @@ namespace {_builder.ContainingNamespace}
 ";
 
     }
+
     private string GenerateStaticBuildsCode()
     {
-        var (parameters, properties) = GetParametersAndProperties();
+        if (_entity.ConstructorToBuild is null)
+            return "";
+
+        var (parameters, properties) = GetParametersAndProperties(_entity.ConstructorToBuild);
         var moqInit = parameters
             .Concat(properties)
             .Where(symbol => symbol.IsMockable())
@@ -138,11 +145,15 @@ namespace {_builder.ContainingNamespace}
         return $@"        public static implicit operator {_entity.FullName}({_builder.FullName} builder) => builder.Build();";
     }
 
-    private (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties()
+    private (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties(EntityToBuild.Constructor constructorToBuild)
     {
-        var parameters = _entity.ConstructorParameters;
-        var properties = _entity.SettableProperties.Where(x => !parameters.ContainsKey(x.SymbolName));
-        return (parameters.Values.ToList(), properties.ToList());
+        var parameters = constructorToBuild.Parameters;
+        var properties = _entity.SettableProperties.AsEnumerable();
+        if (_entity.ConstructorToBuild is not null)
+        {
+            properties = properties.Where(x => !constructorToBuild.ContainsParameter(x.SymbolName));
+        }
+        return (parameters.ToList(), properties.ToList());
     }
 
     private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
