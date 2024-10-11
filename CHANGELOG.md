@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+
+## 6.1.2 & 8.1.2 - 2024-10-11
+
+### Changed
+
+- Very weird issue only reproducible after creating and using nuget package. Filtering implicitly created constructors helped by some reason.
+- Versioning number to the generation string
+
 ## 6.1.1 & 8.1.1 - 2024-10-11
 
 ### Changed
