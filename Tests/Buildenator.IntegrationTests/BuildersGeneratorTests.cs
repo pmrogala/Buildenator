@@ -3,8 +3,6 @@ using Buildenator.IntegrationTests.SharedEntities;
 using Buildenator.IntegrationTests.Source.Builders;
 using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 using FluentAssertions;
-using System.Collections.Generic;
-using System.Linq;
 using Xunit;
 using PostBuildEntityBuilder = Buildenator.IntegrationTests.Source.Builders.PostBuildEntityBuilder;
 
@@ -273,5 +271,28 @@ public class BuildersGeneratorTests
         var builder = ReadOnlyEntityWithConstructorBuilder.ReadOnlyEntityWithConstructor;
         _ = builder.WithPrivateField(privateField);
         _ = builder.Build().PrivateField.Should().BeEquivalentTo(privateField);
+    }
+
+    [Fact]
+    public void BuildersGenerator_DefaultPublicConstructor_ShouldCreateBuildMethod()
+    {
+        _ = new EntityWithDefaultConstructorBuilder().Build().Should().NotBeNull();
+    }
+
+
+    [Fact]
+    public void BuildersGenerator_PrivateConstructor_ShouldNotGenerateBuildMethod()
+    {
+        var lamda = () => new EntityWithPrivateConstructorBuilder().Build();
+        lamda.Should().ThrowExactly<InvalidOperationException>().Which.Message.Should().Be("It is a test!");
+    }
+
+    [Fact]
+    public void BuildersGenerator_PrivateConstructor_ShouldCreateWithProperties()
+    {
+        var builder = new EntityWithPrivateConstructorBuilder();
+        _ = builder.WithPropertyIntGetter(1);
+        _ = builder.WithPropertyGetter("1");
+        _ = builder.WithEntityInDifferentNamespace(null!);
     }
 }
