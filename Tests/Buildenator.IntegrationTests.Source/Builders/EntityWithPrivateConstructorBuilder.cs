@@ -1,5 +1,6 @@
 ﻿using Buildenator.Abstraction;
 using Buildenator.IntegrationTests.SharedEntities;
+using System;
 
 namespace Buildenator.IntegrationTests.Source.Builders;
 
@@ -8,6 +9,6 @@ public partial class EntityWithPrivateConstructorBuilder
 {
     public EntityWithPrivateConstructor Build()
     {
-        return default!;
+        throw new InvalidOperationException("It is a test!");
     }
 }

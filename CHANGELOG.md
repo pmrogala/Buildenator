@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## 6.1.3 & 8.1.3 - 2024-10-11
+
+### Changed
+
+- Fixed regression for default constructors - the build method should appear again
+- Added generation of methods for properties from private constructors, keeping the Build method removed.
 
 ## 6.1.2 & 8.1.2 - 2024-10-11
 

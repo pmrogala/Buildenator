@@ -11,7 +11,7 @@ internal interface IEntityToBuild : IAdditionalNamespacesProvider
     string Name { get; }
     IReadOnlyList<TypedSymbol> SettableProperties { get; }
     IReadOnlyList<TypedSymbol> ReadOnlyProperties { get; }
-    EntityToBuild.Constructor? ConstructorToBuild { get; }
+    EntityToBuild.Constructor ConstructorToBuild { get; }
 
     IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch();
     IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters();
