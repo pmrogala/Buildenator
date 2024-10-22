@@ -13,6 +13,7 @@ using System.Text;
 using Buildenator.Extensions;
 using System.Collections.Immutable;
 using System.Threading;
+using Buildenator.Diagnostics;
 
 [assembly: InternalsVisibleTo("Buildenator.UnitTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
@@ -46,8 +47,8 @@ public class BuildersGenerator : IIncrementalGenerator
                 => (symbolAndAttributesTuple.Symbol,
                     Attribute: symbolAndAttributesTuple.Attributes.SingleOrDefault(attributeData =>
                         attributeData.AttributeClass?.Name == nameof(MakeBuilderAttribute))))
-            .Where(static tuple => tuple.Attribute is not null)
-            .Select(static (tuple, _) => (tuple.Symbol, Attribute: new MakeBuilderAttributeInternal(tuple.Attribute!)));
+            .Where(static tuple => tuple.Attribute is not null /* remember about the bang operator in the next line when removing this condition */)
+            .Select(static (tuple, _) => (BuilderSymbol: tuple.Symbol, Attribute: new MakeBuilderAttributeInternal(tuple.Attribute!)));
 
         var classSymbols = symbolsAndAttributes
             .Where(tuple => !tuple.Attribute.TypeForBuilder.IsAbstract);
@@ -119,22 +120,25 @@ public class BuildersGenerator : IIncrementalGenerator
         {
             productionContext.AddCsSourceFile(generator.FileName,
                 SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
+            foreach(var diagnostic in generator.Diagnostics)
+            {
+                productionContext.ReportDiagnostic(diagnostic);
+            }
         });
 
 
         var abstractClassSymbols = symbolsAndAttributes
             .Where(tuple => tuple.Attribute.TypeForBuilder.IsAbstract)
-            .Select((tuple, _) => (tuple.Symbol, tuple.Attribute.TypeForBuilder));
+            .Select((tuple, _) => (tuple.BuilderSymbol, tuple.Attribute.TypeForBuilder));
 
         context.RegisterSourceOutput(abstractClassSymbols, (productionContext, tuple)
             =>
         {
             productionContext.ReportDiagnostic(
-                Diagnostic.Create(AbstractDiagnostic,
-                    tuple.Symbol.Locations.First(),
-                    tuple.TypeForBuilder.Name
-                )
-            );
+                new BuildenatorDiagnostic(BuildenatorDiagnosticDescriptors.AbstractDiagnostic,
+                    tuple.BuilderSymbol.Locations.First(),
+                    tuple.TypeForBuilder.Name)
+                );
         });
     }
 
@@ -151,7 +155,4 @@ public class BuildersGenerator : IIncrementalGenerator
         attributeData
             .SingleOrDefault(x => x.AttributeClass.HasNameOrBaseClassHas(nameof(MockingConfigurationAttribute)))
             ?.ConstructorArguments;
-
-    private static readonly DiagnosticDescriptor AbstractDiagnostic = new("BDN001", "Cannot generate a builder for an abstract class", "Cannot generate a builder for the {0} abstract class", "Buildenator", DiagnosticSeverity.Error, true);
-
 }

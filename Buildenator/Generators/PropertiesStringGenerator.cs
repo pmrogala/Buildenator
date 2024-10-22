@@ -21,9 +21,9 @@ internal sealed class PropertiesStringGenerator
 	{
 		var properties = _entity.GetAllUniqueSettablePropertiesAndParameters();
 
-		if (_builder.ShouldGenerateMethodsForUnreachableProperties || _entity.ConstructorToBuild.IsPrivate)
+		if (_builder.ShouldGenerateMethodsForUnreachableProperties || _entity.ConstructorToBuild is null)
 		{
-			properties = properties.Concat(_entity.GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch()).ToList();
+			properties = [.. properties, .. _entity.GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch()];
 		}
 
 		var output = new StringBuilder();

@@ -9,6 +9,8 @@ using Buildenator.Configuration;
 using static Buildenator.Generators.NamespacesGenerator;
 using static Buildenator.Generators.ConstructorsGenerator;
 using Microsoft.CodeAnalysis;
+using System.Reflection;
+using Buildenator.Diagnostics;
 
 namespace Buildenator.Generators;
 
@@ -19,6 +21,7 @@ internal sealed class BuilderSourceStringGenerator
     private readonly IFixtureProperties? _fixtureConfiguration;
     private readonly IMockingProperties? _mockingConfiguration;
     private readonly PropertiesStringGenerator _propertiesStringGenerator;
+    private readonly List<BuildenatorDiagnostic> _diagnostics = [];
 
     public BuilderSourceStringGenerator(
         IBuilderProperties builder,
@@ -28,12 +31,34 @@ internal sealed class BuilderSourceStringGenerator
     {
         _builder = builder;
         _entity = entity;
+        var privateConstructorDiagnostic = GetBuiltTypeWithoutPublicConstructorDiagnosticOrDefault();
+        if (privateConstructorDiagnostic is not null)
+        {
+            _diagnostics.Add(privateConstructorDiagnostic);
+        }
+        _diagnostics.AddRange(_builder.Diagnostics);
+        _diagnostics.AddRange(_entity.Diagnostics);
+
         _fixtureConfiguration = fixtureConfiguration;
         _mockingConfiguration = mockingConfiguration;
         _propertiesStringGenerator = new PropertiesStringGenerator(_builder, _entity);
     }
 
+    private BuildenatorDiagnostic? GetBuiltTypeWithoutPublicConstructorDiagnosticOrDefault()
+    {
+        return _entity.ConstructorToBuild is null
+                ? _builder.IsBuildMethodOverriden
+                    ? null
+                    : new BuildenatorDiagnostic(
+                        BuildenatorDiagnosticDescriptors.NoPublicConstructorsDiagnostic,
+                        _builder.OriginalLocation,
+                        _entity.FullName)
+                : null;
+    }
+
     public string FileName => _builder.Name;
+
+    public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
 
     public string CreateBuilderCode()
         => $@"{AutoGenerationComment}
@@ -58,7 +83,7 @@ namespace {_builder.ContainingNamespace}
         => _builder.IsPostBuildMethodOverriden
             ? string.Empty
             : @$"{CommentsGenerator.GenerateSummaryOverrideComment()}
-        public void PostBuild({_entity.FullName} buildResult) {{ }}";
+        public void {DefaultConstants.PostBuildMethodName}({_entity.FullName} buildResult) {{ }}";
 
     private string GenerateGlobalNullable()
         => _builder.NullableStrategy switch
@@ -73,7 +98,7 @@ namespace {_builder.ContainingNamespace}
 
     private string GenerateBuildsCode()
     {
-        if (_entity.ConstructorToBuild.IsPrivate)
+        if (_entity.ConstructorToBuild is null || _builder.IsBuildMethodOverriden)
             return "";
 
         var (parameters, properties) = GetParametersAndProperties();
@@ -85,7 +110,7 @@ namespace {_builder.ContainingNamespace}
             ? "#pragma warning restore CS8604\n"
             : string.Empty;
 
-        return $@"{disableWarning}        public {_entity.FullName} Build()
+        return $@"{disableWarning}        public {_entity.FullName} {DefaultConstants.BuildMethodName}()
         {{
             {GenerateLazyBuildEntityString(parameters, properties)}
         }}
@@ -106,7 +131,7 @@ namespace {_builder.ContainingNamespace}
 
     private string GenerateStaticBuildsCode()
     {
-        if (_entity.ConstructorToBuild.IsPrivate)
+        if (_entity.ConstructorToBuild is null)
             return "";
 
         var (parameters, properties) = GetParametersAndProperties();
@@ -142,13 +167,19 @@ namespace {_builder.ContainingNamespace}
 
     private string GenerateImplicitCastCode()
     {
-        return $@"        public static implicit operator {_entity.FullName}({_builder.FullName} builder) => builder.Build();";
+        return $@"        public static implicit operator {_entity.FullName}({_builder.FullName} builder) => builder.{DefaultConstants.BuildMethodName}();";
     }
 
     private (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties()
     {
-        var parameters = _entity.ConstructorToBuild.Parameters;
-        var properties = _entity.SettableProperties.Where(x => !_entity.ConstructorToBuild.ContainsParameter(x.SymbolName));
+        IEnumerable<TypedSymbol> parameters = [];
+        IEnumerable<TypedSymbol> properties = _entity.SettableProperties;
+        if (_entity.ConstructorToBuild is not null)
+        {
+            parameters = _entity.ConstructorToBuild.Parameters;
+            properties = properties.Where(x => !_entity.ConstructorToBuild.ContainsParameter(x.SymbolName));
+        }
+
         return (parameters.ToList(), properties.ToList());
     }
 
@@ -160,7 +191,7 @@ namespace {_builder.ContainingNamespace}
 {(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
             }};
             {(_builder.ShouldGenerateMethodsForUnreachableProperties ? GenerateUnreachableProperties() : "")}
-            PostBuild(result);
+            {DefaultConstants.PostBuildMethodName}(result);
             return result;";
 
         string GenerateUnreachableProperties()
@@ -186,11 +217,11 @@ namespace {_builder.ContainingNamespace}
             }};";
     }
 
-    private const string AutoGenerationComment = @"
+    private static readonly string AutoGenerationComment = @$"
 // ------------------------------------------------------------------------------
 // <auto-generated>
 //     This code was generated by a source generator named Buildenator (https://github.com/pmrogala/Buildenator)
-//     Version 8.1.3
+//     Version {Assembly.GetAssembly(MethodBase.GetCurrentMethod().DeclaringType).GetName().Version}
 //
 //     Changes to this file may cause incorrect behavior and will be lost if
 //     the code is regenerated.
