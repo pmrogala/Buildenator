@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## 8.2.0 - 2024-10-23
+
+### Added
+- Diagnostics for
+  - replacing the default Build method
+  - replacing the default constructor
+  - a builder without the build method error
+- Possibility to replace default Build method
+
 ## 6.1.3 & 8.1.3 - 2024-10-11
 
 ### Changed

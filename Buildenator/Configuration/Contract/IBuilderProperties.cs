@@ -1,4 +1,5 @@
 ﻿using Buildenator.Abstraction;
+using Buildenator.Diagnostics;
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 
@@ -18,4 +19,7 @@ internal interface IBuilderProperties
     bool IsPostBuildMethodOverriden { get; }
     bool IsDefaultConstructorOverriden { get; }
     bool ShouldGenerateMethodsForUnreachableProperties { get; }
+    Location OriginalLocation { get; }
+    bool IsBuildMethodOverriden { get; }
+    IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
 }

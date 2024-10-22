@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Immutable;
+using System.Linq;
 using Buildenator.Abstraction;
 using Buildenator.Configuration;
 using FluentAssertions;
@@ -23,6 +25,7 @@ public class BuilderPropertiesTests
             .Returns("BuilderFullName");
         _ = _builderSymbolMock.Setup(x => x.ContainingNamespace).Returns(namespaceSymbol.Object);
         _ = _builderSymbolMock.Setup(x => x.Name).Returns("BuilderName");
+        _ = _builderSymbolMock.Setup(x => x.Locations).Returns(new [] { Location.None }.ToImmutableArray());
     }
 
     [Fact]
@@ -92,7 +95,7 @@ public class BuilderPropertiesTests
     [InlineData("With", 1, false, Accessibility.Internal)]
     [InlineData("Build", 0, true, Accessibility.Internal)]
     public void Constructor_ShouldOnlyPopulateBuildingMethodsDictionary_WhenOrdinaryBuildingMethodIsFound(
-        string prefix, int parametersLength, bool isImplicitlyDeclared, Accessibility accessibility)
+        string prefix, int parametersCount, bool isImplicitlyDeclared, Accessibility accessibility)
     {
         // Arrange
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
@@ -102,11 +105,7 @@ public class BuilderPropertiesTests
         _ = methodSymbolMock.SetupGet(x => x.Name).Returns($"{prefix}Method");
         _ = methodSymbolMock.SetupGet(x => x.MethodKind).Returns(MethodKind.Ordinary);
         _ = methodSymbolMock.SetupGet(x => x.DeclaredAccessibility).Returns(accessibility);
-        if (parametersLength == 0)
-            _ = methodSymbolMock.SetupGet(x => x.Parameters).Returns([]);
-        else
-            _ = methodSymbolMock.SetupGet(x => x.Parameters)
-                .Returns([new Mock<IParameterSymbol>().Object]);
+        SetUpParametersCount(parametersCount, methodSymbolMock);
         _ = methodSymbolMock.SetupGet(x => x.IsImplicitlyDeclared).Returns(isImplicitlyDeclared);
 
         _ = _builderSymbolMock.Setup(x => x.GetMembers()).Returns([methodSymbolMock.Object]);
@@ -119,6 +118,15 @@ public class BuilderPropertiesTests
         _ = properties.Fields.Should().BeEmpty();
         _ = properties.IsDefaultConstructorOverriden.Should().BeFalse();
         _ = properties.IsPostBuildMethodOverriden.Should().BeFalse();
+    }
+
+    private static void SetUpParametersCount(int parametersLength, Mock<IMethodSymbol> methodSymbolMock)
+    {
+        if (parametersLength == 0)
+            _ = methodSymbolMock.SetupGet(x => x.Parameters).Returns([]);
+        else
+            _ = methodSymbolMock.SetupGet(x => x.Parameters)
+                .Returns([.. Enumerable.Range(0, parametersLength).Select(_ => new Mock<IParameterSymbol>().Object)]);
     }
 
     [Fact]
@@ -189,6 +197,47 @@ public class BuilderPropertiesTests
 
         // Assert
         _ = properties.IsDefaultConstructorOverriden.Should().BeTrue();
+        _ = properties.IsPostBuildMethodOverriden.Should().BeFalse();
+        _ = properties.BuildingMethods.Should().BeEmpty();
+        _ = properties.Fields.Should().BeEmpty();
+    }
+
+
+    [Fact]
+    public void Constructor_ShouldOnlySetIsBuiltMethodOverrideTrue_WhenBuildMethodWithZeroParametersIsFound()
+    {
+        IsBuildMethodOverridenSetup(0, true);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(10)]
+    [InlineData(257)]
+    public void Constructor_ShouldOnlySetIsBuiltMethodOverrideFalse_WhenBuildMethodWithManyParametersIsFound(int parametersLenght)
+    {
+        IsBuildMethodOverridenSetup(parametersLenght, false);
+    }
+
+    private void IsBuildMethodOverridenSetup(int parametersLenght, bool result)
+    {
+        // Arrange
+        var typeSymbolMock = new Mock<INamedTypeSymbol>();
+        var attributeDataMock = GenerateAttributeInternal(typeSymbolMock);
+
+        var methodSymbolMock = new Mock<IMethodSymbol>();
+        _ = methodSymbolMock.SetupGet(x => x.MethodKind).Returns(MethodKind.Ordinary);
+        SetUpParametersCount(parametersLenght, methodSymbolMock);
+        _ = methodSymbolMock.SetupGet(x => x.Name).Returns("Build");
+        _ = methodSymbolMock.SetupGet(x => x.IsImplicitlyDeclared).Returns(false);
+
+        _ = _builderSymbolMock.Setup(x => x.GetMembers()).Returns([methodSymbolMock.Object]);
+
+        // Act
+        var properties = Create(attributeDataMock);
+
+        // Assert
+        _ = properties.IsDefaultConstructorOverriden.Should().BeFalse();
+        _ = properties.IsBuildMethodOverriden.Should().Be(result);
         _ = properties.IsPostBuildMethodOverriden.Should().BeFalse();
         _ = properties.BuildingMethods.Should().BeEmpty();
         _ = properties.Fields.Should().BeEmpty();

@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using Buildenator.Extensions;
+using System.Linq;
+using Buildenator.Diagnostics;
 
 namespace Buildenator.Configuration;
 
@@ -12,7 +14,8 @@ internal readonly struct BuilderProperties : IBuilderProperties
 {
     private readonly Dictionary<string, IMethodSymbol> _buildingMethods;
     private readonly Dictionary<string, IFieldSymbol> _fields;
-		
+    private readonly List<BuildenatorDiagnostic> _diagnostics = [];
+
     public static BuilderProperties Create(INamespaceOrTypeSymbol builderSymbol,
         MakeBuilderAttributeInternal builderAttribute, ImmutableArray<TypedConstant>? globalAttributes)
     {
@@ -52,6 +55,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
         StaticCreator = attributeData.DefaultStaticCreator ?? true;
         ImplicitCast = attributeData.ImplicitCast ?? false;
         ShouldGenerateMethodsForUnreachableProperties = attributeData.GenerateMethodsForUnreachableProperties ?? false;
+        OriginalLocation = builderSymbol.Locations.First();
 
         if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
             throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");
@@ -63,14 +67,25 @@ internal readonly struct BuilderProperties : IBuilderProperties
         {
             switch (member)
             {
-                case IMethodSymbol { MethodKind: MethodKind.Ordinary } method when method.Name.StartsWith(BuildingMethodsPrefix):
+                case IMethodSymbol { MethodKind: MethodKind.Ordinary } method
+                when method.Name.StartsWith(BuildingMethodsPrefix)
+                && method.Name != DefaultConstants.BuildMethodName:
                     _buildingMethods.Add(method.Name, method);
                     break;
                 case IMethodSymbol { MethodKind: MethodKind.Ordinary, Name: DefaultConstants.PostBuildMethodName }:
                     IsPostBuildMethodOverriden = true;
                     break;
+                case IMethodSymbol { MethodKind: MethodKind.Ordinary, Name: DefaultConstants.BuildMethodName, Parameters.Length: 0 }:
+                    IsBuildMethodOverriden = true;
+                    _diagnostics.Add(new BuildenatorDiagnostic(
+                        BuildenatorDiagnosticDescriptors.BuildMethodOverridenDiagnostic,
+                        OriginalLocation));
+                    break;
                 case IMethodSymbol { MethodKind: MethodKind.Constructor, Parameters.Length: 0, IsImplicitlyDeclared: false }:
                     IsDefaultConstructorOverriden = true;
+                    _diagnostics.Add(new BuildenatorDiagnostic(
+                        BuildenatorDiagnosticDescriptors.DefaultConstructorOverridenDiagnostic,
+                        OriginalLocation));
                     break;
                 case IFieldSymbol field:
                     _fields.Add(field.Name, field);
@@ -89,8 +104,11 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public bool IsPostBuildMethodOverriden { get; }
     public bool IsDefaultConstructorOverriden { get; }
     public bool ShouldGenerateMethodsForUnreachableProperties { get; }
+    public bool IsBuildMethodOverriden { get; }
+    public Location OriginalLocation { get; }
 
     public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;
     public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
 
+    public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
 }

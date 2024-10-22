@@ -5,8 +5,7 @@ using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
 using System.Linq;
 using Buildenator.Abstraction;
-using System.Diagnostics;
-using System.Reflection.Metadata;
+using Buildenator.Diagnostics;
 
 namespace Buildenator.Configuration;
 
@@ -15,10 +14,11 @@ internal sealed class EntityToBuild : IEntityToBuild
     public string Name { get; }
     public string FullName { get; }
     public string FullNameWithConstraints { get; }
-    public Constructor ConstructorToBuild { get; }
+    public Constructor? ConstructorToBuild { get; }
     public IReadOnlyList<TypedSymbol> SettableProperties { get; }
     public IReadOnlyList<TypedSymbol> ReadOnlyProperties { get; }
     public string[] AdditionalNamespaces { get; }
+    public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
 
     public EntityToBuild(
         INamedTypeSymbol typeForBuilder,
@@ -40,7 +40,7 @@ internal sealed class EntityToBuild : IEntityToBuild
             entityToBuildSymbol = typeForBuilder;
         }
 
-        AdditionalNamespaces = additionalNamespaces.Concat(new[] { entityToBuildSymbol.ContainingNamespace.ToDisplayString() }).ToArray();
+        AdditionalNamespaces = additionalNamespaces.Concat([entityToBuildSymbol.ContainingNamespace.ToDisplayString()]).ToArray();
         Name = entityToBuildSymbol.Name;
         FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters, typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
         FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
@@ -52,6 +52,11 @@ internal sealed class EntityToBuild : IEntityToBuild
 
     public IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
     {
+        if (ConstructorToBuild is null)
+        {
+            return _uniqueTypedSymbols ??= SettableProperties;
+        }
+
         return _uniqueTypedSymbols ??= SettableProperties
             .Where(x => !ConstructorToBuild.ContainsParameter(x.SymbolName))
             .Concat(ConstructorToBuild.Parameters).ToList();
@@ -59,6 +64,11 @@ internal sealed class EntityToBuild : IEntityToBuild
 
     public IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch()
     {
+        if (ConstructorToBuild is null)
+        {
+            return _uniqueReadOnlyTypedSymbols ??= ReadOnlyProperties;
+        }
+
         return _uniqueReadOnlyTypedSymbols ??= ReadOnlyProperties
             .Where(x => !ConstructorToBuild.ContainsParameter(x.SymbolName)).ToList();
     }
@@ -75,12 +85,11 @@ internal sealed class EntityToBuild : IEntityToBuild
 
     private IReadOnlyList<TypedSymbol>? _uniqueTypedSymbols;
     private IReadOnlyList<TypedSymbol>? _uniqueReadOnlyTypedSymbols;
+    private readonly List<BuildenatorDiagnostic> _diagnostics = [];
 
     internal sealed class Constructor
     {
-        public bool IsPrivate { get; }
-
-        public static Constructor CreateConstructorOrDefault(
+        public static Constructor? CreateConstructorOrDefault(
             INamedTypeSymbol entityToBuildSymbol,
             IMockingProperties? mockingConfiguration,
             IFixtureProperties? fixtureConfiguration,
@@ -91,25 +100,23 @@ internal sealed class EntityToBuild : IEntityToBuild
                 .Where(m => m.DeclaredAccessibility == Accessibility.Public || m.DeclaredAccessibility == Accessibility.Internal)
                 .ToList();
 
-            var isPrivate = onlyPublicConstructors.Count == 0;
+            if (onlyPublicConstructors.Count == 0)
+                return default;
 
             Dictionary<string, TypedSymbol> parameters = [];
-            if (!isPrivate)
-            {
-                parameters = onlyPublicConstructors
-                    .OrderByDescending(x => x.Parameters.Length)
-                    .First()
-                    .Parameters
-                    .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, mockingConfiguration, fixtureConfiguration, nullableStrategy));
-            }
 
-            return new Constructor(parameters, isPrivate);
+            parameters = onlyPublicConstructors
+                .OrderByDescending(x => x.Parameters.Length)
+                .First()
+                .Parameters
+                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, mockingConfiguration, fixtureConfiguration, nullableStrategy));
+
+            return new Constructor(parameters);
         }
 
-        private Constructor(IReadOnlyDictionary<string, TypedSymbol> constructorParameters, bool isPrivate)
+        private Constructor(IReadOnlyDictionary<string, TypedSymbol> constructorParameters)
         {
             ConstructorParameters = constructorParameters;
-            IsPrivate = isPrivate;
         }
 
         public IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }

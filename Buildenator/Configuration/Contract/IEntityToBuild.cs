@@ -1,4 +1,5 @@
 ﻿using Buildenator.CodeAnalysis;
+using Buildenator.Diagnostics;
 using Buildenator.Generators;
 using System.Collections.Generic;
 
@@ -11,7 +12,8 @@ internal interface IEntityToBuild : IAdditionalNamespacesProvider
     string Name { get; }
     IReadOnlyList<TypedSymbol> SettableProperties { get; }
     IReadOnlyList<TypedSymbol> ReadOnlyProperties { get; }
-    EntityToBuild.Constructor ConstructorToBuild { get; }
+    EntityToBuild.Constructor? ConstructorToBuild { get; }
+    IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
 
     IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch();
     IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters();

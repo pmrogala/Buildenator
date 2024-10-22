@@ -5,3 +5,7 @@
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
 BDN001 | Buildenator | Error | BuildersGenerator
+BDN002 | Buildenator | Error | BuildersGenerator
+BDN003 | Buildenator | Info | BuildenatorDiagnosticDescriptors
+BDN004 | Buildenator | Info | BuildenatorDiagnosticDescriptors
+BDN005 | Buildenator | Info | BuildenatorDiagnosticDescriptors
