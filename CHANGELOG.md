@@ -4,11 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [x.x.x]
+## [MinDotNetVersion.x.x.x]
 
 ### Added
 ### Changed
 ### Removed
+
+## 8.2.1.0 - 2024-10-30
+
+### Changed
+- Fixed the default nullable strategy - it should inherit the option from the project the builder is in.
+   - *Warning* It may be a breaking change if someone is accustomed to previous behavior, but it was a bug.
+- Changed the format of versioning: The biggest number is only to reflect minimum version of .net. The rest is like in the Semantic Versioning
 
 ## 8.2.0 - 2024-10-23
 

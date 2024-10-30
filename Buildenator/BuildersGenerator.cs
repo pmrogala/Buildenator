@@ -29,6 +29,9 @@ public class BuildersGenerator : IIncrementalGenerator
 #if DEBUG
         // Debugger.Launch();
 #endif
+
+        var nullableOptions = context.CompilationProvider
+            .Select(static (compilation, _) => compilation.Options.NullableContextOptions);
         var syntaxTrees = context.CompilationProvider
             .SelectMany(static (compilation, _) => compilation.SyntaxTrees);
 
@@ -82,13 +85,16 @@ public class BuildersGenerator : IIncrementalGenerator
                 return (globalFixtureProperties, mockingConfigurationBuilder, globalBuilderProperties);
             });
 
-        var generators = classSymbols.Combine(configurationBuilders)
-            .Select(static (leftRight, _) =>
+        var generators = classSymbols
+            .Combine(configurationBuilders)
+            .Combine(nullableOptions)
+            .Select(static (leftRightAndNullable, _) =>
             {
-                var (builderNamedTypeSymbol, attribute) = leftRight.Left;
+                var (builderNamedTypeSymbol, attribute) = leftRightAndNullable.Left.Left;
                 var (globalFixtureProperties,
                     globalMockingConfiguration,
-                    globalBuilderProperties) = leftRight.Right;
+                    globalBuilderProperties) = leftRightAndNullable.Left.Right;
+                var nullableOptions = leftRightAndNullable.Right;
                 var builderAttributes = builderNamedTypeSymbol.GetAttributes();
 
                 var mockingProperties = MockingProperties.CreateOrDefault(
@@ -101,7 +107,7 @@ public class BuildersGenerator : IIncrementalGenerator
                         GetLocalFixturePropertiesOrDefault(builderAttributes));
 
                 var builderProperties =
-                    BuilderProperties.Create(builderNamedTypeSymbol, attribute, globalBuilderProperties);
+                    BuilderProperties.Create(builderNamedTypeSymbol, attribute, globalBuilderProperties, nullableOptions.AnnotationsEnabled());
 
                 return (fixtureProperties, mockingConfiguration: mockingProperties, builderProperties,
                     attribute.TypeForBuilder);

@@ -16,8 +16,11 @@ internal readonly struct BuilderProperties : IBuilderProperties
     private readonly Dictionary<string, IFieldSymbol> _fields;
     private readonly List<BuildenatorDiagnostic> _diagnostics = [];
 
-    public static BuilderProperties Create(INamespaceOrTypeSymbol builderSymbol,
-        MakeBuilderAttributeInternal builderAttribute, ImmutableArray<TypedConstant>? globalAttributes)
+    public static BuilderProperties Create(
+        INamespaceOrTypeSymbol builderSymbol,
+        MakeBuilderAttributeInternal builderAttribute,
+        ImmutableArray<TypedConstant>? globalAttributes,
+        bool nullableAnnotaionEnabled)
     {
         string? defaultNameWith = null;
         bool? defaultStaticBuilder = null;
@@ -34,12 +37,20 @@ internal readonly struct BuilderProperties : IBuilderProperties
             implicitCast = globalAttributes.Value.GetOrThrow<bool>(4, nameof(MakeBuilderAttributeInternal.ImplicitCast));
         }
 
+        nullableStrategy = builderAttribute.NullableStrategy is null ? nullableStrategy: builderAttribute.NullableStrategy;
+
+        if ((nullableStrategy is null || nullableStrategy == NullableStrategy.Default) && nullableAnnotaionEnabled)
+        {
+            nullableStrategy = NullableStrategy.Enabled;
+        }
+
+
         return new BuilderProperties(builderSymbol,
             new MakeBuilderAttributeInternal(
                 builderAttribute.TypeForBuilder,
                 builderAttribute.BuildingMethodsPrefix ?? defaultNameWith,
                 builderAttribute.DefaultStaticCreator ?? defaultStaticBuilder,
-                builderAttribute.NullableStrategy ?? nullableStrategy,
+                nullableStrategy,
                 builderAttribute.GenerateMethodsForUnreachableProperties ??
                 generateMethodsForUnreachableProperties,
                 builderAttribute.ImplicitCast ?? implicitCast));

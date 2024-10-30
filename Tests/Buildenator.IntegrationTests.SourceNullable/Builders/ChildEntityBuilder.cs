@@ -4,7 +4,7 @@ using Buildenator.IntegrationTests.SharedEntitiesNullable;
 
 namespace Buildenator.IntegrationTests.SourceNullable.Builders
 {
-    [MakeBuilder(typeof(ChildEntity))]
+    [MakeBuilder(typeof(ChildEntity), nullableStrategy: NullableStrategy.Default)]
     [MoqConfiguration(MockingInterfacesStrategy.All)]
     public partial class ChildEntityBuilder
     {

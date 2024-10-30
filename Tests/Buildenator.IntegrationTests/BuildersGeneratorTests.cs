@@ -5,6 +5,7 @@ using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 using FluentAssertions;
 using Xunit;
 using PostBuildEntityBuilder = Buildenator.IntegrationTests.Source.Builders.PostBuildEntityBuilder;
+using Newtonsoft.Json.Linq;
 
 namespace Buildenator.IntegrationTests;
 
