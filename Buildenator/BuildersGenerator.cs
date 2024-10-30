@@ -117,7 +117,7 @@ public class BuildersGenerator : IIncrementalGenerator
                 var (fixtureProperties, mockingProperties, builderProperties, typeForBuilder) = properties;
                 return new BuilderSourceStringGenerator(builderProperties,
                     new EntityToBuild(typeForBuilder, mockingProperties, fixtureProperties,
-                        builderProperties.NullableStrategy),
+                        builderProperties.NullableStrategy, builderProperties.StaticFactoryMethodName),
                     fixtureProperties,
                     mockingProperties);
             });

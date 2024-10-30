@@ -2,5 +2,5 @@
 
 public class EntityInDifferentNamespace
 {
-
+    public int Id { get; set; }
 }

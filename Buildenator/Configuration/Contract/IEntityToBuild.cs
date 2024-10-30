@@ -15,6 +15,9 @@ internal interface IEntityToBuild : IAdditionalNamespacesProvider
     EntityToBuild.Constructor? ConstructorToBuild { get; }
     IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
 
+    string GenerateDefaultBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties);
+    string GenerateStaticBuildsCode();
     IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch();
     IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters();
+    (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties();
 }
