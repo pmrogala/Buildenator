@@ -46,13 +46,7 @@ public class BuilderPropertiesTests
     public void Constructor_ShouldInitializePropertiesAndCollections_WhenValidParametersAreProvided()
     {
         // Arrange
-        var typeSymbolMock = new Mock<INamedTypeSymbol>();
-        var attributeDataMock = new MakeBuilderAttributeInternal(typeSymbolMock.Object, "Build", false,
-            NullableStrategy.Enabled, false, true);
-        var methodSymbolMock = new Mock<IMethodSymbol>();
-        _ = methodSymbolMock.SetupGet(x => x.Name).Returns("BuildMethod");
-        _ = methodSymbolMock.SetupGet(x => x.MethodKind).Returns(MethodKind.Ordinary);
-        _ = _builderSymbolMock.Setup(x => x.GetMembers()).Returns([methodSymbolMock.Object]);
+        var (attributeDataMock, methodSymbolMock) = ArrangeBasicAttirbutesAndMethods(NullableStrategy.Enabled);
 
         // Act
         var properties = Create(attributeDataMock);
@@ -72,9 +66,47 @@ public class BuilderPropertiesTests
         _ = properties.Fields.Should().BeEmpty();
     }
 
-    private BuilderProperties Create(MakeBuilderAttributeInternal attributeDataMock)
+    [Theory]
+    [InlineData(NullableStrategy.Default, true, NullableStrategy.Enabled)]
+    [InlineData(null, true, NullableStrategy.Enabled)]
+    [InlineData(NullableStrategy.Disabled, true, NullableStrategy.Disabled)]
+    [InlineData(NullableStrategy.Enabled, true, NullableStrategy.Enabled)]
+    [InlineData(NullableStrategy.Default, false, NullableStrategy.Default)]
+    [InlineData(null, false, NullableStrategy.Default)]
+    [InlineData(NullableStrategy.Disabled, false, NullableStrategy.Disabled)]
+    [InlineData(NullableStrategy.Enabled, false, NullableStrategy.Enabled)]
+    public void Constructor_ShouldSetProperNullableStragy_WhenDifferentSetupOfAttributesAndProject(
+        NullableStrategy? builderStategy,
+        bool annonationContextEnabled,
+        NullableStrategy? result)
     {
-        return BuilderProperties.Create(_builderSymbolMock.Object, attributeDataMock, null);
+        // Arrange
+        var (attributeDataMock, _) = ArrangeBasicAttirbutesAndMethods(builderStategy);
+
+        // Act
+        var properties = Create(attributeDataMock, nullableAnnotationEnabled: annonationContextEnabled);
+
+        // Assert
+        _ = properties.NullableStrategy.Should().Be(result);
+    }
+
+    private (MakeBuilderAttributeInternal attributeDataMock, Mock<IMethodSymbol> methodSymbolMock) ArrangeBasicAttirbutesAndMethods(
+        NullableStrategy? nullableStrategy = NullableStrategy.Default)
+    {
+        var typeSymbolMock = new Mock<INamedTypeSymbol>();
+        var attributeDataMock = new MakeBuilderAttributeInternal(typeSymbolMock.Object, "Build", false,
+            nullableStrategy, false, true);
+        var methodSymbolMock = new Mock<IMethodSymbol>();
+        _ = methodSymbolMock.SetupGet(x => x.Name).Returns("BuildMethod");
+        _ = methodSymbolMock.SetupGet(x => x.MethodKind).Returns(MethodKind.Ordinary);
+        _ = _builderSymbolMock.Setup(x => x.GetMembers()).Returns([methodSymbolMock.Object]);
+
+        return (attributeDataMock, methodSymbolMock);
+    }
+
+    private BuilderProperties Create(MakeBuilderAttributeInternal attributeDataMock, TypedConstant[]? typedConstants = null, bool nullableAnnotationEnabled = false)
+    {
+        return BuilderProperties.Create(_builderSymbolMock.Object, attributeDataMock, typedConstants?.ToImmutableArray(), nullableAnnotationEnabled);
     }
 
     [Theory]
@@ -111,7 +143,7 @@ public class BuilderPropertiesTests
         _ = _builderSymbolMock.Setup(x => x.GetMembers()).Returns([methodSymbolMock.Object]);
 
         // Act
-        var properties = BuilderProperties.Create(_builderSymbolMock.Object, attributeDataMock, null);
+        var properties = BuilderProperties.Create(_builderSymbolMock.Object, attributeDataMock, null, false);
 
         // Assert
         _ = properties.BuildingMethods.Should().ContainKey(methodSymbolMock.Object.Name).And.ContainValue(methodSymbolMock.Object);
