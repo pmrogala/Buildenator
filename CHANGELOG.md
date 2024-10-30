@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## 8.3.0.0 - 2024-10-30
+
+### Added
+- Possibility to use static method for constructing an object instead of normal constructors.
+   - simple usage ```[MakeBuilder(typeof(Entity), staticFactoryMethodName: nameof(Entity.CreateEntity))]```
+   - It may be useful when your entity has private constructors and you create it by factory methods.
+
+
 ## 8.2.1.0 - 2024-10-30
 
 ### Changed

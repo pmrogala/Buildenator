@@ -58,6 +58,27 @@ public class BuildersGeneratorTests
         _ = typeof(EntityBuilder).GetMethod("BuildDefault", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public).Should().BeNull();
     }
 
+    [Fact]
+    public void BuildersGenerator_StaticFactoryMethod_ShouldUseTheFactoryMethodForConstructing()
+    {
+        var builder = new EntityWithStaticFactoryMethodBuilder();
+
+        var entity = builder.WithDifferentNamespaceId(10).Build();
+        var subEntity = entity.EntityInDifferentNamespace;
+        _ = subEntity.Should().NotBeNull();
+        _ = subEntity.Id.Should().Be(10);
+    }
+
+    [Fact]
+    public void BuildersGenerator_StaticFactoryMethod_ShouldUseTheFactoryMethodForDefaultConstructing()
+    {
+        var entity = EntityWithStaticFactoryMethodBuilder.BuildDefault(_differentNamespaceId: 10);
+
+        var subEntity = entity.EntityInDifferentNamespace;
+        _ = subEntity.Should().NotBeNull();
+        _ = subEntity.Id.Should().Be(10);
+    }
+
     [Theory]
     [AutoData]
     public void BuildersGenerator_OneConstructorWithoutSettableProperties_CreatedWithMethodsByConstructorParametersNames(int value, string str)
@@ -145,7 +166,7 @@ public class BuildersGeneratorTests
             .Build();
 
 
-        _ = typeof(GrandchildEntityBuilder).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), new[] { typeof(List<string>) });
+        _ = typeof(GrandchildEntityBuilder).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), [typeof(List<string>)]);
         _ = result.Should().BeEquivalentTo(grandchildEntity);
         _ = result.GetPrivateField().Should().BeEquivalentTo(grandchildEntity.GetPrivateField());
         _ = result.GetProtectedProperty().Should().BeEquivalentTo(grandchildEntity.GetProtectedProperty());
@@ -167,7 +188,7 @@ public class BuildersGeneratorTests
             .WithInterfaceType(mock => mock.Setup(x => x.Property).Returns(interfaceProperty))
             .Build();
 
-        _ = typeof(EntityBuilderWithCustomMethods).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), new[] { typeof(List<string>) })
+        _ = typeof(EntityBuilderWithCustomMethods).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), [typeof(List<string>)])
             .Which.Should().HaveAccessModifier(FluentAssertions.Common.CSharpAccessModifier.Private);
         _ = result.PropertyIntGetter.Should().Be(grandchildEntity.PropertyIntGetter / 2);
         _ = result.PropertyGetter.Should().Be(grandchildEntity.PropertyGetter + "custom");

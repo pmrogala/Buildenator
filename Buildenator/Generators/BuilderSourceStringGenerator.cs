@@ -73,7 +73,7 @@ namespace {_builder.ContainingNamespace}
 {_propertiesStringGenerator.GeneratePropertiesCode()}
 {GenerateBuildsCode()}
 {GenerateBuildManyCode()}
-{(_builder.StaticCreator ? GenerateStaticBuildsCode() : string.Empty)}
+{(_builder.StaticCreator ? _entity.GenerateStaticBuildsCode() : string.Empty)}
 {(_builder.ImplicitCast ? GenerateImplicitCastCode() : string.Empty)}
 {GeneratePostBuildMethod()}
     }}
@@ -101,7 +101,7 @@ namespace {_builder.ContainingNamespace}
         if (_entity.ConstructorToBuild is null || _builder.IsBuildMethodOverriden)
             return "";
 
-        var (parameters, properties) = GetParametersAndProperties();
+        var (parameters, properties) = _entity.GetParametersAndProperties();
 
         var disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
             ? "#pragma warning disable CS8604\n"
@@ -129,68 +129,31 @@ namespace {_builder.ContainingNamespace}
 
     }
 
-    private string GenerateStaticBuildsCode()
-    {
-        if (_entity.ConstructorToBuild is null)
-            return "";
-
-        var (parameters, properties) = GetParametersAndProperties();
-        var moqInit = parameters
-            .Concat(properties)
-            .Where(symbol => symbol.IsMockable())
-            .Select(s => $@"            {s.GenerateFieldInitialization()}")
-            .Aggregate(new StringBuilder(), (builder, s) => builder.AppendLine(s))
-            .ToString();
-
-        var methodParameters = parameters
-            .Concat(properties)
-            .Select(s =>
-            {
-                var fieldType = s.GenerateFieldType();
-                return $"{fieldType} {s.UnderScoreName} = default({fieldType})";
-            }).ComaJoin();
-        var disableWarning = _builder.NullableStrategy == NullableStrategy.Enabled
-            ? "#pragma warning disable CS8625\n"
-            : string.Empty;
-        var restoreWarning = _builder.NullableStrategy == NullableStrategy.Enabled
-            ? "#pragma warning restore CS8625\n"
-            : string.Empty;
-
-        return $@"{disableWarning}        public static {_entity.FullName} BuildDefault({methodParameters})
-        {{
-            {moqInit}
-            {GenerateBuildEntityString(parameters, properties)}
-        }}
-{restoreWarning}";
-
-    }
-
     private string GenerateImplicitCastCode()
     {
         return $@"        public static implicit operator {_entity.FullName}({_builder.FullName} builder) => builder.{DefaultConstants.BuildMethodName}();";
     }
 
-    private (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties()
-    {
-        IEnumerable<TypedSymbol> parameters = [];
-        IEnumerable<TypedSymbol> properties = _entity.SettableProperties;
-        if (_entity.ConstructorToBuild is not null)
-        {
-            parameters = _entity.ConstructorToBuild.Parameters;
-            properties = properties.Where(x => !_entity.ConstructorToBuild.ContainsParameter(x.SymbolName));
-        }
-
-        return (parameters.ToList(), properties.ToList());
-    }
-
     private string GenerateLazyBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
     {
         var propertiesAssignment = properties.Select(property => $"{property.SymbolName} = {property.GenerateLazyFieldValueReturn()}").ComaJoin();
-        return @$"var result = new {_entity.FullName}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()})
+        var onlyConstructorString = string.Empty;
+        if (_entity.ConstructorToBuild is EntityToBuild.StaticConstructor staticConstructor)
+        {
+            onlyConstructorString = @$"var result = {_entity.FullName}.{staticConstructor.Name}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()});
+";
+        }
+        else
+        {
+            onlyConstructorString = @$"var result = new {_entity.FullName}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
             }};
-            {(_builder.ShouldGenerateMethodsForUnreachableProperties ? GenerateUnreachableProperties() : "")}
+";
+        }
+
+        return onlyConstructorString
+            + $@"{(_builder.ShouldGenerateMethodsForUnreachableProperties ? GenerateUnreachableProperties() : "")}
             {DefaultConstants.PostBuildMethodName}(result);
             return result;";
 
@@ -210,11 +173,7 @@ namespace {_builder.ContainingNamespace}
 
     private string GenerateBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
     {
-        var propertiesAssignment = properties.Select(property => $"{property.SymbolName} = {property.GenerateFieldValueReturn()}").ComaJoin();
-        return @$"return new {_entity.FullName}({parameters.Select(a => a.GenerateFieldValueReturn()).ComaJoin()})
-            {{
-{(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
-            }};";
+        return _entity.GenerateDefaultBuildEntityString(parameters, properties);
     }
 
     private static readonly string AutoGenerationComment = @$"

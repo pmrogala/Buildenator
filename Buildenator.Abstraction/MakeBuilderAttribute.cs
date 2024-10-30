@@ -14,14 +14,16 @@ public sealed class MakeBuilderAttribute : Attribute
     /// <param name="defaultStaticCreator">The resulting builder will have a special static building method with default parameters. true/false/null</param>
     /// <param name="nullableStrategy">Change nullable context behaviour. Use the <see cref="NullableStrategy"/> enum.</param>
     /// <param name="implicitCast">Should the builder have implicit cast to the target type.</param>
-    /// <param name="generateMethodsForUnreachableProperties"></param>
+    /// <param name="generateMethodsForUnreachableProperties">It will create methods for setting up properties that does not have public setter.</param>
+    /// <param name="staticFactoryMethodName">if you want to use a static factory method for constructing an entity, you can bring here the name.</param>
     public MakeBuilderAttribute(
         Type typeForBuilder,
         string? buildingMethodsPrefix = "With",
         object? defaultStaticCreator = null,
         object? nullableStrategy = null,
         object? generateMethodsForUnreachableProperties = null,
-        object? implicitCast = null
+        object? implicitCast = null,
+        string? staticFactoryMethodName = null
     )
     {
         }

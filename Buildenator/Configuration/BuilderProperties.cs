@@ -53,7 +53,8 @@ internal readonly struct BuilderProperties : IBuilderProperties
                 nullableStrategy,
                 builderAttribute.GenerateMethodsForUnreachableProperties ??
                 generateMethodsForUnreachableProperties,
-                builderAttribute.ImplicitCast ?? implicitCast));
+                builderAttribute.ImplicitCast ?? implicitCast,
+                builderAttribute.StaticFactoryMethodName));
     }
 
     private BuilderProperties(INamespaceOrTypeSymbol builderSymbol, MakeBuilderAttributeInternal attributeData)
@@ -67,6 +68,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
         ImplicitCast = attributeData.ImplicitCast ?? false;
         ShouldGenerateMethodsForUnreachableProperties = attributeData.GenerateMethodsForUnreachableProperties ?? false;
         OriginalLocation = builderSymbol.Locations.First();
+        StaticFactoryMethodName = attributeData.StaticFactoryMethodName;
 
         if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
             throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");
@@ -117,6 +119,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public bool ShouldGenerateMethodsForUnreachableProperties { get; }
     public bool IsBuildMethodOverriden { get; }
     public Location OriginalLocation { get; }
+    public string? StaticFactoryMethodName { get; }
 
     public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;
     public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;

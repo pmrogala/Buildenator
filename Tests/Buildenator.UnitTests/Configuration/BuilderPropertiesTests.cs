@@ -25,7 +25,7 @@ public class BuilderPropertiesTests
             .Returns("BuilderFullName");
         _ = _builderSymbolMock.Setup(x => x.ContainingNamespace).Returns(namespaceSymbol.Object);
         _ = _builderSymbolMock.Setup(x => x.Name).Returns("BuilderName");
-        _ = _builderSymbolMock.Setup(x => x.Locations).Returns(new [] { Location.None }.ToImmutableArray());
+        _ = _builderSymbolMock.Setup(x => x.Locations).Returns([Location.None]);
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class BuilderPropertiesTests
     {
         // Arrange
         var attributeDataMock = new MakeBuilderAttributeInternal(null!, string.Empty, false,
-            NullableStrategy.Enabled, false, true);
+            NullableStrategy.Enabled, false, true, null);
 
         // Act
         var act = () => Create(attributeDataMock);
@@ -95,7 +95,7 @@ public class BuilderPropertiesTests
     {
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
         var attributeDataMock = new MakeBuilderAttributeInternal(typeSymbolMock.Object, "Build", false,
-            nullableStrategy, false, true);
+            nullableStrategy, false, true, null);
         var methodSymbolMock = new Mock<IMethodSymbol>();
         _ = methodSymbolMock.SetupGet(x => x.Name).Returns("BuildMethod");
         _ = methodSymbolMock.SetupGet(x => x.MethodKind).Returns(MethodKind.Ordinary);
@@ -298,5 +298,5 @@ public class BuilderPropertiesTests
     }
 
     private static MakeBuilderAttributeInternal GenerateAttributeInternal(Mock<INamedTypeSymbol> typeSymbolMock, string prefix = "Build")
-        => new (typeSymbolMock.Object, prefix, false, NullableStrategy.Enabled, false, true);
+        => new (typeSymbolMock.Object, prefix, false, NullableStrategy.Enabled, false, true, null);
 }
