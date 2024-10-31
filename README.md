@@ -1,6 +1,10 @@
 # Buildenator
-A test data builders source generator for .net 5 and later.
+A test data **Builder Generator** for .net 5 and later.
 
+Versioning:
+N.X.Y.Z
+N - minimum version of .net required.
+X.Y.Z - standard semantic versioning.
 
 ## A simple usage example
 
