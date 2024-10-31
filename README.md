@@ -3,8 +3,9 @@ A test data **Builder Generator** for .net 5 and later.
 
 Versioning:
 N.X.Y.Z
-N - minimum version of .net required.
-X.Y.Z - standard semantic versioning.
+
+- N - minimum version of .net required.
+- X.Y.Z - standard semantic versioning.
 
 ## A simple usage example
 
@@ -17,7 +18,9 @@ using SampleProject;
 namespace SampleTestProject.Builders
 {
     [MakeBuilder(typeof(DomainEntity))]
-    [AutoFixtureConfiguration()]
+    /* AutoFixture is optional. By adding it, the builder will use random data generator 
+       for filling in not set up properties. */
+    [AutoFixtureConfiguration()] 
     public partial class DomainEntityBuilder
     {
     }
