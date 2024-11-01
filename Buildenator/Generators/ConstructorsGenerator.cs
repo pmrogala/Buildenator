@@ -12,7 +12,7 @@ internal static class ConstructorsGenerator
         IFixtureProperties? fixtureConfiguration)
     {
             var hasAnyBody = false;
-            var parameters = entity.GetAllUniqueSettablePropertiesAndParameters();
+            var parameters = entity.AllUniqueSettablePropertiesAndParameters;
 
             var output = new StringBuilder();
         output = output.AppendLine($@"{CommentsGenerator.GenerateSummaryOverrideComment()}

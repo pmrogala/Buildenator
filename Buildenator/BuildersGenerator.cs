@@ -56,27 +56,21 @@ public class BuildersGenerator : IIncrementalGenerator
         var classSymbols = symbolsAndAttributes
             .Where(tuple => !tuple.Attribute.TypeForBuilder.IsAbstract);
 
-        var allAttributes = context.CompilationProvider
+        var configurationBuilders = context.CompilationProvider
             .Select(static (c, _) => c.Assembly)
             .Select(static (assembly, _) => assembly.GetAttributes())
             .Select(static (attributes, _) =>
             (
-                Mockings: attributes.Where(x =>
-                    x.AttributeClass.HasNameOrBaseClassHas(nameof(MockingConfigurationAttribute))),
-                Builders: attributes.Where(x =>
-                    x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute))),
-                Fixtures: attributes.Where(x =>
+                Mocking: attributes.Where(x =>
+                    x.AttributeClass.HasNameOrBaseClassHas(nameof(MockingConfigurationAttribute)))
+                .FirstOrDefault(),
+                Builder: attributes.Where(x =>
+                    x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute)))
+                .FirstOrDefault(),
+                Fixture: attributes.Where(x =>
                     x.AttributeClass.HasNameOrBaseClassHas(nameof(FixtureConfigurationAttribute)))
-            ));
-
-        var configurationBuilders = allAttributes
-            .Select(static (attributes, _) =>
-                (
-                    Mocking: attributes.Mockings.FirstOrDefault(),
-                    Builder: attributes.Builders.FirstOrDefault(),
-                    Fixture: attributes.Fixtures.FirstOrDefault()
-                )
-            )
+                .FirstOrDefault()
+            ))
             .Select(static (assembly, _) =>
             {
                 var globalFixtureProperties = assembly.Fixture?.ConstructorArguments;
@@ -116,8 +110,12 @@ public class BuildersGenerator : IIncrementalGenerator
             {
                 var (fixtureProperties, mockingProperties, builderProperties, typeForBuilder) = properties;
                 return new BuilderSourceStringGenerator(builderProperties,
-                    new EntityToBuild(typeForBuilder, mockingProperties, fixtureProperties,
-                        builderProperties.NullableStrategy, builderProperties.StaticFactoryMethodName),
+                    new EntityToBuild(
+                        typeForBuilder,
+                        mockingProperties,
+                        fixtureProperties,
+                        builderProperties.NullableStrategy,
+                        builderProperties.StaticFactoryMethodName),
                     fixtureProperties,
                     mockingProperties);
             });

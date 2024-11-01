@@ -33,7 +33,7 @@ public class BuilderPropertiesTests
     {
         // Arrange
         var attributeDataMock = new MakeBuilderAttributeInternal(null!, string.Empty, false,
-            NullableStrategy.Enabled, false, true, null);
+            NullableStrategy.Enabled, false, true, null, null);
 
         // Act
         var act = () => Create(attributeDataMock);
@@ -57,7 +57,7 @@ public class BuilderPropertiesTests
         _ = properties.FullName.Should().NotBeNullOrEmpty();
         _ = properties.BuildingMethodsPrefix.Should().Be(attributeDataMock.BuildingMethodsPrefix);
         _ = properties.NullableStrategy.Should().Be(attributeDataMock.NullableStrategy!.Value);
-        _ = properties.StaticCreator.Should().Be(attributeDataMock.DefaultStaticCreator!.Value);
+        _ = properties.GenerateDefaultBuildMethod.Should().Be(attributeDataMock.GenerateDefaultBuildMethod!.Value);
         _ = properties.ImplicitCast.Should().Be(attributeDataMock.ImplicitCast!.Value);
         _ = properties.ShouldGenerateMethodsForUnreachableProperties.Should().Be(attributeDataMock.GenerateMethodsForUnreachableProperties!.Value);
         _ = properties.IsPostBuildMethodOverriden.Should().BeFalse();
@@ -95,7 +95,7 @@ public class BuilderPropertiesTests
     {
         var typeSymbolMock = new Mock<INamedTypeSymbol>();
         var attributeDataMock = new MakeBuilderAttributeInternal(typeSymbolMock.Object, "Build", false,
-            nullableStrategy, false, true, null);
+            nullableStrategy, false, true, null, null);
         var methodSymbolMock = new Mock<IMethodSymbol>();
         _ = methodSymbolMock.SetupGet(x => x.Name).Returns("BuildMethod");
         _ = methodSymbolMock.SetupGet(x => x.MethodKind).Returns(MethodKind.Ordinary);
@@ -298,5 +298,5 @@ public class BuilderPropertiesTests
     }
 
     private static MakeBuilderAttributeInternal GenerateAttributeInternal(Mock<INamedTypeSymbol> typeSymbolMock, string prefix = "Build")
-        => new (typeSymbolMock.Object, prefix, false, NullableStrategy.Enabled, false, true, null);
+        => new (typeSymbolMock.Object, prefix, false, NullableStrategy.Enabled, false, true, null, null);
 }

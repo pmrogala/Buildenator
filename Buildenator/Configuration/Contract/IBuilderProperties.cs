@@ -14,7 +14,7 @@ internal interface IBuilderProperties
     string FullName { get; }
     string Name { get; }
     NullableStrategy NullableStrategy { get; }
-    bool StaticCreator { get; }
+    bool GenerateDefaultBuildMethod { get; }
     bool ImplicitCast { get; }
     bool IsPostBuildMethodOverriden { get; }
     bool IsDefaultConstructorOverriden { get; }
@@ -22,4 +22,5 @@ internal interface IBuilderProperties
     Location OriginalLocation { get; }
     bool IsBuildMethodOverriden { get; }
     IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
+    bool GenerateStaticPropertyForBuilderCreation { get; }
 }

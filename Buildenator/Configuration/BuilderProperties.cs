@@ -27,14 +27,16 @@ internal readonly struct BuilderProperties : IBuilderProperties
         NullableStrategy? nullableStrategy = null;
         bool? generateMethodsForUnreachableProperties = null;
         bool? implicitCast = null;
+        bool? generateStaticPropertyForBuilderCreation = null;
 
         if (globalAttributes.HasValue)
         {
             defaultNameWith = globalAttributes.Value.GetOrThrow<string>(0, nameof(MakeBuilderAttributeInternal.BuildingMethodsPrefix));
-            defaultStaticBuilder = globalAttributes.Value.GetOrThrow<bool>(1, nameof(MakeBuilderAttributeInternal.DefaultStaticCreator));
+            defaultStaticBuilder = globalAttributes.Value.GetOrThrow<bool>(1, nameof(MakeBuilderAttributeInternal.GenerateDefaultBuildMethod));
             nullableStrategy = globalAttributes.Value.GetOrThrow<NullableStrategy>(2, nameof(MakeBuilderAttributeInternal.NullableStrategy));
             generateMethodsForUnreachableProperties = globalAttributes.Value.GetOrThrow<bool>(3, nameof(MakeBuilderAttributeInternal.GenerateMethodsForUnreachableProperties));
             implicitCast = globalAttributes.Value.GetOrThrow<bool>(4, nameof(MakeBuilderAttributeInternal.ImplicitCast));
+            generateStaticPropertyForBuilderCreation = globalAttributes.Value.GetOrThrow<bool>(5, nameof(MakeBuilderAttributeInternal.GenerateStaticPropertyForBuilderCreation));
         }
 
         nullableStrategy = builderAttribute.NullableStrategy is null ? nullableStrategy: builderAttribute.NullableStrategy;
@@ -49,12 +51,13 @@ internal readonly struct BuilderProperties : IBuilderProperties
             new MakeBuilderAttributeInternal(
                 builderAttribute.TypeForBuilder,
                 builderAttribute.BuildingMethodsPrefix ?? defaultNameWith,
-                builderAttribute.DefaultStaticCreator ?? defaultStaticBuilder,
+                builderAttribute.GenerateDefaultBuildMethod ?? defaultStaticBuilder,
                 nullableStrategy,
                 builderAttribute.GenerateMethodsForUnreachableProperties ??
                 generateMethodsForUnreachableProperties,
                 builderAttribute.ImplicitCast ?? implicitCast,
-                builderAttribute.StaticFactoryMethodName));
+                builderAttribute.StaticFactoryMethodName,
+                builderAttribute.GenerateStaticPropertyForBuilderCreation ?? generateStaticPropertyForBuilderCreation));
     }
 
     private BuilderProperties(INamespaceOrTypeSymbol builderSymbol, MakeBuilderAttributeInternal attributeData)
@@ -64,11 +67,12 @@ internal readonly struct BuilderProperties : IBuilderProperties
         FullName = builderSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
         BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix ?? DefaultConstants.BuildingMethodsPrefix;
         NullableStrategy = attributeData.NullableStrategy ?? NullableStrategy.Default;
-        StaticCreator = attributeData.DefaultStaticCreator ?? true;
+        GenerateDefaultBuildMethod = attributeData.GenerateDefaultBuildMethod ?? true;
         ImplicitCast = attributeData.ImplicitCast ?? false;
         ShouldGenerateMethodsForUnreachableProperties = attributeData.GenerateMethodsForUnreachableProperties ?? false;
         OriginalLocation = builderSymbol.Locations.First();
         StaticFactoryMethodName = attributeData.StaticFactoryMethodName;
+        GenerateStaticPropertyForBuilderCreation = attributeData.GenerateStaticPropertyForBuilderCreation ?? false;
 
         if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
             throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");
@@ -112,7 +116,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public string FullName { get; }
     public string BuildingMethodsPrefix { get; }
     public NullableStrategy NullableStrategy { get; }
-    public bool StaticCreator { get; }
+    public bool GenerateDefaultBuildMethod { get; }
     public bool ImplicitCast { get; }
     public bool IsPostBuildMethodOverriden { get; }
     public bool IsDefaultConstructorOverriden { get; }
@@ -120,6 +124,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public bool IsBuildMethodOverriden { get; }
     public Location OriginalLocation { get; }
     public string? StaticFactoryMethodName { get; }
+    public bool GenerateStaticPropertyForBuilderCreation { get; }
 
     public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;
     public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;

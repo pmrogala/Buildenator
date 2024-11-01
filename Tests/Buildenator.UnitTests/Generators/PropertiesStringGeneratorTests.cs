@@ -42,8 +42,8 @@ public class PropertiesStringGeneratorTests
         var properties = new[] { typedSymbol1, typedSymbol2 };
 
         var generator = new PropertiesStringGenerator(_builder, _entity);
-        _ = Mock.Get(_entity).Setup(x => x.GetAllUniqueSettablePropertiesAndParameters()).Returns(properties);
-        _ = Mock.Get(_entity).Setup(x => x.GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch())
+        _ = Mock.Get(_entity).Setup(x => x.AllUniqueSettablePropertiesAndParameters).Returns(properties);
+        _ = Mock.Get(_entity).Setup(x => x.AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch)
             .Returns(Array.Empty<ITypedSymbol>());
 
         // Act
@@ -66,8 +66,8 @@ public class PropertiesStringGeneratorTests
 
         var generator = new PropertiesStringGenerator(_builder, _entity);
         _ = Mock.Get(_builder).Setup(x => x.ShouldGenerateMethodsForUnreachableProperties).Returns(true);
-        _ = Mock.Get(_entity).Setup(x => x.GetAllUniqueSettablePropertiesAndParameters()).Returns(properties);
-        _ = Mock.Get(_entity).Setup(x => x.GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch())
+        _ = Mock.Get(_entity).Setup(x => x.AllUniqueSettablePropertiesAndParameters).Returns(properties);
+        _ = Mock.Get(_entity).Setup(x => x.AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch)
             .Returns(readOnlyProperties);
 
         // Act
@@ -85,7 +85,7 @@ public class PropertiesStringGeneratorTests
         var properties = new[] { _typedSymbol };
 
         var generator = new PropertiesStringGenerator(_builder, _entity);
-        _ = Mock.Get(_entity).Setup(x => x.GetAllUniqueSettablePropertiesAndParameters()).Returns(properties);
+        _ = Mock.Get(_entity).Setup(x => x.AllUniqueSettablePropertiesAndParameters).Returns(properties);
 
         var existingField = _typedSymbol.UnderScoreName;
         var existingMethod = $"Build{_typedSymbol.SymbolPascalName}";
@@ -109,7 +109,7 @@ public class PropertiesStringGeneratorTests
         var properties = new[] { _typedSymbol };
 
         var generator = new PropertiesStringGenerator(_builder, _entity);
-        _ = Mock.Get(_entity).Setup(x => x.GetAllUniqueSettablePropertiesAndParameters()).Returns(properties);
+        _ = Mock.Get(_entity).Setup(x => x.AllUniqueSettablePropertiesAndParameters).Returns(properties);
         _ = Mock.Get(_typedSymbol).Setup(x => x.IsMockable()).Returns(true);
 
         // Act
@@ -126,7 +126,7 @@ public class PropertiesStringGeneratorTests
         var properties = new[] { _typedSymbol };
 
         var generator = new PropertiesStringGenerator(_builder, _entity);
-        _ = Mock.Get(_entity).Setup(x => x.GetAllUniqueSettablePropertiesAndParameters()).Returns(properties);
+        _ = Mock.Get(_entity).Setup(x => x.AllUniqueSettablePropertiesAndParameters).Returns(properties);
         _ = Mock.Get(_typedSymbol).Setup(x => x.IsMockable()).Returns(false);
 
         // Act
@@ -144,7 +144,7 @@ public class PropertiesStringGeneratorTests
         var properties = new[] { _typedSymbol };
 
         var generator = new PropertiesStringGenerator(_builder, _entity);
-        _ = Mock.Get(_entity).Setup(x => x.GetAllUniqueSettablePropertiesAndParameters()).Returns(properties);
+        _ = Mock.Get(_entity).Setup(x => x.AllUniqueSettablePropertiesAndParameters).Returns(properties);
 
         // Act
         var result = generator.GeneratePropertiesCode();
@@ -160,7 +160,7 @@ public class PropertiesStringGeneratorTests
         var properties = new[] { _typedSymbol };
 
         var generator = new PropertiesStringGenerator(_builder, _entity);
-        _ = Mock.Get(_entity).Setup(x => x.GetAllUniqueSettablePropertiesAndParameters()).Returns(properties);
+        _ = Mock.Get(_entity).Setup(x => x.AllUniqueSettablePropertiesAndParameters).Returns(properties);
 
         // Act
         var result = generator.GeneratePropertiesCode();

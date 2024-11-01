@@ -19,11 +19,11 @@ internal sealed class PropertiesStringGenerator
 
 	public string GeneratePropertiesCode()
 	{
-		var properties = _entity.GetAllUniqueSettablePropertiesAndParameters();
+		var properties = _entity.AllUniqueSettablePropertiesAndParameters;
 
 		if (_builder.ShouldGenerateMethodsForUnreachableProperties || _entity.ConstructorToBuild is null)
 		{
-			properties = [.. properties, .. _entity.GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch()];
+			properties = [.. properties, .. _entity.AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch];
 		}
 
 		var output = new StringBuilder();

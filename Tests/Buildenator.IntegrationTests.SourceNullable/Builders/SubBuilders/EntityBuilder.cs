@@ -3,7 +3,7 @@ using Buildenator.IntegrationTests.SharedEntitiesNullable;
 
 namespace Buildenator.IntegrationTests.SourceNullable.Builders.SubBuilders
 {
-	[MakeBuilder(typeof(Entity), defaultStaticCreator: false)]
+	[MakeBuilder(typeof(Entity), generateDefaultBuildMethod: false)]
 	public partial class EntityBuilder
 	{
 	}
