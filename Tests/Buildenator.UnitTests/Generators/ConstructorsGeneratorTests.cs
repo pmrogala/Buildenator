@@ -19,7 +19,7 @@ public class ConstructorsGeneratorTests
         var typedSymbolMock = new Mock<ITypedSymbol>();
         _ = typedSymbolMock.Setup(ts => ts.NeedsFieldInit()).Returns(true);
         _ = typedSymbolMock.Setup(ts => ts.GenerateFieldInitialization()).Returns("TestFieldInitialization");
-        _ = entityMock.Setup(e => e.GetAllUniqueSettablePropertiesAndParameters())
+        _ = entityMock.Setup(e => e.AllUniqueSettablePropertiesAndParameters)
             .Returns(new[] { typedSymbolMock.Object });
         _ = fixtureConfigurationMock.Setup(fc => fc.NeedsAdditionalConfiguration()).Returns(true);
         _ = fixtureConfigurationMock.Setup(fc => fc.GenerateAdditionalConfiguration())
@@ -48,7 +48,7 @@ public class ConstructorsGeneratorTests
         var typedSymbolMock = new Mock<ITypedSymbol>();
         _ = typedSymbolMock.Setup(ts => ts.NeedsFieldInit()).Returns(true);
         _ = typedSymbolMock.Setup(ts => ts.GenerateFieldInitialization()).Returns("TestFieldInitialization");
-        _ = entityMock.Setup(e => e.GetAllUniqueSettablePropertiesAndParameters())
+        _ = entityMock.Setup(e => e.AllUniqueSettablePropertiesAndParameters)
             .Returns(new[] { typedSymbolMock.Object });
 
         // Act
@@ -72,7 +72,7 @@ public class ConstructorsGeneratorTests
         var fixtureConfigurationMock = new Mock<IFixtureProperties>();
         var typedSymbolMock = new Mock<ITypedSymbol>();
         _ = typedSymbolMock.Setup(ts => ts.NeedsFieldInit()).Returns(false);
-        _ = entityMock.Setup(e => e.GetAllUniqueSettablePropertiesAndParameters())
+        _ = entityMock.Setup(e => e.AllUniqueSettablePropertiesAndParameters)
             .Returns(new[] { typedSymbolMock.Object });
         _ = fixtureConfigurationMock.Setup(fc => fc.NeedsAdditionalConfiguration()).Returns(false);
 

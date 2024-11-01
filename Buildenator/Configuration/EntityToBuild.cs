@@ -16,8 +16,8 @@ internal sealed class EntityToBuild : IEntityToBuild
     public string FullName { get; }
     public string FullNameWithConstraints { get; }
     public Constructor? ConstructorToBuild { get; }
-    public IReadOnlyList<TypedSymbol> SettableProperties { get; }
-    public IReadOnlyList<TypedSymbol> ReadOnlyProperties { get; }
+    public IReadOnlyList<ITypedSymbol> AllUniqueSettablePropertiesAndParameters => _uniqueTypedSymbols;
+    public IReadOnlyList<ITypedSymbol> AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch => _uniqueReadOnlyTypedSymbols;
     public string[] AdditionalNamespaces { get; }
     public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
     public NullableStrategy NullableStrategy { get; }
@@ -43,38 +43,80 @@ internal sealed class EntityToBuild : IEntityToBuild
             entityToBuildSymbol = typeForBuilder;
         }
 
-        AdditionalNamespaces = additionalNamespaces.Concat([entityToBuildSymbol.ContainingNamespace.ToDisplayString()]).ToArray();
+        AdditionalNamespaces = additionalNamespaces.ToArray();
         Name = entityToBuildSymbol.Name;
         FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters, typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
         FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
             genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters | SymbolDisplayGenericsOptions.IncludeTypeConstraints | SymbolDisplayGenericsOptions.IncludeVariance));
 
         ConstructorToBuild = Constructor.CreateConstructorOrDefault(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy, staticFactoryMethodName);
-        (SettableProperties, ReadOnlyProperties) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy);
+        (_properties, _uniqueReadOnlyTypedSymbols) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy);
+        _uniqueTypedSymbols = _properties;
+        if (ConstructorToBuild is not null)
+        {
+            _properties = _properties.Where(x => !ConstructorToBuild.ContainsParameter(x.SymbolName)).ToList();
+            _uniqueTypedSymbols = [.. _properties, .. ConstructorToBuild.Parameters];
+            _uniqueReadOnlyTypedSymbols = _uniqueReadOnlyTypedSymbols.Where(x => !ConstructorToBuild.ContainsParameter(x.SymbolName)).ToList();
+        }
+
         NullableStrategy = nullableStrategy;
     }
 
-    public IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters()
+    public string GenerateBuildsCode(bool shouldGenerateMethodsForUnreachableProperties)
     {
         if (ConstructorToBuild is null)
-        {
-            return _uniqueTypedSymbols ??= SettableProperties;
-        }
+            return "";
 
-        return _uniqueTypedSymbols ??= SettableProperties
-            .Where(x => !ConstructorToBuild.ContainsParameter(x.SymbolName))
-            .Concat(ConstructorToBuild.Parameters).ToList();
+        var disableWarning = NullableStrategy == NullableStrategy.Enabled
+            ? "#pragma warning disable CS8604\n"
+            : string.Empty;
+        var restoreWarning = NullableStrategy == NullableStrategy.Enabled
+            ? "#pragma warning restore CS8604\n"
+            : string.Empty;
+
+        return $@"{disableWarning}        public {FullName} {DefaultConstants.BuildMethodName}()
+        {{
+            {GenerateLazyBuildEntityString(shouldGenerateMethodsForUnreachableProperties, ConstructorToBuild.Parameters)}
+        }}
+{restoreWarning}
+";
     }
 
-    public IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch()
+    private string GenerateLazyBuildEntityString(bool shouldGenerateMethodsForUnreachableProperties, IEnumerable<TypedSymbol> parameters)
     {
-        if (ConstructorToBuild is null)
+        var propertiesAssignment = _properties.Select(property => $"{property.SymbolName} = {property.GenerateLazyFieldValueReturn()}").ComaJoin();
+        var onlyConstructorString = string.Empty;
+        if (ConstructorToBuild is StaticConstructor staticConstructor)
         {
-            return _uniqueReadOnlyTypedSymbols ??= ReadOnlyProperties;
+            onlyConstructorString = @$"var result = {FullName}.{staticConstructor.Name}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()});
+";
+        }
+        else
+        {
+            onlyConstructorString = @$"var result = new {FullName}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()})
+            {{
+{(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
+            }};
+";
         }
 
-        return _uniqueReadOnlyTypedSymbols ??= ReadOnlyProperties
-            .Where(x => !ConstructorToBuild.ContainsParameter(x.SymbolName)).ToList();
+        return onlyConstructorString
+            + $@"{(shouldGenerateMethodsForUnreachableProperties ? GenerateUnreachableProperties() : "")}
+            {DefaultConstants.PostBuildMethodName}(result);
+            return result;";
+
+        string GenerateUnreachableProperties()
+        {
+            var output = new StringBuilder();
+            output.AppendLine($"var t = typeof({FullName});");
+            foreach (var a in AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch)
+            {
+                output.Append($"            t.GetProperty(\"{a.SymbolName}\")")
+                    .Append(NullableStrategy == NullableStrategy.Enabled ? "!" : "")
+                    .AppendLine($".SetValue(result, {a.GenerateLazyFieldValueReturn()}, System.Reflection.BindingFlags.NonPublic, null, null, null);");
+            }
+            return output.ToString();
+        }
     }
 
     private static (TypedSymbol[] Settable, TypedSymbol[] ReadOnly) DividePropertiesBySetability(
@@ -87,50 +129,20 @@ internal sealed class EntityToBuild : IEntityToBuild
             readOnly.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration, nullableStrategy)).ToArray());
     }
 
-    public string GenerateDefaultBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties)
-    {
-        if (ConstructorToBuild is StaticConstructor staticConstructor)
-        {
-            return @$"return {FullName}.{staticConstructor.Name}({parameters.Select(a => a.GenerateFieldValueReturn()).ComaJoin()});";
-        }
-        else
-        {
-            var propertiesAssignment = properties.Select(property => $"{property.SymbolName} = {property.GenerateFieldValueReturn()}").ComaJoin();
-            return @$"return new {FullName}({parameters.Select(a => a.GenerateFieldValueReturn()).ComaJoin()})
-            {{
-{(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
-            }};";
-        }
-    }
-
-    public (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties()
-    {
-        IEnumerable<TypedSymbol> parameters = [];
-        IEnumerable<TypedSymbol> properties = SettableProperties;
-        if (ConstructorToBuild is not null)
-        {
-            parameters = ConstructorToBuild.Parameters;
-            properties = properties.Where(x => !ConstructorToBuild.ContainsParameter(x.SymbolName));
-        }
-
-        return (parameters.ToList(), properties.ToList());
-    }
-
-    public string GenerateStaticBuildsCode()
+    public string GenerateDefaultBuildsCode()
     {
         if (ConstructorToBuild is null)
             return "";
 
-        var (parameters, properties) = GetParametersAndProperties();
-        var moqInit = parameters
-            .Concat(properties)
+        var moqInit = ConstructorToBuild.Parameters
+            .Concat(_properties)
             .Where(symbol => symbol.IsMockable())
             .Select(s => $@"            {s.GenerateFieldInitialization()}")
             .Aggregate(new StringBuilder(), (builder, s) => builder.AppendLine(s))
             .ToString();
 
-        var methodParameters = parameters
-            .Concat(properties)
+        var methodParameters = ConstructorToBuild.Parameters
+            .Concat(_properties)
             .Select(s =>
             {
                 var fieldType = s.GenerateFieldType();
@@ -146,16 +158,33 @@ internal sealed class EntityToBuild : IEntityToBuild
         return $@"{disableWarning}        public static {FullName} BuildDefault({methodParameters})
         {{
             {moqInit}
-            {GenerateDefaultBuildEntityString(parameters, properties)}
+            {GenerateDefaultBuildEntityString(ConstructorToBuild.Parameters)}
         }}
 {restoreWarning}";
     }
 
-    private IReadOnlyList<TypedSymbol>? _uniqueTypedSymbols;
-    private IReadOnlyList<TypedSymbol>? _uniqueReadOnlyTypedSymbols;
+    private string GenerateDefaultBuildEntityString(IEnumerable<TypedSymbol> parameters)
+    {
+        if (ConstructorToBuild is StaticConstructor staticConstructor)
+        {
+            return @$"return {FullName}.{staticConstructor.Name}({parameters.Select(a => a.GenerateFieldValueReturn()).ComaJoin()});";
+        }
+        else
+        {
+            var propertiesAssignment = _properties.Select(property => $"{property.SymbolName} = {property.GenerateFieldValueReturn()}").ComaJoin();
+            return @$"return new {FullName}({parameters.Select(a => a.GenerateFieldValueReturn()).ComaJoin()})
+            {{
+{(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
+            }};";
+        }
+    }
+
+    private readonly IReadOnlyList<TypedSymbol> _uniqueReadOnlyTypedSymbols;
+    private readonly IReadOnlyList<TypedSymbol> _uniqueTypedSymbols;
+    private readonly IReadOnlyList<TypedSymbol> _properties;
     private readonly List<BuildenatorDiagnostic> _diagnostics = [];
 
-    internal abstract class Constructor
+    internal abstract class Constructor(IReadOnlyDictionary<string, TypedSymbol> constructorParameters)
     {
         public static Constructor? CreateConstructorOrDefault(
             INamedTypeSymbol entityToBuildSymbol,
@@ -164,14 +193,14 @@ internal sealed class EntityToBuild : IEntityToBuild
             NullableStrategy nullableStrategy,
             string? staticFactoryMethodName)
         {
-            IMethodSymbol[] constructors;
+            IEnumerable<IMethodSymbol> constructors;
             if (staticFactoryMethodName is null)
             {
-                constructors = entityToBuildSymbol.Constructors.Select(a => a).ToArray();
+                constructors = entityToBuildSymbol.Constructors.Select(a => a);
             }
             else
             {
-                constructors = entityToBuildSymbol.GetMembers(staticFactoryMethodName).OfType<IMethodSymbol>().Where(a => a.IsStatic).ToArray();
+                constructors = entityToBuildSymbol.GetMembers(staticFactoryMethodName).OfType<IMethodSymbol>().Where(a => a.IsStatic);
             }
 
             var onlyPublicConstructors = constructors
@@ -181,12 +210,10 @@ internal sealed class EntityToBuild : IEntityToBuild
             if (onlyPublicConstructors.Count == 0)
                 return default;
 
-            Dictionary<string, TypedSymbol> parameters = [];
-
             var selectedConstructor = onlyPublicConstructors
                             .OrderByDescending(x => x.Parameters.Length)
                             .First();
-            parameters = selectedConstructor
+            var parameters = selectedConstructor
                 .Parameters
                 .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, mockingConfiguration, fixtureConfiguration, nullableStrategy));
 
@@ -195,32 +222,17 @@ internal sealed class EntityToBuild : IEntityToBuild
                 : new StaticConstructor(parameters, selectedConstructor.Name);
         }
 
-        protected Constructor(IReadOnlyDictionary<string, TypedSymbol> constructorParameters)
-        {
-            ConstructorParameters = constructorParameters;
-        }
-
-        public IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; }
+        public IReadOnlyDictionary<string, TypedSymbol> ConstructorParameters { get; } = constructorParameters;
 
         public bool ContainsParameter(string parameterName) => ConstructorParameters.ContainsKey(parameterName);
         public IEnumerable<TypedSymbol> Parameters => ConstructorParameters.Values;
     }
 
-    internal sealed class ObjectConstructor : Constructor
-    {
-        internal ObjectConstructor(IReadOnlyDictionary<string, TypedSymbol> constructorParameters)
-            : base(constructorParameters)
-        {
-        }
-    }
+    internal sealed class ObjectConstructor(IReadOnlyDictionary<string, TypedSymbol> constructorParameters) : Constructor(constructorParameters) { }
 
-    internal sealed class StaticConstructor : Constructor
+    internal sealed class StaticConstructor(IReadOnlyDictionary<string, TypedSymbol> constructorParameters, string name)
+        : Constructor(constructorParameters)
     {
-        internal StaticConstructor(IReadOnlyDictionary<string, TypedSymbol> constructorParameters, string name)
-            : base(constructorParameters)
-        {
-            Name = name;
-        }
-        public string Name { get; }
+        public string Name { get; } = name;
     }
 }

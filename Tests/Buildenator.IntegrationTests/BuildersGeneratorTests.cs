@@ -250,7 +250,7 @@ public class BuildersGeneratorTests
     }
 
     [Fact]
-    public void BuildersGenerator_DefaultStaticCreator_ShouldCreateWithAllDefaultValues()
+    public void BuildersGenerator_GenerateDefaultBuildMethod_ShouldCreateWithAllDefaultValues()
     {
         var result = GrandchildEntityBuilder.BuildDefault();
 

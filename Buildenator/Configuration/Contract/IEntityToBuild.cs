@@ -10,14 +10,11 @@ internal interface IEntityToBuild : IAdditionalNamespacesProvider
     string FullName { get; }
     string FullNameWithConstraints { get; }
     string Name { get; }
-    IReadOnlyList<TypedSymbol> SettableProperties { get; }
-    IReadOnlyList<TypedSymbol> ReadOnlyProperties { get; }
     EntityToBuild.Constructor? ConstructorToBuild { get; }
     IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
+    IReadOnlyList<ITypedSymbol> AllUniqueSettablePropertiesAndParameters { get; }
 
-    string GenerateDefaultBuildEntityString(IEnumerable<ITypedSymbol> parameters, IEnumerable<ITypedSymbol> properties);
-    string GenerateStaticBuildsCode();
-    IReadOnlyList<ITypedSymbol> GetAllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch();
-    IReadOnlyList<ITypedSymbol> GetAllUniqueSettablePropertiesAndParameters();
-    (IReadOnlyList<ITypedSymbol> Parameters, IReadOnlyList<ITypedSymbol> Properties) GetParametersAndProperties();
+    string GenerateBuildsCode(bool shouldGenerateMethodsForUnreachableProperties);
+    string GenerateDefaultBuildsCode();
+    IReadOnlyList<ITypedSymbol> AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch { get; }
 }

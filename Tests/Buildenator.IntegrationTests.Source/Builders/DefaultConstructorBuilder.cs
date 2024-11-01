@@ -3,7 +3,7 @@ using Buildenator.IntegrationTests.SharedEntities;
 
 namespace Buildenator.IntegrationTests.Source.Builders;
 
-[MakeBuilder(typeof(DefaultConstructor), defaultStaticCreator: false)]
+[MakeBuilder(typeof(DefaultConstructor), generateDefaultBuildMethod: false)]
 public partial class DefaultConstructorBuilder
 {
     public DefaultConstructorBuilder()

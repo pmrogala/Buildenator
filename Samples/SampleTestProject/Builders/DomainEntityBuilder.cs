@@ -3,7 +3,7 @@ using SampleProject;
 
 namespace SampleTestProject.Builders;
 
-[MakeBuilder(typeof(DomainEntity))]
+[MakeBuilder(typeof(DomainEntity), generateStaticPropertyForBuilderCreation: true)]
 public partial class DomainEntityBuilder
 {
 }

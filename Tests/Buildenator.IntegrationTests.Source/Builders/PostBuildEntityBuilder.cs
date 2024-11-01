@@ -3,7 +3,7 @@ using Buildenator.IntegrationTests.SharedEntities;
 
 namespace Buildenator.IntegrationTests.Source.Builders;
 
-[MakeBuilder(typeof(PostBuildEntity), defaultStaticCreator: false, generateMethodsForUnreachableProperties: true)]
+[MakeBuilder(typeof(PostBuildEntity), generateDefaultBuildMethod: false, generateMethodsForUnreachableProperties: true)]
 public partial class PostBuildEntityBuilder
 {
     public void PostBuild(PostBuildEntity buildResult)
