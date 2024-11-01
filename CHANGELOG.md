@@ -22,6 +22,7 @@ This version brings many breaking changes.
 - Changed `defaultStaticCreator` to `generateDefaultBuildMethod` to better reflect the intention.
 - Removed generating the namespace of an entity that is build by a builder to handle edge cases.
    - It shouldn't generate any regression, but it's a breaking change anyway.
+- **Improved performance 3x**
 
 
 ## 8.3.0.0 - 2024-10-30

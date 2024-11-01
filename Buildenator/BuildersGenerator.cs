@@ -29,32 +29,28 @@ public class BuildersGenerator : IIncrementalGenerator
 #if DEBUG
         // Debugger.Launch();
 #endif
+        var symbolsAndAttributes = context.SyntaxProvider.ForAttributeWithMetadataName(
+            typeof(MakeBuilderAttribute).FullName,
+            predicate: static (sx, _) => sx is ClassDeclarationSyntax,
+            transform: static (ctx, _) =>
+            {
+                var attributes = ctx.TargetSymbol.GetAttributes();
+                return (
+                BuilderSymbol: (INamedTypeSymbol)ctx.TargetSymbol,
+                BuilderAttribute: new MakeBuilderAttributeInternal(
+                    attributes.Single(
+                        attributeData => attributeData.AttributeClass?.Name == nameof(MakeBuilderAttribute))),
+                MockingAttribute: GetMockingConfigurationOrDefault(attributes),
+                FixtureAttribute: GetLocalFixturePropertiesOrDefault(attributes)
+                        );
+            }
+        );
 
         var nullableOptions = context.CompilationProvider
             .Select(static (compilation, _) => compilation.Options.NullableContextOptions);
-        var syntaxTrees = context.CompilationProvider
-            .SelectMany(static (compilation, _) => compilation.SyntaxTrees);
-
-        var symbolsAndAttributes = syntaxTrees
-            .Combine(context.CompilationProvider)
-            .Select(SelectSyntaxTreeAndSemanticModel)
-            .Select(static (tuple, ct) => (Root: tuple.SyntaxTree.GetRoot(ct), tuple.SemanticModel))
-            .SelectMany(static (tuple, _) =>
-                tuple.Root.DescendantNodesAndSelf().Select(node => (node, tuple.SemanticModel)))
-            .Where(static tuple => tuple.node is ClassDeclarationSyntax)
-            .Select(static (tuple, token) => tuple.SemanticModel.GetDeclaredSymbol(tuple.node, token))
-            .Where(static symbol => symbol is INamedTypeSymbol)
-            .Select(static (symbol, _) => (INamedTypeSymbol)symbol!)
-            .Select(static (symbol, _) => (Symbol: symbol, Attributes: symbol.GetAttributes()))
-            .Select(static (symbolAndAttributesTuple, _)
-                => (symbolAndAttributesTuple.Symbol,
-                    Attribute: symbolAndAttributesTuple.Attributes.SingleOrDefault(attributeData =>
-                        attributeData.AttributeClass?.Name == nameof(MakeBuilderAttribute))))
-            .Where(static tuple => tuple.Attribute is not null /* remember about the bang operator in the next line when removing this condition */)
-            .Select(static (tuple, _) => (BuilderSymbol: tuple.Symbol, Attribute: new MakeBuilderAttributeInternal(tuple.Attribute!)));
 
         var classSymbols = symbolsAndAttributes
-            .Where(tuple => !tuple.Attribute.TypeForBuilder.IsAbstract);
+            .Where(tuple => !tuple.BuilderAttribute.TypeForBuilder.IsAbstract);
 
         var configurationBuilders = context.CompilationProvider
             .Select(static (c, _) => c.Assembly)
@@ -76,6 +72,7 @@ public class BuildersGenerator : IIncrementalGenerator
                 var globalFixtureProperties = assembly.Fixture?.ConstructorArguments;
                 var mockingConfigurationBuilder = assembly.Mocking?.ConstructorArguments;
                 var globalBuilderProperties = assembly.Builder?.ConstructorArguments;
+
                 return (globalFixtureProperties, mockingConfigurationBuilder, globalBuilderProperties);
             });
 
@@ -84,27 +81,22 @@ public class BuildersGenerator : IIncrementalGenerator
             .Combine(nullableOptions)
             .Select(static (leftRightAndNullable, _) =>
             {
-                var (builderNamedTypeSymbol, attribute) = leftRightAndNullable.Left.Left;
+                var (builderNamedTypeSymbol, builderAttribute, mockingAttribute, fixtureAttribute) = leftRightAndNullable.Left.Left;
                 var (globalFixtureProperties,
                     globalMockingConfiguration,
                     globalBuilderProperties) = leftRightAndNullable.Left.Right;
                 var nullableOptions = leftRightAndNullable.Right;
-                var builderAttributes = builderNamedTypeSymbol.GetAttributes();
 
-                var mockingProperties = MockingProperties.CreateOrDefault(
-                    globalMockingConfiguration,
-                    GetMockingConfigurationOrDefault(builderAttributes));
+                var mockingProperties = MockingProperties.CreateOrDefault(globalMockingConfiguration, mockingAttribute);
 
                 var fixtureProperties =
-                    FixtureProperties.CreateOrDefault(
-                        globalFixtureProperties,
-                        GetLocalFixturePropertiesOrDefault(builderAttributes));
+                    FixtureProperties.CreateOrDefault(globalFixtureProperties, fixtureAttribute);
 
                 var builderProperties =
-                    BuilderProperties.Create(builderNamedTypeSymbol, attribute, globalBuilderProperties, nullableOptions.AnnotationsEnabled());
+                    BuilderProperties.Create(builderNamedTypeSymbol, builderAttribute, globalBuilderProperties, nullableOptions.AnnotationsEnabled());
 
                 return (fixtureProperties, mockingConfiguration: mockingProperties, builderProperties,
-                    attribute.TypeForBuilder);
+                    builderAttribute.TypeForBuilder);
             })
             .Select(static (properties, _) =>
             {
@@ -124,7 +116,7 @@ public class BuildersGenerator : IIncrementalGenerator
         {
             productionContext.AddCsSourceFile(generator.FileName,
                 SourceText.From(generator.CreateBuilderCode(), Encoding.UTF8));
-            foreach(var diagnostic in generator.Diagnostics)
+            foreach (var diagnostic in generator.Diagnostics)
             {
                 productionContext.ReportDiagnostic(diagnostic);
             }
@@ -132,8 +124,8 @@ public class BuildersGenerator : IIncrementalGenerator
 
 
         var abstractClassSymbols = symbolsAndAttributes
-            .Where(tuple => tuple.Attribute.TypeForBuilder.IsAbstract)
-            .Select((tuple, _) => (tuple.BuilderSymbol, tuple.Attribute.TypeForBuilder));
+            .Where(tuple => tuple.BuilderAttribute.TypeForBuilder.IsAbstract)
+            .Select((tuple, _) => (tuple.BuilderSymbol, tuple.BuilderAttribute.TypeForBuilder));
 
         context.RegisterSourceOutput(abstractClassSymbols, (productionContext, tuple)
             =>
