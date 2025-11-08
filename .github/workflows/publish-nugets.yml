@@ -27,7 +27,7 @@ jobs:
         id: get_version
         with:
           text: ${{ github.ref }}
-          regex: '[0-9]+.[0-9]+.[0-9]+-?[0-9a-z]*'
+          regex: '[0-9]+.[0-9]+.[0-9]+.[0-9]+-?[0-9a-z]*'
       - name: Check version or exit
         id: check-version
         shell: bash
