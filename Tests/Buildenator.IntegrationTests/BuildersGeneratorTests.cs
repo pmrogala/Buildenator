@@ -317,4 +317,19 @@ public class BuildersGeneratorTests
         _ = builder.WithPropertyGetter("1");
         _ = builder.WithEntityInDifferentNamespace(null!);
     }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_InheritedPropertyWithPrivateSetter_ShouldBuildSuccessfully(string aProperty, int derivedProperty)
+    {
+        var builder = DerivedClassFromBaseWithPrivateSetterBuilder.DerivedClassFromBaseWithPrivateSetter;
+
+        var result = builder
+            .WithAProperty(aProperty)
+            .WithDerivedProperty(derivedProperty)
+            .Build();
+
+        _ = result.AProperty.Should().Be(aProperty);
+        _ = result.DerivedProperty.Should().Be(derivedProperty);
+    }
 }

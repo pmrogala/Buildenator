@@ -113,7 +113,11 @@ internal sealed class EntityToBuild : IEntityToBuild
             {
                 output.Append($"            t.GetProperty(\"{a.SymbolName}\")")
                     .Append(NullableStrategy == NullableStrategy.Enabled ? "!" : "")
-                    .AppendLine($".SetValue(result, {a.GenerateLazyFieldValueReturn()}, System.Reflection.BindingFlags.NonPublic, null, null, null);");
+                    .Append(".DeclaringType")
+                    .Append(NullableStrategy == NullableStrategy.Enabled ? "!" : "")
+                    .Append($".GetProperty(\"{a.SymbolName}\")")
+                    .Append(NullableStrategy == NullableStrategy.Enabled ? "!" : "")
+                    .AppendLine($".SetValue(result, {a.GenerateLazyFieldValueReturn()});");
             }
             return output.ToString();
         }
