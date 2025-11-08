@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## 8.4.0.1 - 2025-11-08
+
+### Fixed
+- Generator: when generating methods for properties without public setters (e.g. inherited properties with private setters), the generator now resolves the property's declaring type before calling SetValue. This fixes "Property set method not found" errors when setting inherited, non-public setters from generated builders.
+
 ## 8.4.0.0 - 2024-10-31
 
 ### Changed
