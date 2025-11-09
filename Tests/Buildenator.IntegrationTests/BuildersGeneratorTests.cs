@@ -332,4 +332,45 @@ public class BuildersGeneratorTests
         _ = result.AProperty.Should().Be(aProperty);
         _ = result.DerivedProperty.Should().Be(derivedProperty);
     }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_GetOnlyProperties_ShouldNotGenerateMethodsForPropertiesWithoutSetters(
+        int constructorValue, string settableValue)
+    {
+        var builder = EntityWithGetOnlyPropertiesBuilder.EntityWithGetOnlyProperties;
+
+        // Should have method for constructor parameter
+        var result = builder
+            .WithConstructorValue(constructorValue)
+            .WithSettableProperty(settableValue)
+            .Build();
+
+        _ = result.ConstructorValue.Should().Be(constructorValue);
+        _ = result.SettableProperty.Should().Be(settableValue);
+        
+        // ExpressionBodiedProperty should always be true (computed property)
+        _ = result.ExpressionBodiedProperty.Should().BeTrue();
+        
+        // GetOnlyProperty should be null (no constructor parameter or setter)
+        _ = result.GetOnlyProperty.Should().BeNull();
+    }
+
+    [Fact]
+    public void BuildersGenerator_GetOnlyProperties_ShouldNotHaveMethodsForExpressionBodiedProperties()
+    {
+        var builderType = typeof(EntityWithGetOnlyPropertiesBuilder);
+        
+        // Should NOT have method for expression-bodied property
+        _ = builderType.GetMethod("WithExpressionBodiedProperty").Should().BeNull();
+        
+        // Should NOT have method for get-only property without constructor
+        _ = builderType.GetMethod("WithGetOnlyProperty").Should().BeNull();
+        
+        // Should have method for constructor parameter
+        _ = builderType.GetMethod("WithConstructorValue").Should().NotBeNull();
+        
+        // Should have method for settable property
+        _ = builderType.GetMethod("WithSettableProperty").Should().NotBeNull();
+    }
 }

@@ -36,6 +36,10 @@ internal static class SymbolExtensions
             baseType = baseType.BaseType;
         }
 
+        // Filter out properties that have no setter at all (e.g., expression-bodied properties or get-only properties)
+        // These cannot be set via reflection and should not be included in builders
+        unsetProperties = unsetProperties.Where(p => p.SetMethod is not null).ToList();
+
         return (setProperties, unsetProperties);
 
         static void TakeNotCoveredProperties(
