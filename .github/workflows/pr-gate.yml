@@ -2,7 +2,7 @@ name: PR Gate
 
 on:
   pull_request:
-    branches: [ main, release/* ]
+    branches: [ main, release/*, feature/* ]
     types: [opened, synchronize, reopened]
 
 jobs:
