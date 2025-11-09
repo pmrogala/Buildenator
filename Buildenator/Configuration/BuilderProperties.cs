@@ -98,6 +98,12 @@ internal readonly struct BuilderProperties : IBuilderProperties
                         BuildenatorDiagnosticDescriptors.BuildMethodOverridenDiagnostic,
                         OriginalLocation));
                     break;
+                case IMethodSymbol { MethodKind: MethodKind.Ordinary, Name: DefaultConstants.BuildManyMethodName }:
+                    IsBuildManyMethodOverriden = true;
+                    _diagnostics.Add(new BuildenatorDiagnostic(
+                        BuildenatorDiagnosticDescriptors.BuildManyMethodOverridenDiagnostic,
+                        OriginalLocation));
+                    break;
                 case IMethodSymbol { MethodKind: MethodKind.Constructor, Parameters.Length: 0, IsImplicitlyDeclared: false }:
                     IsDefaultConstructorOverriden = true;
                     _diagnostics.Add(new BuildenatorDiagnostic(
@@ -122,6 +128,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public bool IsDefaultConstructorOverriden { get; }
     public bool ShouldGenerateMethodsForUnreachableProperties { get; }
     public bool IsBuildMethodOverriden { get; }
+    public bool IsBuildManyMethodOverriden { get; }
     public Location OriginalLocation { get; }
     public string? StaticFactoryMethodName { get; }
     public bool GenerateStaticPropertyForBuilderCreation { get; }

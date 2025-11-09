@@ -21,6 +21,7 @@ internal interface IBuilderProperties
     bool ShouldGenerateMethodsForUnreachableProperties { get; }
     Location OriginalLocation { get; }
     bool IsBuildMethodOverriden { get; }
+    bool IsBuildManyMethodOverriden { get; }
     IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
     bool GenerateStaticPropertyForBuilderCreation { get; }
 }
