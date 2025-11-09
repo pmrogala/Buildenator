@@ -9,4 +9,5 @@ internal static class DefaultConstants
     public const string NullBox = "NullBox";
     public const string FixtureLiteral = "_fixture";
     public const string BuildMethodName = "Build";
+    public const string BuildManyMethodName = "BuildMany";
 }

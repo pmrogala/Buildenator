@@ -44,4 +44,12 @@ internal static class BuildenatorDiagnosticDescriptors
         "Buildenator",
         DiagnosticSeverity.Info,
         true);
+
+    internal static readonly DiagnosticDescriptor BuildManyMethodOverridenDiagnostic = new(
+        "BDN006",
+        "You overriden the default " + DefaultConstants.BuildManyMethodName + "() method",
+        "You overriden the default " + DefaultConstants.BuildManyMethodName + "() method. If it's not on purpose, please remove it.",
+        "Buildenator",
+        DiagnosticSeverity.Info,
+        true);
 }

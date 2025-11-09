@@ -286,6 +286,17 @@ public class BuildersGeneratorTests
         _ = results[0].Should().NotBeEquivalentTo(results[2]);
     }
 
+    [Fact]
+    public void BuildersGenerator_CustomBuildMany_ShouldUseCustomImplementation()
+    {
+        var results = CustomBuildManyEntityBuilder.Entity.BuildMany(3).ToList();
+
+        _ = results.Should().HaveCount(3);
+        _ = results[0].Id.Should().BeGreaterThan(0);
+        _ = results[1].Id.Should().BeGreaterThan(results[0].Id);
+        _ = results[2].Id.Should().BeGreaterThan(results[1].Id);
+    }
+
     [Theory]
     [CustomAutoData]
     public void BuildersGenerator_ReadOnlyProperty_ShouldCreateMethodForSettingItsValue(int[] privateField)

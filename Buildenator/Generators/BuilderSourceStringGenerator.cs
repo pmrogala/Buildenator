@@ -68,7 +68,7 @@ namespace {_builder.ContainingNamespace}
 {(_builder.IsDefaultConstructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration))}
 {_propertiesStringGenerator.GeneratePropertiesCode()}
 {(_builder.IsBuildMethodOverriden ? string.Empty : _entity.GenerateBuildsCode(_builder.ShouldGenerateMethodsForUnreachableProperties))}
-{GenerateBuildManyCode()}
+{(_builder.IsBuildManyMethodOverriden ? string.Empty : GenerateBuildManyCode())}
 {(_builder.GenerateStaticPropertyForBuilderCreation ? $"        public static {_builder.FullName} {_entity.Name} => new {_builder.FullName}();" : "")}
 {(_builder.GenerateDefaultBuildMethod ? _entity.GenerateDefaultBuildsCode() : string.Empty)}
 {(_builder.ImplicitCast ? GenerateImplicitCastCode() : string.Empty)}
