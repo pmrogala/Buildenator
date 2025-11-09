@@ -20,8 +20,9 @@ internal static class SymbolExtensions
             .Where(a => 
                 a.GetMethod is not null 
                 && a.GetMethod.DeclaredAccessibility != Accessibility.Private
-                && a.GetMethod.DeclaredAccessibility != Accessibility.Protected)
-            .Split(a => a.IsSettableProperty())
+                && a.GetMethod.DeclaredAccessibility != Accessibility.Protected
+                && a.IsSettableProperty())
+            .Split(a => a.IsPubliclySettableProperty())
             .ToLists();
 
         var setPropertyNames = new HashSet<string>(setProperties.Select(x => x.Name));
@@ -29,16 +30,14 @@ internal static class SymbolExtensions
         var baseType = entityToBuildSymbol.BaseType;
         while (baseType != null)
         {
-            var newProperties = baseType.GetMembers().OfType<IPropertySymbol>().Split(a => a.IsSettableProperty());
+            var newProperties = baseType.GetMembers().OfType<IPropertySymbol>()
+                .Where(a => a.IsSettableProperty())
+                .Split(a => a.IsPubliclySettableProperty());
             TakeNotCoveredProperties(ref setProperties, setPropertyNames, newProperties.Left);
             TakeNotCoveredProperties(ref unsetProperties, unsetPropertyNames, newProperties.Right);
 
             baseType = baseType.BaseType;
         }
-
-        // Filter out properties that have no setter at all (e.g., expression-bodied properties or get-only properties)
-        // These cannot be set via reflection and should not be included in builders
-        unsetProperties = unsetProperties.Where(p => p.SetMethod is not null).ToList();
 
         return (setProperties, unsetProperties);
 
