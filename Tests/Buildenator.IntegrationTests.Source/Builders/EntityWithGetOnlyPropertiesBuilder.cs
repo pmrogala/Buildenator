@@ -4,7 +4,7 @@ using Buildenator.IntegrationTests.SharedEntities;
 
 namespace Buildenator.IntegrationTests.Source.Builders;
 
-[MakeBuilder(typeof(EntityWithGetOnlyProperties), nullableStrategy: NullableStrategy.Enabled)]
+[MakeBuilder(typeof(EntityWithGetOnlyProperties), nullableStrategy: NullableStrategy.Enabled, generateMethodsForUnreachableProperties: true)]
 [AutoFixtureConfiguration]
 public partial class EntityWithGetOnlyPropertiesBuilder
 {

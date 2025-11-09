@@ -336,18 +336,20 @@ public class BuildersGeneratorTests
     [Theory]
     [AutoData]
     public void BuildersGenerator_GetOnlyProperties_ShouldNotGenerateMethodsForPropertiesWithoutSetters(
-        int constructorValue, string settableValue)
+        int constructorValue, string settableValue, string privateSetterValue)
     {
         var builder = EntityWithGetOnlyPropertiesBuilder.EntityWithGetOnlyProperties;
 
-        // Should have method for constructor parameter
+        // Should have method for constructor parameter, settable property, and private setter property
         var result = builder
             .WithConstructorValue(constructorValue)
             .WithSettableProperty(settableValue)
+            .WithPrivateSetterProperty(privateSetterValue)
             .Build();
 
         _ = result.ConstructorValue.Should().Be(constructorValue);
         _ = result.SettableProperty.Should().Be(settableValue);
+        _ = result.PrivateSetterProperty.Should().Be(privateSetterValue, "properties with private setters can be set via reflection when generateMethodsForUnreachableProperties is true");
         
         // ExpressionBodiedProperty should always be true (computed property)
         _ = result.ExpressionBodiedProperty.Should().BeTrue();
@@ -372,5 +374,20 @@ public class BuildersGeneratorTests
         
         // Should have method for settable property
         _ = builderType.GetMethod("WithSettableProperty").Should().NotBeNull();
+        
+        // Should have method for property with private setter
+        _ = builderType.GetMethod("WithPrivateSetterProperty").Should().NotBeNull("properties with private setters can be set via reflection when generateMethodsForUnreachableProperties is true");
+    }
+
+    [Fact]
+    public void BuildersGenerator_GetOnlyProperties_PrivateSettersShouldStillWork()
+    {
+        var builderType = typeof(DerivedClassFromBaseWithPrivateSetterBuilder);
+        
+        // Should have method for property with private setter (can be set via reflection)
+        _ = builderType.GetMethod("WithAProperty").Should().NotBeNull("properties with private setters can be set via reflection when generateMethodsForUnreachableProperties is true");
+        
+        // Should have method for regular settable property
+        _ = builderType.GetMethod("WithDerivedProperty").Should().NotBeNull();
     }
 }
