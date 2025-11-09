@@ -289,7 +289,7 @@ public class BuildersGeneratorTests
     [Fact]
     public void BuildersGenerator_CustomBuildMany_ShouldUseCustomImplementation()
     {
-        var results = CustomBuildManyEntityBuilder.Entity.BuildMany(3).ToList();
+        var results = CustomBuildManyEntityBuilder.CustomBuildManyEntity.BuildMany(3).ToList();
 
         _ = results.Should().HaveCount(3);
         _ = results[0].Id.Should().BeGreaterThan(0);
