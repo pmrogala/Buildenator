@@ -17,8 +17,8 @@ public class EntityWithGetOnlyProperties
     public string GetOnlyProperty { get; }
 
     // Settable property - should be included
-    public string? SettableProperty { get; set; }
+    public string SettableProperty { get; set; }
     
     // Property with private setter - should be included when generateMethodsForUnreachableProperties is true
-    public string? PrivateSetterProperty { get; private set; }
+    public string PrivateSetterProperty { get; private set; }
 }
