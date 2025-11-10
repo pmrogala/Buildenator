@@ -343,4 +343,37 @@ public class BuildersGeneratorTests
         _ = result.AProperty.Should().Be(aProperty);
         _ = result.DerivedProperty.Should().Be(derivedProperty);
     }
+
+    [Fact]
+    public void BuildersGenerator_GetOnlyProperties_ShouldNotThrowExceptionWhenBuilding()
+    {
+        // Arrange
+        var builder = DerivedClassFromBaseWithPrivateSetterBuilder.DerivedClassFromBaseWithPrivateSetter;
+
+        // Act - This should not throw an exception even though there are get-only properties
+        var result = builder.Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.ABool.Should().BeTrue();
+        _ = result.ReadOnlyString.Should().Be("readonly");
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_GetOnlyProperties_WithSettableProperty_ShouldSetOnlySettableProperties(int derivedProperty)
+    {
+        // Arrange
+        var builder = DerivedClassFromBaseWithPrivateSetterBuilder.DerivedClassFromBaseWithPrivateSetter;
+
+        // Act - Set the settable property, get-only properties should be ignored in Build
+        var result = builder.WithDerivedProperty(derivedProperty).Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.DerivedProperty.Should().Be(derivedProperty);
+        _ = result.ABool.Should().BeTrue();
+        _ = result.ReadOnlyString.Should().Be("readonly");
+        _ = result.ComputedValue.Should().Be(derivedProperty * 2);
+    }
 }
