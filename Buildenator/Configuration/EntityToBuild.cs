@@ -111,13 +111,16 @@ internal sealed class EntityToBuild : IEntityToBuild
             output.AppendLine($"var t = typeof({FullName});");
             foreach (var a in AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch)
             {
+                // Always use nullable operators for reflection chain to avoid exceptions on get-only properties
                 output.Append($"            t.GetProperty(\"{a.SymbolName}\")")
-                    .Append(NullableStrategy == NullableStrategy.Enabled ? "!" : "")
+                    .Append("?")
                     .Append(".DeclaringType")
-                    .Append(NullableStrategy == NullableStrategy.Enabled ? "!" : "")
+                    .Append("?")
                     .Append($".GetProperty(\"{a.SymbolName}\")")
-                    .Append(NullableStrategy == NullableStrategy.Enabled ? "!" : "")
-                    .AppendLine($".SetValue(result, {a.GenerateLazyFieldValueReturn()});");
+                    .Append("?")
+                    .Append(".SetMethod")
+                    .Append("?")
+                    .AppendLine($".Invoke(result, new object[] {{ {a.GenerateLazyFieldValueReturn()} }});");
             }
             return output.ToString();
         }
