@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## 8.4.0.2 - 2025-11-10
+
+### Fixed
+- Generator: fixed exception when building entities with get-only properties (e.g. `public bool ABool => true;` or `public string Name { get; }`) when `generateMethodsForUnreachableProperties` is true. The generated Build method now uses reflection with nullable operators (`SetMethod?.Invoke()`) to safely skip properties without setters, while properties with private setters continue to work correctly.
+
 ## 8.4.0.1 - 2025-11-08
 
 ### Fixed
