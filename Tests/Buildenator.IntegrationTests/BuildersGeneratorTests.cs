@@ -377,37 +377,6 @@ public class BuildersGeneratorTests
         _ = result.ComputedValue.Should().Be(derivedProperty * 2);
     }
 
-    [Fact]
-    public void BuildersGenerator_CollectionProperty_ShouldGenerateAddToMethod()
-    {
-        // Arrange & Act - Verify the AddTo methods exist via reflection
-        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
-
-        // Assert - IEnumerable<T>
-        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
-            .GetMethod("AddToEnumerableItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Should().NotBeNull("AddToEnumerableItems method should be generated for IEnumerable<T> property");
-        
-        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
-            .GetMethod("AddToEnumerableConstructorItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Should().NotBeNull("AddToEnumerableConstructorItems method should be generated for IEnumerable<T> constructor parameter");
-        
-        // Assert - IReadOnlyList<T>
-        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
-            .GetMethod("AddToReadOnlyListItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Should().NotBeNull("AddToReadOnlyListItems method should be generated for IReadOnlyList<T> property");
-        
-        // Assert - ICollection<T>
-        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
-            .GetMethod("AddToCollectionItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Should().NotBeNull("AddToCollectionItems method should be generated for ICollection<T> property");
-        
-        // Assert - IList<T>
-        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
-            .GetMethod("AddToListItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Should().NotBeNull("AddToListItems method should be generated for IList<T> property");
-    }
-
     [Theory]
     [AutoData]
     public void BuildersGenerator_CollectionProperty_AddToMethodShouldAddMultipleItems(string item1, string item2, string item3)
@@ -694,20 +663,6 @@ public class BuildersGeneratorTests
     }
     
     // ===== Tests for Concrete Collection Types (List<T>, HashSet<T>, etc.) =====
-    
-    [Fact]
-    public void BuildersGenerator_ConcreteListProperty_AddToMethodShouldBeGenerated()
-    {
-        // Assert - AddToConcreteListItems method should exist for List<T> property
-        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
-            .GetMethod("AddToConcreteListItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Should().NotBeNull("AddToConcreteListItems method should be generated for List<T> property");
-        
-        // Assert - AddToConcreteHashSetItems method should exist for HashSet<T> property
-        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
-            .GetMethod("AddToConcreteHashSetItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Should().NotBeNull("AddToConcreteHashSetItems method should be generated for HashSet<T> property");
-    }
     
     [Theory]
     [AutoData]
