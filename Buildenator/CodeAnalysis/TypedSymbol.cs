@@ -56,22 +56,24 @@ internal sealed class TypedSymbol : ITypedSymbol
     public string SymbolPascalName => Symbol.PascalCaseName();
     public string SymbolName => Symbol.Name;
 
-    private bool? _isInterfaceCollection;
-    public bool IsInterfaceCollection => _isInterfaceCollection ??= CollectionMethodDetector.IsInterfaceCollectionProperty(Type);
-
-    private ITypeSymbol? _collectionElementType;
-    private bool _collectionElementTypeInitialized;
-    public ITypeSymbol? CollectionElementType
+    private CollectionMetadata? _collectionMetadata;
+    private bool _collectionMetadataInitialized;
+    
+    public CollectionMetadata? GetCollectionMetadata()
     {
-        get
+        if (!_collectionMetadataInitialized)
         {
-            if (!_collectionElementTypeInitialized)
+            _collectionMetadataInitialized = true;
+            if (CollectionMethodDetector.IsInterfaceCollectionProperty(Type))
             {
-                _collectionElementType = CollectionMethodDetector.GetCollectionElementType(Type);
-                _collectionElementTypeInitialized = true;
+                var elementType = CollectionMethodDetector.GetCollectionElementType(Type);
+                if (elementType != null)
+                {
+                    _collectionMetadata = new CollectionMetadata(elementType);
+                }
             }
-            return _collectionElementType;
         }
+        return _collectionMetadata;
     }
 
     private readonly IMockingProperties? _mockingProperties;
@@ -106,7 +108,12 @@ internal sealed class TypedSymbol : ITypedSymbol
 
 
     public string GenerateFieldType()
-        => IsMockable() ? GenerateMockableFieldType() : (IsInterfaceCollection && !IsMockable() ? $"System.Collections.Generic.List<{CollectionElementType!.ToDisplayString()}>" : TypeFullName);
+    {
+        var collectionMetadata = GetCollectionMetadata();
+        return IsMockable() ? GenerateMockableFieldType() 
+            : (collectionMetadata != null && !IsMockable() ? $"System.Collections.Generic.List<{collectionMetadata.ElementType.ToDisplayString()}>" 
+            : TypeFullName);
+    }
 
     public string GenerateLazyFieldType()
         => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{TypeFullName}>?";
