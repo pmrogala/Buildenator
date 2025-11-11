@@ -9,8 +9,6 @@ internal interface ITypedSymbol
     string TypeFullName { get; }
     string TypeName { get; }
     string UnderScoreName { get; }
-    bool IsInterfaceCollection { get; }
-    ITypeSymbol? CollectionElementType { get; }
 
     string GenerateFieldInitialization();
     string GenerateFieldType();
@@ -21,4 +19,23 @@ internal interface ITypedSymbol
     bool IsFakeable();
     bool IsMockable();
     bool NeedsFieldInit();
+    
+    /// <summary>
+    /// Gets collection metadata if this symbol represents an interface collection type.
+    /// Returns null if not a collection.
+    /// </summary>
+    CollectionMetadata? GetCollectionMetadata();
+}
+
+/// <summary>
+/// Metadata about a collection property, encapsulating collection-related information.
+/// </summary>
+internal sealed class CollectionMetadata
+{
+    public ITypeSymbol ElementType { get; }
+    
+    public CollectionMetadata(ITypeSymbol elementType)
+    {
+        ElementType = elementType;
+    }
 }

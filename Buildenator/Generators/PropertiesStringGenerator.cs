@@ -26,11 +26,6 @@ internal sealed class PropertiesStringGenerator
 			properties = [.. properties, .. _entity.AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch];
 		}
 
-		// For AddTo methods, we need to check ALL properties (including read-only ones)
-		var allPropertiesForAddMethods = _entity.AllUniqueSettablePropertiesAndParameters
-			.Concat(_entity.AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch)
-			.ToList();
-
 		var output = new StringBuilder();
 
 		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
@@ -38,7 +33,7 @@ internal sealed class PropertiesStringGenerator
             output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName};");
 		}
 
-		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredMethod))
+		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredWithMethod))
 		{
             output = output.AppendLine($@"
 
@@ -47,7 +42,7 @@ internal sealed class PropertiesStringGenerator
 		}
 
 		// Generate AddTo methods for collection properties
-		foreach (var typedSymbol in allPropertiesForAddMethods.Where(IsCollectionProperty))
+		foreach (var typedSymbol in properties.Where(IsCollectionProperty).Where(IsNotYetDeclaredAddToMethod))
 		{
 			output = output.AppendLine($@"
 
@@ -58,10 +53,12 @@ internal sealed class PropertiesStringGenerator
 
 		bool IsNotYetDeclaredField(ITypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out _);
 
-		bool IsNotYetDeclaredMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
+		bool IsNotYetDeclaredWithMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
 		                                               || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
 
-		bool IsCollectionProperty(ITypedSymbol x) => x.IsInterfaceCollection && !x.IsMockable();
+		bool IsNotYetDeclaredAddToMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(x), out _);
+
+		bool IsCollectionProperty(ITypedSymbol x) => x.GetCollectionMetadata() != null && !x.IsMockable();
 	}
 
 	private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
@@ -83,11 +80,11 @@ internal sealed class PropertiesStringGenerator
 
 	private string GenerateAddToMethodDefinition(ITypedSymbol typedSymbol)
 	{
-		var elementType = typedSymbol.CollectionElementType;
-		if (elementType == null)
+		var collectionMetadata = typedSymbol.GetCollectionMetadata();
+		if (collectionMetadata == null)
 			return string.Empty;
 
-		var elementTypeName = elementType.ToDisplayString();
+		var elementTypeName = collectionMetadata.ElementType.ToDisplayString();
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
 		

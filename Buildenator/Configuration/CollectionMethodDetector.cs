@@ -7,18 +7,11 @@ internal static class CollectionMethodDetector
 {
     /// <summary>
     /// Checks if the type is an interface collection type (implements IEnumerable<T> and is an interface).
-    /// Excludes string even though it implements IEnumerable<char>.
     /// Excludes concrete types like List<T>, only returns true for interface types.
     /// </summary>
     public static bool IsInterfaceCollectionProperty(ITypeSymbol propertyType)
     {
-        // Exclude string type (even though it implements IEnumerable<char>)
-        if (propertyType.SpecialType == SpecialType.System_String)
-        {
-            return false;
-        }
-
-        // Only process interface types
+        // Only process interface types (also excludes string which is a concrete type)
         if (propertyType.TypeKind != TypeKind.Interface)
         {
             return false;
