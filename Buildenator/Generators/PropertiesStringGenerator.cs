@@ -38,15 +38,15 @@ internal sealed class PropertiesStringGenerator
             output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName};");
 		}
 
-		// Generate fields to track items to add for properties with Add methods
-		foreach (var typedSymbol in allPropertiesForAddMethods.Where(HasAddMethod))
+		// Generate fields to track items to add for collection properties
+		foreach (var typedSymbol in allPropertiesForAddMethods.Where(IsCollectionProperty))
 		{
-			var parameterType = CollectionMethodDetector.GetAddMethodParameterType(_entity.EntitySymbol, typedSymbol);
-			if (parameterType != null)
+			var elementType = CollectionMethodDetector.GetCollectionElementType(typedSymbol.TypeSymbol);
+			if (elementType != null)
 			{
-				var parameterTypeName = parameterType.ToDisplayString();
+				var elementTypeName = elementType.ToDisplayString();
 				var fieldName = GetAddItemsFieldName(typedSymbol);
-				output = output.AppendLine($@"        private System.Collections.Generic.List<{parameterTypeName}> {fieldName} = new System.Collections.Generic.List<{parameterTypeName}>();");
+				output = output.AppendLine($@"        private System.Collections.Generic.List<{elementTypeName}> {fieldName} = new System.Collections.Generic.List<{elementTypeName}>();");
 			}
 		}
 
@@ -58,8 +58,8 @@ internal sealed class PropertiesStringGenerator
 
 		}
 
-		// Generate AddTo methods for properties with Add methods
-		foreach (var typedSymbol in allPropertiesForAddMethods.Where(HasAddMethod))
+		// Generate AddTo methods for collection properties
+		foreach (var typedSymbol in allPropertiesForAddMethods.Where(IsCollectionProperty))
 		{
 			output = output.AppendLine($@"
 
@@ -73,7 +73,7 @@ internal sealed class PropertiesStringGenerator
 		bool IsNotYetDeclaredMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
 		                                               || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
 
-		bool HasAddMethod(ITypedSymbol x) => CollectionMethodDetector.HasAddMethodForProperty(_entity.EntitySymbol, x);
+		bool IsCollectionProperty(ITypedSymbol x) => CollectionMethodDetector.IsCollectionProperty(x, x.TypeSymbol);
 	}
 
 	private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
@@ -95,17 +95,21 @@ internal sealed class PropertiesStringGenerator
 
 	private string GenerateAddToMethodDefinition(ITypedSymbol typedSymbol)
 	{
-		var parameterType = CollectionMethodDetector.GetAddMethodParameterType(_entity.EntitySymbol, typedSymbol);
-		if (parameterType == null)
+		var elementType = CollectionMethodDetector.GetCollectionElementType(typedSymbol.TypeSymbol);
+		if (elementType == null)
 			return string.Empty;
 
-		var parameterTypeName = parameterType.ToDisplayString();
+		var elementTypeName = elementType.ToDisplayString();
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = GetAddItemsFieldName(typedSymbol);
 		
-		return $@"public {_builder.FullName} {methodName}({parameterTypeName} item)
+		return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
         {{
-            {fieldName}.Add(item);
+            if ({fieldName} == null)
+            {{
+                {fieldName} = new System.Collections.Generic.List<{elementTypeName}>();
+            }}
+            {fieldName}.AddRange(items);
             return this;
         }}";
 	}
@@ -113,15 +117,4 @@ internal sealed class PropertiesStringGenerator
 	private string CreateAddToMethodName(ITypedSymbol property) => $"AddTo{property.SymbolPascalName}";
 
 	private string GetAddItemsFieldName(ITypedSymbol property) => $"_{property.SymbolName}ToAdd";
-
-	private static string GetSingularPropertyName(string propertyName)
-	{
-		// Simple heuristic: remove trailing 's' if present
-		if (propertyName.Length > 1 && propertyName.EndsWith("s") && !propertyName.EndsWith("ss"))
-		{
-			return propertyName.Substring(0, propertyName.Length - 1);
-		}
-		
-		return propertyName;
-	}
 }
