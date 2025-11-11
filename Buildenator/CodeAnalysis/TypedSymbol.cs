@@ -56,8 +56,8 @@ internal sealed class TypedSymbol : ITypedSymbol
     public string SymbolPascalName => Symbol.PascalCaseName();
     public string SymbolName => Symbol.Name;
 
-    private bool? _isCollection;
-    public bool IsCollection => _isCollection ??= CollectionMethodDetector.IsCollectionProperty(Type);
+    private bool? _isInterfaceCollection;
+    public bool IsInterfaceCollection => _isInterfaceCollection ??= CollectionMethodDetector.IsInterfaceCollectionProperty(Type);
 
     private ITypeSymbol? _collectionElementType;
     private bool _collectionElementTypeInitialized;
@@ -106,7 +106,7 @@ internal sealed class TypedSymbol : ITypedSymbol
 
 
     public string GenerateFieldType()
-        => IsMockable() ? GenerateMockableFieldType() : (IsCollection && !IsMockable() ? $"System.Collections.Generic.List<{CollectionElementType!.ToDisplayString()}>" : TypeFullName);
+        => IsMockable() ? GenerateMockableFieldType() : (IsInterfaceCollection && !IsMockable() ? $"System.Collections.Generic.List<{CollectionElementType!.ToDisplayString()}>" : TypeFullName);
 
     public string GenerateLazyFieldType()
         => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{TypeFullName}>?";
