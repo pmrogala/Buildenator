@@ -1,4 +1,3 @@
-using Buildenator.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using System.Linq;
 
@@ -7,10 +6,10 @@ namespace Buildenator.Configuration;
 internal static class CollectionMethodDetector
 {
     /// <summary>
-    /// Checks if the property is a collection type (implements IEnumerable<T>).
+    /// Checks if the type is a collection type (implements IEnumerable<T>).
     /// Excludes string even though it implements IEnumerable<char>.
     /// </summary>
-    public static bool IsCollectionProperty(ITypedSymbol property, ITypeSymbol propertyType)
+    public static bool IsCollectionProperty(ITypeSymbol propertyType)
     {
         // Exclude string type (even though it implements IEnumerable<char>)
         if (propertyType.SpecialType == SpecialType.System_String)

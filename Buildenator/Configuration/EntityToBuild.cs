@@ -128,7 +128,7 @@ internal sealed class EntityToBuild : IEntityToBuild
         string GeneratePropertyValue(ITypedSymbol property)
         {
             // Check if this is a collection property with items to add
-            if (CollectionMethodDetector.IsCollectionProperty(property, property.TypeSymbol))
+            if (property.IsCollection)
             {
                 var fieldName = $"_{property.SymbolName}ToAdd";
                 return $"{fieldName}.Count > 0 ? {fieldName} : {property.GenerateLazyFieldValueReturn()}";
@@ -140,7 +140,7 @@ internal sealed class EntityToBuild : IEntityToBuild
         string GenerateConstructorParameterValue(ITypedSymbol parameter)
         {
             // Check if this is a collection parameter with items to add
-            if (CollectionMethodDetector.IsCollectionProperty(parameter, parameter.TypeSymbol))
+            if (parameter.IsCollection)
             {
                 var fieldName = $"_{parameter.SymbolName}ToAdd";
                 return $"{fieldName}.Count > 0 ? {fieldName} : {parameter.GenerateLazyFieldValueReturn()}";
