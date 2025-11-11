@@ -84,16 +84,16 @@ internal sealed class EntityToBuild : IEntityToBuild
 
     private string GenerateLazyBuildEntityString(bool shouldGenerateMethodsForUnreachableProperties, IEnumerable<TypedSymbol> parameters)
     {
-        var propertiesAssignment = _properties.Select(property => $"{property.SymbolName} = {GeneratePropertyValue(property)}").ComaJoin();
+        var propertiesAssignment = _properties.Select(property => $"{property.SymbolName} = {property.GenerateLazyFieldValueReturn()}").ComaJoin();
         var onlyConstructorString = string.Empty;
         if (ConstructorToBuild is StaticConstructor staticConstructor)
         {
-            onlyConstructorString = @$"var result = {FullName}.{staticConstructor.Name}({parameters.Select(symbol => GenerateConstructorParameterValue(symbol)).ComaJoin()});
+            onlyConstructorString = @$"var result = {FullName}.{staticConstructor.Name}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()});
 ";
         }
         else
         {
-            onlyConstructorString = @$"var result = new {FullName}({parameters.Select(symbol => GenerateConstructorParameterValue(symbol)).ComaJoin()})
+            onlyConstructorString = @$"var result = new {FullName}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
             }};
@@ -120,33 +120,9 @@ internal sealed class EntityToBuild : IEntityToBuild
                     .Append("?")
                     .Append(".SetMethod")
                     .Append("?")
-                    .AppendLine($".Invoke(result, new object[] {{ {GeneratePropertyValue(a)} }});");
+                    .AppendLine($".Invoke(result, new object[] {{ {a.GenerateLazyFieldValueReturn()} }});");
             }
             return output.ToString();
-        }
-
-        string GeneratePropertyValue(ITypedSymbol property)
-        {
-            // Check if this is a collection property with items to add
-            if (property.IsCollection)
-            {
-                var fieldName = $"_{property.SymbolName}ToAdd";
-                return $"{fieldName}.Count > 0 ? {fieldName} : {property.GenerateLazyFieldValueReturn()}";
-            }
-            
-            return property.GenerateLazyFieldValueReturn();
-        }
-
-        string GenerateConstructorParameterValue(ITypedSymbol parameter)
-        {
-            // Check if this is a collection parameter with items to add
-            if (parameter.IsCollection)
-            {
-                var fieldName = $"_{parameter.SymbolName}ToAdd";
-                return $"{fieldName}.Count > 0 ? {fieldName} : {parameter.GenerateLazyFieldValueReturn()}";
-            }
-            
-            return parameter.GenerateLazyFieldValueReturn();
         }
     }
 

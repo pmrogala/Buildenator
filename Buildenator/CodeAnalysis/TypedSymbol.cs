@@ -106,23 +106,63 @@ internal sealed class TypedSymbol : ITypedSymbol
 
 
     public string GenerateFieldType()
-        => IsMockable() ? GenerateMockableFieldType() : TypeFullName;
+        => IsMockable() ? GenerateMockableFieldType() : (IsCollection && !IsMockable() ? $"System.Collections.Generic.List<{CollectionElementType!.ToDisplayString()}>" : TypeFullName);
 
     public string GenerateLazyFieldType()
-        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{TypeFullName}>?";
+    {
+        if (IsMockable())
+            return GenerateMockableFieldType();
+        
+        // For non-mockable collections, use List (initialized to avoid null)
+        if (IsCollection && CollectionElementType != null && !IsMockable())
+            return $"System.Collections.Generic.List<{CollectionElementType.ToDisplayString()}>";
+        
+        return $"{DefaultConstants.NullBox}<{TypeFullName}>?";
+    }
 
     public string GenerateLazyFieldValueReturn()
-        => IsMockable()
-            ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
-            : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{TypeFullName}>({(IsFakeable()
+    {
+        if (IsMockable())
+            return string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName);
+        
+        // For non-mockable collections
+        if (IsCollection && CollectionElementType != null && !IsMockable())
+        {
+            // If fakeable and empty, add fake item lazily
+            if (IsFakeable())
+            {
+                var fakeItem = GenerateFakeCollectionItem();
+                return $"({UnderScoreName}.Count > 0 ? {UnderScoreName} : new System.Collections.Generic.List<{CollectionElementType.ToDisplayString()}>() {{ {fakeItem} }})";
+            }
+            return UnderScoreName;
+        }
+        
+        return @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{TypeFullName}>({(IsFakeable()
                 ? $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
                   + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "")
                 : $"default({TypeFullName})")})).Object";
+    }
 
     public string GenerateFieldValueReturn()
-        => IsMockable()
-            ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
-            : UnderScoreName;
+    {
+        if (IsMockable())
+            return string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName);
+        
+        // For collections in BuildDefault, return null (default)
+        if (IsCollection && !IsMockable())
+            return "null";
+        
+        return UnderScoreName;
+    }
+
+    public string GenerateFakeCollectionItem()
+    {
+        if (CollectionElementType == null || !IsFakeable())
+            return string.Empty;
+        
+        var elementTypeName = CollectionElementType.ToDisplayString();
+        return $"{string.Format(_fixtureProperties!.CreateSingleFormat, elementTypeName, SymbolName, DefaultConstants.FixtureLiteral)}{(_nullableStrategy == NullableStrategy.Enabled ? "!" : "")}";
+    }
 
     public string GenerateMethodParameterDefinition()
         => IsMockable() ? $"Action<{GenerateMockableFieldType()}> {DefaultConstants.SetupActionLiteral}" : $"{TypeFullName} {DefaultConstants.ValueLiteral}";
