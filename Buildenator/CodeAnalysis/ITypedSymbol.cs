@@ -18,6 +18,7 @@ internal interface ITypedSymbol
     string GenerateLazyFieldType();
     string GenerateLazyFieldValueReturn();
     string GenerateMethodParameterDefinition();
+    string GenerateFakeCollectionItem();
     bool IsFakeable();
     bool IsMockable();
     bool NeedsFieldInit();
