@@ -21,7 +21,7 @@ internal interface ITypedSymbol
     bool NeedsFieldInit();
     
     /// <summary>
-    /// Gets collection metadata if this symbol represents an interface collection type.
+    /// Gets collection metadata if this symbol represents a collection type (interface or concrete).
     /// Returns null if not a collection.
     /// </summary>
     CollectionMetadata? GetCollectionMetadata();
@@ -34,8 +34,15 @@ internal sealed class CollectionMetadata
 {
     public ITypeSymbol ElementType { get; }
     
-    public CollectionMetadata(ITypeSymbol elementType)
+    /// <summary>
+    /// True if this is a concrete collection type (e.g., List<T>, HashSet<T>),
+    /// false if this is an interface collection type (e.g., IEnumerable<T>, IList<T>).
+    /// </summary>
+    public bool IsConcreteType { get; }
+    
+    public CollectionMetadata(ITypeSymbol elementType, bool isConcreteType)
     {
         ElementType = elementType;
+        IsConcreteType = isConcreteType;
     }
 }

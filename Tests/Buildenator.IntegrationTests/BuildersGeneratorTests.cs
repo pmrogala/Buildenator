@@ -692,4 +692,124 @@ public class BuildersGeneratorTests
         _ = result.ReadOnlyListItems.Should().HaveCount(3);
         _ = result.ReadOnlyListItems.Should().ContainInOrder(item1, item2, item3);
     }
+    
+    // ===== Tests for Concrete Collection Types (List<T>, HashSet<T>, etc.) =====
+    
+    [Fact]
+    public void BuildersGenerator_ConcreteListProperty_AddToMethodShouldBeGenerated()
+    {
+        // Assert - AddToConcreteListItems method should exist for List<T> property
+        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
+            .GetMethod("AddToConcreteListItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Should().NotBeNull("AddToConcreteListItems method should be generated for List<T> property");
+        
+        // Assert - AddToConcreteHashSetItems method should exist for HashSet<T> property
+        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
+            .GetMethod("AddToConcreteHashSetItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Should().NotBeNull("AddToConcreteHashSetItems method should be generated for HashSet<T> property");
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_ConcreteListProperty_AddToMethodShouldAddItems(string item1, string item2, string item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        
+        // Act
+        var result = builder
+            .AddToConcreteListItems(item1, item2, item3)
+            .Build();
+        
+        // Assert
+        _ = result.ConcreteListItems.Should().HaveCount(3);
+        _ = result.ConcreteListItems.Should().ContainInOrder(item1, item2, item3);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_ConcreteHashSetProperty_AddToMethodShouldAddItems(int item1, int item2, int item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        
+        // Act
+        var result = builder
+            .AddToConcreteHashSetItems(item1, item2, item3)
+            .Build();
+        
+        // Assert
+        _ = result.ConcreteHashSetItems.Should().HaveCount(3);
+        _ = result.ConcreteHashSetItems.Should().Contain(new[] { item1, item2, item3 });
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_ConcreteListProperty_WithThenAddTo_ShouldAppendItems(string item1, string item2, string item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        
+        // Act - With sets initial value, AddTo appends
+        var result = builder
+            .WithConcreteListItems(new List<string> { item1 })
+            .AddToConcreteListItems(item2, item3)
+            .Build();
+        
+        // Assert
+        _ = result.ConcreteListItems.Should().HaveCount(3);
+        _ = result.ConcreteListItems.Should().ContainInOrder(item1, item2, item3);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_ConcreteListProperty_AddToThenWith_ShouldReplaceCompletely(string item1, string item2, string item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        
+        // Act - AddTo first, then With replaces everything
+        var result = builder
+            .AddToConcreteListItems(item1, item2)
+            .WithConcreteListItems(new List<string> { item3 })
+            .Build();
+        
+        // Assert - Should only have item3
+        _ = result.ConcreteListItems.Should().ContainSingle().Which.Should().Be(item3);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_ConcreteListConstructorParameter_AddToMethodShouldPopulateConstructorParameter(char item1, char item2)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        
+        // Act
+        var result = builder
+            .AddToConcreteListConstructorItems(item1, item2)
+            .Build();
+        
+        // Assert
+        _ = result.ConcreteListConstructorItems.Should().HaveCount(2);
+        _ = result.ConcreteListConstructorItems.Should().ContainInOrder(item1, item2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_ConcreteListProperty_WithNullThenAddTo_ShouldStartFresh(string item1, string item2)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        
+        // Act - With(null) clears, AddTo starts fresh
+        var result = builder
+            .WithConcreteListItems(null)
+            .AddToConcreteListItems(item1, item2)
+            .Build();
+        
+        // Assert - Should only have the AddTo items
+        _ = result.ConcreteListItems.Should().HaveCount(2);
+        _ = result.ConcreteListItems.Should().ContainInOrder(item1, item2);
+    }
 }
