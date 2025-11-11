@@ -35,18 +35,14 @@ internal sealed class PropertiesStringGenerator
 
 		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
 		{
-            output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName};");
-		}
-
-		// Generate fields to track items to add for collection properties
-		foreach (var typedSymbol in allPropertiesForAddMethods.Where(IsCollectionProperty))
-		{
-			var elementType = typedSymbol.CollectionElementType;
-			if (elementType != null)
+			if (typedSymbol.IsCollection && !typedSymbol.IsMockable() && typedSymbol.CollectionElementType != null)
 			{
-				var elementTypeName = elementType.ToDisplayString();
-				var fieldName = GetAddItemsFieldName(typedSymbol);
-				output = output.AppendLine($@"        private System.Collections.Generic.List<{elementTypeName}> {fieldName} = new System.Collections.Generic.List<{elementTypeName}>();");
+				var elementTypeName = typedSymbol.CollectionElementType.ToDisplayString();
+				output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName} = new System.Collections.Generic.List<{elementTypeName}>();");
+			}
+			else
+			{
+				output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName};");
 			}
 		}
 
@@ -73,7 +69,7 @@ internal sealed class PropertiesStringGenerator
 		bool IsNotYetDeclaredMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
 		                                               || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
 
-		bool IsCollectionProperty(ITypedSymbol x) => x.IsCollection;
+		bool IsCollectionProperty(ITypedSymbol x) => x.IsCollection && !x.IsMockable();
 	}
 
 	private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
@@ -87,9 +83,19 @@ internal sealed class PropertiesStringGenerator
 		=> $"public {_builder.FullName} {CreateMethodName(typedSymbol)}({typedSymbol.GenerateMethodParameterDefinition()})";
 
 	private static string GenerateValueAssignment(ITypedSymbol typedSymbol)
-		=> typedSymbol.IsMockable()
-			? $"{DefaultConstants.SetupActionLiteral}({typedSymbol.UnderScoreName})"
-			: $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({DefaultConstants.ValueLiteral})";
+	{
+		if (typedSymbol.IsMockable())
+			return $"{DefaultConstants.SetupActionLiteral}({typedSymbol.UnderScoreName})";
+		
+		if (typedSymbol.IsCollection && typedSymbol.CollectionElementType != null && !typedSymbol.IsMockable())
+		{
+			var elementTypeName = typedSymbol.CollectionElementType.ToDisplayString();
+			// For collections, clear and replace with new items from the value parameter
+			return $"{typedSymbol.UnderScoreName}.Clear(); if ({DefaultConstants.ValueLiteral} != null) {{ {typedSymbol.UnderScoreName}.AddRange({DefaultConstants.ValueLiteral}); }}";
+		}
+		
+		return $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({DefaultConstants.ValueLiteral})";
+	}
 
 	private string CreateMethodName(ITypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
 
@@ -101,20 +107,14 @@ internal sealed class PropertiesStringGenerator
 
 		var elementTypeName = elementType.ToDisplayString();
 		var methodName = CreateAddToMethodName(typedSymbol);
-		var fieldName = GetAddItemsFieldName(typedSymbol);
+		var fieldName = typedSymbol.UnderScoreName;
 		
 		return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
         {{
-            if ({fieldName} == null)
-            {{
-                {fieldName} = new System.Collections.Generic.List<{elementTypeName}>();
-            }}
             {fieldName}.AddRange(items);
             return this;
         }}";
 	}
 
 	private string CreateAddToMethodName(ITypedSymbol property) => $"AddTo{property.SymbolPascalName}";
-
-	private string GetAddItemsFieldName(ITypedSymbol property) => $"_{property.SymbolName}ToAdd";
 }

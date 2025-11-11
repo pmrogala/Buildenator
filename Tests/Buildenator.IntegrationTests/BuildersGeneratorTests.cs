@@ -459,8 +459,8 @@ public class BuildersGeneratorTests
             .WithEnumerableItems(emptyList)
             .Build();
 
-        // Assert - Collection should be set to what we provided
-        _ = result.EnumerableItems.Should().BeSameAs(emptyList);
+        // Assert - Collection should be empty (same values as what we provided)
+        _ = result.EnumerableItems.Should().BeEmpty();
     }
     
     [Theory]
