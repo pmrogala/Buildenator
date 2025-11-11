@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [MinDotNetVersion.x.x.x]
 
 ### Added
+- **AddTo methods for collection properties**: Builders now generate `AddTo<PropertyName>(params T[] items)` methods for collection properties and constructor parameters
+  - Works with interface collection types: `IEnumerable<T>`, `IReadOnlyList<T>`, `ICollection<T>`, `IList<T>`, etc.
+  - Works with concrete collection types: `List<T>`, `HashSet<T>`, and any class implementing `ICollection<T>`
+  - Allows incremental addition of items: `.AddToItems("a", "b", "c")`
+  - `With` methods continue to replace entire collection, `AddTo` methods append items
+  - Respects user-defined AddTo methods (won't generate if custom implementation exists)
+- `BuildMany` method can now be overridden by users
+
 ### Changed
 ### Removed
 

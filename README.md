@@ -7,6 +7,19 @@ N.X.Y.Z
 - N - minimum version of .net required.
 - X.Y.Z - standard semantic versioning.
 
+## Features
+
+- **Fluent API builder generation**: Automatically generates `With<PropertyName>` methods for all constructor parameters and settable properties
+- **Collection support with AddTo methods**: Generate `AddTo<PropertyName>(params T[] items)` methods for collection properties
+  - Works with interface types: `IEnumerable<T>`, `IReadOnlyList<T>`, `ICollection<T>`, `IList<T>`
+  - Works with concrete types: `List<T>`, `HashSet<T>`, and any class implementing `ICollection<T>`
+  - `With` methods replace entire collection, `AddTo` methods append items incrementally
+- **Fixture integration**: Optional AutoFixture support for automatic test data generation
+- **Mocking support**: Built-in integration with mocking frameworks (NSubstitute, Moq)
+- **BuildMany method**: Generate multiple test objects with a single call
+- **Customizable**: Override default behavior by implementing your own methods
+- **Performance optimized**: Uses incremental source generators for fast compilation
+
 ## A simple usage example
 
 The following code:
@@ -92,6 +105,40 @@ namespace SampleTestProject.Builders
 ```
 
 Check ```Buildenator.IntegrationTests``` for more examples.
+
+## Collection Support with AddTo Methods
+
+Buildenator automatically generates `AddTo<PropertyName>` methods for collection properties, allowing you to incrementally add items to collections:
+
+```csharp
+// Entity with collection properties
+public class Order
+{
+    public IEnumerable<string> Items { get; set; }
+    public List<decimal> Prices { get; set; }
+}
+
+// Generated builder usage
+var order = OrderBuilder.Order
+    .AddToItems("Product A", "Product B", "Product C")  // Add multiple items at once
+    .AddToItems("Product D")                             // Or add one at a time
+    .AddToPrices(9.99m, 19.99m)
+    .Build();
+// order.Items = ["Product A", "Product B", "Product C", "Product D"]
+// order.Prices = [9.99, 19.99]
+
+// With methods replace entire collection, AddTo methods append
+var order2 = OrderBuilder.Order
+    .WithItems(new[] { "Initial" })       // Set initial collection
+    .AddToItems("Additional")             // Append to it
+    .WithItems(new[] { "Replaced" })      // Replace everything
+    .Build();
+// order2.Items = ["Replaced"]
+```
+
+**Supported collection types:**
+- Interface types: `IEnumerable<T>`, `IReadOnlyList<T>`, `ICollection<T>`, `IList<T>`
+- Concrete types: `List<T>`, `HashSet<T>`, and any class implementing `ICollection<T>`
 
 
 Feel free to contribute!
