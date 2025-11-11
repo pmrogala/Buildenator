@@ -90,7 +90,7 @@ internal sealed class PropertiesStringGenerator
 		
 		return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
         {{
-            var list = {fieldName}.HasValue 
+            var list = {fieldName}.HasValue && {fieldName}.Value.Object != null
                 ? new System.Collections.Generic.List<{elementTypeName}>({fieldName}.Value.Object) 
                 : new System.Collections.Generic.List<{elementTypeName}>();
             list.AddRange(items);

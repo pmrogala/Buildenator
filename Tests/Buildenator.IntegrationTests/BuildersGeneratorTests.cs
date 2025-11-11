@@ -561,4 +561,135 @@ public class BuildersGeneratorTests
         
         _ = result.ListItems.Should().ContainSingle().Which.Should().Be(boolItem);
     }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_CollectionWithThenAddTo_ShouldReplaceAndThenAdd(string item1, string item2, string item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        var initialCollection = new[] { item1 };
+        
+        // Act - With should replace, AddTo should append
+        var result = builder
+            .WithEnumerableItems(initialCollection)
+            .AddToEnumerableItems(item2, item3)
+            .Build();
+        
+        // Assert - Should have all three items
+        _ = result.EnumerableItems.Should().HaveCount(3);
+        _ = result.EnumerableItems.Should().ContainInOrder(item1, item2, item3);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_CollectionAddToThenWith_WithShouldReplaceEverything(string item1, string item2, string item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        var replacementCollection = new[] { item3 };
+        
+        // Act - AddTo first, then With should completely replace
+        var result = builder
+            .AddToEnumerableItems(item1, item2)
+            .WithEnumerableItems(replacementCollection)
+            .Build();
+        
+        // Assert - Should only have item3, With replaces everything
+        _ = result.EnumerableItems.Should().ContainSingle().Which.Should().Be(item3);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_CollectionWithArrayThenAddTo_ShouldWorkWithDifferentCollectionTypes(string item1, string item2, string item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        var arrayCollection = new[] { item1 };
+        
+        // Act - With accepts array, AddTo should still work
+        var result = builder
+            .WithEnumerableItems(arrayCollection)
+            .AddToEnumerableItems(item2, item3)
+            .Build();
+        
+        // Assert
+        _ = result.EnumerableItems.Should().HaveCount(3);
+        _ = result.EnumerableItems.Should().ContainInOrder(item1, item2, item3);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_CollectionWithListThenAddTo_ShouldWorkWithList(string item1, string item2)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        var listCollection = new List<string> { item1 };
+        
+        // Act - With accepts List, AddTo should still work
+        var result = builder
+            .WithEnumerableItems(listCollection)
+            .AddToEnumerableItems(item2)
+            .Build();
+        
+        // Assert
+        _ = result.EnumerableItems.Should().HaveCount(2);
+        _ = result.EnumerableItems.Should().ContainInOrder(item1, item2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_CollectionMultipleWithAndAddTo_LastOperationsWin(string item1, string item2, string item3, string item4)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        
+        // Act - Complex scenario with multiple With and AddTo calls
+        var result = builder
+            .WithEnumerableItems(new[] { item1 })
+            .AddToEnumerableItems(item2)
+            .WithEnumerableItems(new[] { item3 }) // This replaces everything
+            .AddToEnumerableItems(item4) // This adds to the replaced collection
+            .Build();
+        
+        // Assert - Should only have item3 and item4
+        _ = result.EnumerableItems.Should().HaveCount(2);
+        _ = result.EnumerableItems.Should().ContainInOrder(item3, item4);
+    }
+    
+    [Fact]
+    public void BuildersGenerator_CollectionWithNullThenAddTo_ShouldStartFresh()
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        
+        // Act - With(null) should clear, then AddTo should add
+        var result = builder
+            .WithEnumerableItems(null)
+            .AddToEnumerableItems("item1", "item2")
+            .Build();
+        
+        // Assert
+        _ = result.EnumerableItems.Should().HaveCount(2);
+        _ = result.EnumerableItems.Should().ContainInOrder("item1", "item2");
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_ReadOnlyListWithThenAddTo_ShouldWorkWithReadOnlyList(int item1, int item2, int item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        var readOnlyList = new List<int> { item1 }.AsReadOnly();
+        
+        // Act - With accepts IReadOnlyList, AddTo should still work
+        var result = builder
+            .WithReadOnlyListItems(readOnlyList)
+            .AddToReadOnlyListItems(item2, item3)
+            .Build();
+        
+        // Assert
+        _ = result.ReadOnlyListItems.Should().HaveCount(3);
+        _ = result.ReadOnlyListItems.Should().ContainInOrder(item1, item2, item3);
+    }
 }
