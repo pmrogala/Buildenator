@@ -427,4 +427,21 @@ public class BuildersGeneratorTests
         _ = result.Name.Should().Be(name);
         _ = result.Items.Should().ContainSingle().Which.Should().Be(item);
     }
+
+    [Fact]
+    public void BuildersGenerator_CollectionWithAddMethod_BuildingWithoutAddingItems_ShouldHaveEmptyCollection()
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+
+        // Act - Build without adding any items
+        var result = builder
+            .WithId(1)
+            .WithName("Test")
+            .Build();
+
+        // Assert - Collection should be empty but not null
+        _ = result.Items.Should().NotBeNull();
+        _ = result.Items.Should().BeEmpty();
+    }
 }
