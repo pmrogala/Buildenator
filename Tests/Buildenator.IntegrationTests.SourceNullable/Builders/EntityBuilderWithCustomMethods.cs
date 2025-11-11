@@ -23,7 +23,11 @@ namespace Buildenator.IntegrationTests.SourceNullable.Builders
 
         private EntityBuilderWithCustomMethods WithProtectedProperty(List<string> value)
         {
-            _protectedProperty.AddRange(value);
+            var list = _protectedProperty.HasValue 
+                ? new List<string>(_protectedProperty.Value.Object) 
+                : new List<string>();
+            list.AddRange(value);
+            _protectedProperty = new NullBox<List<string>>(list);
             return this;
         }
     }
