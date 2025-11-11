@@ -64,12 +64,23 @@ internal sealed class TypedSymbol : ITypedSymbol
         if (!_collectionMetadataInitialized)
         {
             _collectionMetadataInitialized = true;
-            if (CollectionMethodDetector.IsInterfaceCollectionProperty(Type))
+            
+            // Check for concrete collection types FIRST (before interface check)
+            if (CollectionMethodDetector.IsConcreteCollectionProperty(Type))
             {
                 var elementType = CollectionMethodDetector.GetCollectionElementType(Type);
                 if (elementType != null)
                 {
-                    _collectionMetadata = new CollectionMetadata(elementType);
+                    _collectionMetadata = new CollectionMetadata(elementType, isConcreteType: true);
+                }
+            }
+            // Then check for interface collection types
+            else if (CollectionMethodDetector.IsInterfaceCollectionProperty(Type))
+            {
+                var elementType = CollectionMethodDetector.GetCollectionElementType(Type);
+                if (elementType != null)
+                {
+                    _collectionMetadata = new CollectionMetadata(elementType, isConcreteType: false);
                 }
             }
         }
@@ -110,9 +121,21 @@ internal sealed class TypedSymbol : ITypedSymbol
     public string GenerateFieldType()
     {
         var collectionMetadata = GetCollectionMetadata();
-        return IsMockable() ? GenerateMockableFieldType() 
-            : (collectionMetadata != null && !IsMockable() ? $"System.Collections.Generic.List<{collectionMetadata.ElementType.ToDisplayString()}>" 
-            : TypeFullName);
+        
+        // For mockable types, use the mocking framework's type
+        if (IsMockable())
+            return GenerateMockableFieldType();
+        
+        // For concrete collection types, use the actual type name
+        if (collectionMetadata != null && collectionMetadata.IsConcreteType)
+            return TypeFullName;
+        
+        // For interface collection types, use List<T>
+        if (collectionMetadata != null)
+            return $"System.Collections.Generic.List<{collectionMetadata.ElementType.ToDisplayString()}>";
+        
+        // For all other types, use the type's full name
+        return TypeFullName;
     }
 
     public string GenerateLazyFieldType()

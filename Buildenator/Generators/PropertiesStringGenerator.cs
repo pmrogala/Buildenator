@@ -88,9 +88,35 @@ internal sealed class PropertiesStringGenerator
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
 		
+		// For concrete types, use new() and .Add() method from ICollection<T>
+		if (collectionMetadata.IsConcreteType)
+		{
+			return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
+        {{
+            {typedSymbol.TypeFullName} collection;
+            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+            {{
+                collection = {fieldName}.Value.Object;
+            }}
+            else
+            {{
+                collection = new {typedSymbol.TypeFullName}();
+            }}
+            
+            foreach (var item in items)
+            {{
+                collection.Add(item);
+            }}
+            
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(collection);
+            return this;
+        }}";
+		}
+		
+		// For interface types, use List<T> and AddRange
 		return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
         {{
-            var list = {fieldName}.HasValue && {fieldName}.Value.Object != null
+            var list = {fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null
                 ? new System.Collections.Generic.List<{elementTypeName}>({fieldName}.Value.Object) 
                 : new System.Collections.Generic.List<{elementTypeName}>();
             list.AddRange(items);
