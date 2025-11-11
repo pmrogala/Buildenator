@@ -9,7 +9,7 @@ internal interface ITypedSymbol
     string TypeFullName { get; }
     string TypeName { get; }
     string UnderScoreName { get; }
-    bool IsCollection { get; }
+    bool IsInterfaceCollection { get; }
     ITypeSymbol? CollectionElementType { get; }
 
     string GenerateFieldInitialization();
