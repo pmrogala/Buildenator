@@ -4,13 +4,12 @@ namespace Buildenator.IntegrationTests.SharedEntities;
 
 public class EntityWithCollectionAndAddMethod
 {
-    private readonly List<string> _items = new();
+    public IEnumerable<string> EnumerableItems { get; set; } = new List<string>();
+    public IEnumerable<string> EnumerableConstructorItems { get; }
 
-    public IReadOnlyList<string> Items => _items;
-
-    public void AddItem(string item)
+    public EntityWithCollectionAndAddMethod(IEnumerable<string> enumerableConstructorItems)
     {
-        _items.Add(item);
+        EnumerableConstructorItems = enumerableConstructorItems;
     }
 
     public int Id { get; set; }

@@ -21,7 +21,6 @@ internal sealed class EntityToBuild : IEntityToBuild
     public string[] AdditionalNamespaces { get; }
     public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
     public NullableStrategy NullableStrategy { get; }
-    public INamedTypeSymbol EntitySymbol { get; }
 
     public EntityToBuild(
         INamedTypeSymbol typeForBuilder,
@@ -50,7 +49,6 @@ internal sealed class EntityToBuild : IEntityToBuild
         FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
             genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters | SymbolDisplayGenericsOptions.IncludeTypeConstraints | SymbolDisplayGenericsOptions.IncludeVariance));
 
-        EntitySymbol = entityToBuildSymbol;
         ConstructorToBuild = Constructor.CreateConstructorOrDefault(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy, staticFactoryMethodName);
         (_properties, _uniqueReadOnlyTypedSymbols) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy);
         _uniqueTypedSymbols = _properties;
@@ -86,16 +84,16 @@ internal sealed class EntityToBuild : IEntityToBuild
 
     private string GenerateLazyBuildEntityString(bool shouldGenerateMethodsForUnreachableProperties, IEnumerable<TypedSymbol> parameters)
     {
-        var propertiesAssignment = _properties.Select(property => $"{property.SymbolName} = {property.GenerateLazyFieldValueReturn()}").ComaJoin();
+        var propertiesAssignment = _properties.Select(property => $"{property.SymbolName} = {GeneratePropertyValue(property)}").ComaJoin();
         var onlyConstructorString = string.Empty;
         if (ConstructorToBuild is StaticConstructor staticConstructor)
         {
-            onlyConstructorString = @$"var result = {FullName}.{staticConstructor.Name}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()});
+            onlyConstructorString = @$"var result = {FullName}.{staticConstructor.Name}({parameters.Select(symbol => GenerateConstructorParameterValue(symbol)).ComaJoin()});
 ";
         }
         else
         {
-            onlyConstructorString = @$"var result = new {FullName}({parameters.Select(symbol => symbol.GenerateLazyFieldValueReturn()).ComaJoin()})
+            onlyConstructorString = @$"var result = new {FullName}({parameters.Select(symbol => GenerateConstructorParameterValue(symbol)).ComaJoin()})
             {{
 {(string.IsNullOrEmpty(propertiesAssignment) ? string.Empty : $"                {propertiesAssignment}")}
             }};
@@ -104,7 +102,6 @@ internal sealed class EntityToBuild : IEntityToBuild
 
         return onlyConstructorString
             + $@"{(shouldGenerateMethodsForUnreachableProperties ? GenerateUnreachableProperties() : "")}
-            {GenerateAddMethodCalls()}
             {DefaultConstants.PostBuildMethodName}(result);
             return result;";
 
@@ -123,43 +120,33 @@ internal sealed class EntityToBuild : IEntityToBuild
                     .Append("?")
                     .Append(".SetMethod")
                     .Append("?")
-                    .AppendLine($".Invoke(result, new object[] {{ {a.GenerateLazyFieldValueReturn()} }});");
+                    .AppendLine($".Invoke(result, new object[] {{ {GeneratePropertyValue(a)} }});");
             }
             return output.ToString();
         }
 
-        string GenerateAddMethodCalls()
+        string GeneratePropertyValue(ITypedSymbol property)
         {
-            var output = new StringBuilder();
-            // Check both settable and read-only properties for Add methods
-            var allPropertiesToCheck = _uniqueTypedSymbols
-                .Concat(_uniqueReadOnlyTypedSymbols)
-                .ToList();
-            
-            foreach (var property in allPropertiesToCheck.Where(p => CollectionMethodDetector.HasAddMethodForProperty(EntitySymbol, p)))
+            // Check if this is a collection property with items to add
+            if (CollectionMethodDetector.IsCollectionProperty(property, property.TypeSymbol))
             {
-                var singularPropertyName = GetSingularPropertyName(property.SymbolPascalName);
-                var addMethodName = $"Add{singularPropertyName}";
                 var fieldName = $"_{property.SymbolName}ToAdd";
-                
-                output.AppendLine($"foreach (var item in {fieldName})");
-                output.AppendLine($"            {{");
-                output.AppendLine($"                result.{addMethodName}(item);");
-                output.AppendLine($"            }}");
+                return $"{fieldName}.Count > 0 ? {fieldName} : {property.GenerateLazyFieldValueReturn()}";
             }
             
-            return output.ToString();
+            return property.GenerateLazyFieldValueReturn();
         }
 
-        string GetSingularPropertyName(string propertyName)
+        string GenerateConstructorParameterValue(ITypedSymbol parameter)
         {
-            // Simple heuristic: remove trailing 's' if present
-            if (propertyName.Length > 1 && propertyName.EndsWith("s") && !propertyName.EndsWith("ss"))
+            // Check if this is a collection parameter with items to add
+            if (CollectionMethodDetector.IsCollectionProperty(parameter, parameter.TypeSymbol))
             {
-                return propertyName.Substring(0, propertyName.Length - 1);
+                var fieldName = $"_{parameter.SymbolName}ToAdd";
+                return $"{fieldName}.Count > 0 ? {fieldName} : {parameter.GenerateLazyFieldValueReturn()}";
             }
             
-            return propertyName;
+            return parameter.GenerateLazyFieldValueReturn();
         }
     }
 
