@@ -376,4 +376,55 @@ public class BuildersGeneratorTests
         _ = result.ReadOnlyString.Should().Be("readonly");
         _ = result.ComputedValue.Should().Be(derivedProperty * 2);
     }
+
+    [Fact]
+    public void BuildersGenerator_CollectionWithAddMethod_ShouldGenerateAddToMethod()
+    {
+        // Arrange & Act - Verify the AddToItems method exists via reflection
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+
+        // Assert
+        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
+            .GetMethod("AddToItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Should().NotBeNull("AddToItems method should be generated when entity has AddItem method");
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_CollectionWithAddMethod_AddToMethodShouldAddSingleItem(string item1, string item2, string item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+
+        // Act
+        var result = builder
+            .AddToItems(item1)
+            .AddToItems(item2)
+            .AddToItems(item3)
+            .Build();
+
+        // Assert
+        _ = result.Items.Should().HaveCount(3);
+        _ = result.Items.Should().ContainInOrder(item1, item2, item3);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_CollectionWithAddMethod_AddToMethodCanBeCombinedWithOtherMethods(string item, int id, string name)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+
+        // Act
+        var result = builder
+            .WithId(id)
+            .WithName(name)
+            .AddToItems(item)
+            .Build();
+
+        // Assert
+        _ = result.Id.Should().Be(id);
+        _ = result.Name.Should().Be(name);
+        _ = result.Items.Should().ContainSingle().Which.Should().Be(item);
+    }
 }
