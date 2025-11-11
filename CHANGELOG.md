@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [MinDotNetVersion.x.x.x]
+## 8.5.0.0 - 2025-11-11
 
 ### Added
 - **AddTo methods for collection properties**: Builders now generate `AddTo<PropertyName>(params T[] items)` methods for collection properties and constructor parameters
