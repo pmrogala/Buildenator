@@ -1,5 +1,5 @@
 # Buildenator
-A test data **Builder Generator** for .net 5 and later.
+A test data **Builder Generator** for .net 6 and later.
 
 Versioning:
 N.X.Y.Z
@@ -137,7 +137,7 @@ var order2 = OrderBuilder.Order
 ```
 
 **Supported collection types:**
-- Interface types: `IEnumerable<T>`, `IReadOnlyList<T>`, `ICollection<T>`, `IList<T>`
+- Interface types: Anything that inherits: `IEnumerable<T>`
 - Concrete types: `List<T>`, `HashSet<T>`, and any class implementing `ICollection<T>`
 
 
