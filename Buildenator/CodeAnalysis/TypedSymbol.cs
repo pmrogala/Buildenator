@@ -44,6 +44,7 @@ internal sealed class TypedSymbol : ITypedSymbol
 
     private ISymbol Symbol { get; }
     private ITypeSymbol Type { get; }
+    public ITypeSymbol TypeSymbol => Type;
 
     private string? _underscoreName;
     public string UnderScoreName => _underscoreName ??= Symbol.UnderScoreName();

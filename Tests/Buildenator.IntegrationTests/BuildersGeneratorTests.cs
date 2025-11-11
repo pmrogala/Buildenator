@@ -378,39 +378,41 @@ public class BuildersGeneratorTests
     }
 
     [Fact]
-    public void BuildersGenerator_CollectionWithAddMethod_ShouldGenerateAddToMethod()
+    public void BuildersGenerator_CollectionProperty_ShouldGenerateAddToMethod()
     {
-        // Arrange & Act - Verify the AddToItems method exists via reflection
+        // Arrange & Act - Verify the AddToEnumerableItems method exists via reflection
         var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
 
         // Assert
         _ = typeof(EntityWithCollectionAndAddMethodBuilder)
-            .GetMethod("AddToItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Should().NotBeNull("AddToItems method should be generated when entity has AddItem method");
+            .GetMethod("AddToEnumerableItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Should().NotBeNull("AddToEnumerableItems method should be generated for IEnumerable<T> property");
+        
+        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
+            .GetMethod("AddToEnumerableConstructorItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Should().NotBeNull("AddToEnumerableConstructorItems method should be generated for IEnumerable<T> constructor parameter");
     }
 
     [Theory]
     [AutoData]
-    public void BuildersGenerator_CollectionWithAddMethod_AddToMethodShouldAddSingleItem(string item1, string item2, string item3)
+    public void BuildersGenerator_CollectionProperty_AddToMethodShouldAddMultipleItems(string item1, string item2, string item3)
     {
         // Arrange
         var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
 
         // Act
         var result = builder
-            .AddToItems(item1)
-            .AddToItems(item2)
-            .AddToItems(item3)
+            .AddToEnumerableItems(item1, item2, item3)
             .Build();
 
         // Assert
-        _ = result.Items.Should().HaveCount(3);
-        _ = result.Items.Should().ContainInOrder(item1, item2, item3);
+        _ = result.EnumerableItems.Should().HaveCount(3);
+        _ = result.EnumerableItems.Should().ContainInOrder(item1, item2, item3);
     }
 
     [Theory]
     [AutoData]
-    public void BuildersGenerator_CollectionWithAddMethod_AddToMethodCanBeCombinedWithOtherMethods(string item, int id, string name)
+    public void BuildersGenerator_CollectionProperty_AddToMethodCanBeCombinedWithOtherMethods(string item, int id, string name)
     {
         // Arrange
         var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
@@ -419,29 +421,47 @@ public class BuildersGeneratorTests
         var result = builder
             .WithId(id)
             .WithName(name)
-            .AddToItems(item)
+            .AddToEnumerableItems(item)
             .Build();
 
         // Assert
         _ = result.Id.Should().Be(id);
         _ = result.Name.Should().Be(name);
-        _ = result.Items.Should().ContainSingle().Which.Should().Be(item);
+        _ = result.EnumerableItems.Should().ContainSingle().Which.Should().Be(item);
     }
 
     [Fact]
-    public void BuildersGenerator_CollectionWithAddMethod_BuildingWithoutAddingItems_ShouldHaveEmptyCollection()
+    public void BuildersGenerator_CollectionProperty_BuildingWithoutAddingItems_ShouldUseWithValue()
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+        var emptyList = new List<string>();
+
+        // Act - Build without using AddTo, but use With to set empty collection
+        var result = builder
+            .WithId(1)
+            .WithName("Test")
+            .WithEnumerableItems(emptyList)
+            .Build();
+
+        // Assert - Collection should be set to what we provided
+        _ = result.EnumerableItems.Should().BeSameAs(emptyList);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_CollectionConstructorParameter_AddToMethodShouldPopulateConstructorParameter(string item1, string item2)
     {
         // Arrange
         var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
 
-        // Act - Build without adding any items
+        // Act
         var result = builder
-            .WithId(1)
-            .WithName("Test")
+            .AddToEnumerableConstructorItems(item1, item2)
             .Build();
 
-        // Assert - Collection should be empty but not null
-        _ = result.Items.Should().NotBeNull();
-        _ = result.Items.Should().BeEmpty();
+        // Assert
+        _ = result.EnumerableConstructorItems.Should().HaveCount(2);
+        _ = result.EnumerableConstructorItems.Should().ContainInOrder(item1, item2);
     }
 }
