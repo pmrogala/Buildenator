@@ -1,3 +1,4 @@
+using Buildenator.CodeAnalysis;
 using Microsoft.CodeAnalysis;
 using System.Linq;
 
@@ -6,10 +7,41 @@ namespace Buildenator.Configuration;
 internal static class CollectionMethodDetector
 {
     /// <summary>
+    /// Factory method that creates CollectionMetadata for a given type symbol.
+    /// Returns ConcreteCollectionMetadata for concrete collection types,
+    /// InterfaceCollectionMetadata for interface collection types,
+    /// or null if the type is not a collection.
+    /// </summary>
+    public static CollectionMetadata? CreateCollectionMetadata(ITypeSymbol propertyType)
+    {
+        // Check for concrete collection types FIRST (before interface check)
+        if (IsConcreteCollectionProperty(propertyType))
+        {
+            var elementType = GetCollectionElementType(propertyType);
+            if (elementType != null)
+            {
+                return new ConcreteCollectionMetadata(elementType);
+            }
+        }
+        
+        // Then check for interface collection types
+        if (IsInterfaceCollectionProperty(propertyType))
+        {
+            var elementType = GetCollectionElementType(propertyType);
+            if (elementType != null)
+            {
+                return new InterfaceCollectionMetadata(elementType);
+            }
+        }
+        
+        return null;
+    }
+    
+    /// <summary>
     /// Checks if the type is an interface collection type (implements IEnumerable<T> and is an interface).
     /// Excludes concrete types like List<T>, only returns true for interface types.
     /// </summary>
-    public static bool IsInterfaceCollectionProperty(ITypeSymbol propertyType)
+    private static bool IsInterfaceCollectionProperty(ITypeSymbol propertyType)
     {
         // Only process interface types (also excludes string which is a concrete type)
         if (propertyType.TypeKind != TypeKind.Interface)
@@ -40,7 +72,7 @@ internal static class CollectionMethodDetector
     /// Checks if the type is a concrete collection type (implements ICollection<T> and is a class).
     /// Only returns true for concrete classes like List<T>, HashSet<T>, etc.
     /// </summary>
-    public static bool IsConcreteCollectionProperty(ITypeSymbol propertyType)
+    private static bool IsConcreteCollectionProperty(ITypeSymbol propertyType)
     {
         // Only process class types (excludes interfaces and string)
         if (propertyType.TypeKind != TypeKind.Class)
@@ -73,7 +105,7 @@ internal static class CollectionMethodDetector
     /// Gets the element type of the collection (T in IEnumerable<T>).
     /// Returns null if the property is not a collection.
     /// </summary>
-    public static ITypeSymbol? GetCollectionElementType(ITypeSymbol propertyType)
+    private static ITypeSymbol? GetCollectionElementType(ITypeSymbol propertyType)
     {
         // Exclude string type
         if (propertyType.SpecialType == SpecialType.System_String)

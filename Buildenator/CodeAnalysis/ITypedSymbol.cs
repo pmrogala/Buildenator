@@ -28,21 +28,34 @@ internal interface ITypedSymbol
 }
 
 /// <summary>
-/// Metadata about a collection property, encapsulating collection-related information.
+/// Base class for collection metadata, encapsulating collection-related information.
 /// </summary>
-internal sealed class CollectionMetadata
+internal abstract class CollectionMetadata
 {
     public ITypeSymbol ElementType { get; }
     
-    /// <summary>
-    /// True if this is a concrete collection type (e.g., List<T>, HashSet<T>),
-    /// false if this is an interface collection type (e.g., IEnumerable<T>, IList<T>).
-    /// </summary>
-    public bool IsConcreteType { get; }
-    
-    public CollectionMetadata(ITypeSymbol elementType, bool isConcreteType)
+    protected CollectionMetadata(ITypeSymbol elementType)
     {
         ElementType = elementType;
-        IsConcreteType = isConcreteType;
+    }
+}
+
+/// <summary>
+/// Metadata for interface collection types (e.g., IEnumerable<T>, IList<T>).
+/// </summary>
+internal sealed class InterfaceCollectionMetadata : CollectionMetadata
+{
+    public InterfaceCollectionMetadata(ITypeSymbol elementType) : base(elementType)
+    {
+    }
+}
+
+/// <summary>
+/// Metadata for concrete collection types (e.g., List<T>, HashSet<T>).
+/// </summary>
+internal sealed class ConcreteCollectionMetadata : CollectionMetadata
+{
+    public ConcreteCollectionMetadata(ITypeSymbol elementType) : base(elementType)
+    {
     }
 }

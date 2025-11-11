@@ -89,7 +89,7 @@ internal sealed class PropertiesStringGenerator
 		var fieldName = typedSymbol.UnderScoreName;
 		
 		// For concrete types, use new() and .Add() method from ICollection<T>
-		if (collectionMetadata.IsConcreteType)
+		if (collectionMetadata is ConcreteCollectionMetadata)
 		{
 			return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
         {{
