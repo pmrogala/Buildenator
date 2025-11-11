@@ -61,7 +61,7 @@ internal sealed class PropertiesStringGenerator
 		bool IsNotYetDeclaredMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
 		                                               || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
 
-		bool IsCollectionProperty(ITypedSymbol x) => x.IsCollection && !x.IsMockable();
+		bool IsCollectionProperty(ITypedSymbol x) => x.IsInterfaceCollection && !x.IsMockable();
 	}
 
 	private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
