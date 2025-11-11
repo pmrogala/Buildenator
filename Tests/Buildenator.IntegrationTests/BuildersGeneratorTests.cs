@@ -380,10 +380,10 @@ public class BuildersGeneratorTests
     [Fact]
     public void BuildersGenerator_CollectionProperty_ShouldGenerateAddToMethod()
     {
-        // Arrange & Act - Verify the AddToEnumerableItems method exists via reflection
+        // Arrange & Act - Verify the AddTo methods exist via reflection
         var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
 
-        // Assert
+        // Assert - IEnumerable<T>
         _ = typeof(EntityWithCollectionAndAddMethodBuilder)
             .GetMethod("AddToEnumerableItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Should().NotBeNull("AddToEnumerableItems method should be generated for IEnumerable<T> property");
@@ -391,6 +391,21 @@ public class BuildersGeneratorTests
         _ = typeof(EntityWithCollectionAndAddMethodBuilder)
             .GetMethod("AddToEnumerableConstructorItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Should().NotBeNull("AddToEnumerableConstructorItems method should be generated for IEnumerable<T> constructor parameter");
+        
+        // Assert - IReadOnlyList<T>
+        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
+            .GetMethod("AddToReadOnlyListItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Should().NotBeNull("AddToReadOnlyListItems method should be generated for IReadOnlyList<T> property");
+        
+        // Assert - ICollection<T>
+        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
+            .GetMethod("AddToCollectionItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Should().NotBeNull("AddToCollectionItems method should be generated for ICollection<T> property");
+        
+        // Assert - IList<T>
+        _ = typeof(EntityWithCollectionAndAddMethodBuilder)
+            .GetMethod("AddToListItems", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Should().NotBeNull("AddToListItems method should be generated for IList<T> property");
     }
 
     [Theory]
@@ -463,5 +478,87 @@ public class BuildersGeneratorTests
         // Assert
         _ = result.EnumerableConstructorItems.Should().HaveCount(2);
         _ = result.EnumerableConstructorItems.Should().ContainInOrder(item1, item2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_IReadOnlyListProperty_AddToMethodShouldAddItems(int item1, int item2, int item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+
+        // Act
+        var result = builder
+            .AddToReadOnlyListItems(item1, item2, item3)
+            .Build();
+
+        // Assert
+        _ = result.ReadOnlyListItems.Should().HaveCount(3);
+        _ = result.ReadOnlyListItems.Should().ContainInOrder(item1, item2, item3);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_ICollectionProperty_AddToMethodShouldAddItems(double item1, double item2)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+
+        // Act
+        var result = builder
+            .AddToCollectionItems(item1, item2)
+            .Build();
+
+        // Assert
+        _ = result.CollectionItems.Should().HaveCount(2);
+        _ = result.CollectionItems.Should().Contain(new[] { item1, item2 });
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_IListProperty_AddToMethodShouldAddItems(bool item1, bool item2, bool item3, bool item4)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+
+        // Act
+        var result = builder
+            .AddToListItems(item1, item2, item3, item4)
+            .Build();
+
+        // Assert
+        _ = result.ListItems.Should().HaveCount(4);
+        _ = result.ListItems.Should().ContainInOrder(item1, item2, item3, item4);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_MultipleCollectionTypes_AddToMethodsShouldWorkTogether(
+        string strItem1, string strItem2,
+        int intItem1, int intItem2,
+        double doubleItem,
+        bool boolItem)
+    {
+        // Arrange
+        var builder = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod;
+
+        // Act
+        var result = builder
+            .AddToEnumerableItems(strItem1, strItem2)
+            .AddToReadOnlyListItems(intItem1, intItem2)
+            .AddToCollectionItems(doubleItem)
+            .AddToListItems(boolItem)
+            .Build();
+
+        // Assert
+        _ = result.EnumerableItems.Should().HaveCount(2);
+        _ = result.EnumerableItems.Should().ContainInOrder(strItem1, strItem2);
+        
+        _ = result.ReadOnlyListItems.Should().HaveCount(2);
+        _ = result.ReadOnlyListItems.Should().ContainInOrder(intItem1, intItem2);
+        
+        _ = result.CollectionItems.Should().ContainSingle().Which.Should().Be(doubleItem);
+        
+        _ = result.ListItems.Should().ContainSingle().Which.Should().Be(boolItem);
     }
 }
