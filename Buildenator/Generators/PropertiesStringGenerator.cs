@@ -41,7 +41,7 @@ internal sealed class PropertiesStringGenerator
 		// Generate fields to track items to add for collection properties
 		foreach (var typedSymbol in allPropertiesForAddMethods.Where(IsCollectionProperty))
 		{
-			var elementType = CollectionMethodDetector.GetCollectionElementType(typedSymbol.TypeSymbol);
+			var elementType = typedSymbol.CollectionElementType;
 			if (elementType != null)
 			{
 				var elementTypeName = elementType.ToDisplayString();
@@ -73,7 +73,7 @@ internal sealed class PropertiesStringGenerator
 		bool IsNotYetDeclaredMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
 		                                               || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
 
-		bool IsCollectionProperty(ITypedSymbol x) => CollectionMethodDetector.IsCollectionProperty(x, x.TypeSymbol);
+		bool IsCollectionProperty(ITypedSymbol x) => x.IsCollection;
 	}
 
 	private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
@@ -95,7 +95,7 @@ internal sealed class PropertiesStringGenerator
 
 	private string GenerateAddToMethodDefinition(ITypedSymbol typedSymbol)
 	{
-		var elementType = CollectionMethodDetector.GetCollectionElementType(typedSymbol.TypeSymbol);
+		var elementType = typedSymbol.CollectionElementType;
 		if (elementType == null)
 			return string.Empty;
 

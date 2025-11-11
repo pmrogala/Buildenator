@@ -44,7 +44,6 @@ internal sealed class TypedSymbol : ITypedSymbol
 
     private ISymbol Symbol { get; }
     private ITypeSymbol Type { get; }
-    public ITypeSymbol TypeSymbol => Type;
 
     private string? _underscoreName;
     public string UnderScoreName => _underscoreName ??= Symbol.UnderScoreName();
@@ -56,6 +55,24 @@ internal sealed class TypedSymbol : ITypedSymbol
 
     public string SymbolPascalName => Symbol.PascalCaseName();
     public string SymbolName => Symbol.Name;
+
+    private bool? _isCollection;
+    public bool IsCollection => _isCollection ??= CollectionMethodDetector.IsCollectionProperty(Type);
+
+    private ITypeSymbol? _collectionElementType;
+    private bool _collectionElementTypeInitialized;
+    public ITypeSymbol? CollectionElementType
+    {
+        get
+        {
+            if (!_collectionElementTypeInitialized)
+            {
+                _collectionElementType = CollectionMethodDetector.GetCollectionElementType(Type);
+                _collectionElementTypeInitialized = true;
+            }
+            return _collectionElementType;
+        }
+    }
 
     private readonly IMockingProperties? _mockingProperties;
     private bool? _isMockable;
