@@ -450,7 +450,7 @@ Buildenator handles inherited properties correctly:
 public class BaseEntity
 {
     public int Id { get; private set; }
-    protected string CreatedBy { get; set; }
+    protected string CreatedBy { get; protected set; }
 }
 
 public class User : BaseEntity
