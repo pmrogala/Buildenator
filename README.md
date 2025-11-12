@@ -490,6 +490,7 @@ var result = new IntResultBuilder()
 
 ### Static Factory Methods
 
+If your constructor is private or you have many of them and you want to use the one you want,
 Use custom factory methods instead of constructors:
 
 ```csharp
@@ -995,9 +996,9 @@ public class UserServiceTests
 [MakeBuilder(typeof(User), staticFactoryMethodName: nameof(User.CreateUser))]
 ```
 
-#### Inherited properties not accessible
+#### Private properties not accessible
 
-**Problem:** Properties from base class can't be set.
+**Problem:** Properties with a private setter can't be set.
 
 **Solution:** Enable unreachable properties:
 ```csharp
