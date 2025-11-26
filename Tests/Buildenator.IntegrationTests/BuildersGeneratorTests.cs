@@ -1080,4 +1080,96 @@ public class BuildersGeneratorTests
         // Assert - The fluent pattern should work
         _ = builderReturned.Should().Be(builder);
     }
+
+    // ===== Tests for Default Field Initialization =====
+    // These tests verify that user-defined Default{PropertyName} values are used as field initializers
+
+    [Fact]
+    public void BuildersGenerator_DefaultFieldValue_ShouldUseConstDefaultForName()
+    {
+        // Arrange - Use builder with DefaultName constant defined
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Build without setting Name, should use the DefaultName constant
+        var result = builder.Build();
+        
+        // Assert - Name should be the DefaultName value
+        _ = result.Name.Should().Be(EntityWithDefaultValueBuilder.DefaultName);
+    }
+
+    [Fact]
+    public void BuildersGenerator_DefaultFieldValue_ShouldUseConstDefaultForCount()
+    {
+        // Arrange - Use builder with DefaultCount constant defined
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Build without setting Count, should use the DefaultCount constant
+        var result = builder.Build();
+        
+        // Assert - Count should be the DefaultCount value
+        _ = result.Count.Should().Be(EntityWithDefaultValueBuilder.DefaultCount);
+    }
+
+    [Fact]
+    public void BuildersGenerator_DefaultFieldValue_ShouldUseStaticReadonlyDefault()
+    {
+        // Arrange - Use builder with DefaultOptionalValue static readonly field defined
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Build without setting OptionalValue, should use the DefaultOptionalValue field
+        var result = builder.Build();
+        
+        // Assert - OptionalValue should be the DefaultOptionalValue value
+        _ = result.OptionalValue.Should().Be(EntityWithDefaultValueBuilder.DefaultOptionalValue);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DefaultFieldValue_WithMethodShouldOverrideDefault(string customName)
+    {
+        // Arrange - Use builder with default values
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Use WithName to override the default
+        var result = builder.WithName(customName).Build();
+        
+        // Assert - Name should be the custom value, not the default
+        _ = result.Name.Should().Be(customName);
+        _ = result.Count.Should().Be(EntityWithDefaultValueBuilder.DefaultCount); // Other defaults still apply
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DefaultFieldValue_AllPropertiesCanBeOverridden(string name, int count, string optionalValue)
+    {
+        // Arrange - Use builder with default values
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Override all properties
+        var result = builder
+            .WithName(name)
+            .WithCount(count)
+            .WithOptionalValue(optionalValue)
+            .Build();
+        
+        // Assert - All values should be the custom values
+        _ = result.Name.Should().Be(name);
+        _ = result.Count.Should().Be(count);
+        _ = result.OptionalValue.Should().Be(optionalValue);
+    }
+
+    [Fact]
+    public void BuildersGenerator_DefaultFieldValue_BuildManyShouldUseDefaultsForEachInstance()
+    {
+        // Arrange - Use builder with default values
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Build multiple instances
+        var results = builder.BuildMany(3).ToList();
+        
+        // Assert - All instances should have the default values
+        results.Should().OnlyContain(r => r.Name == EntityWithDefaultValueBuilder.DefaultName);
+        results.Should().OnlyContain(r => r.Count == EntityWithDefaultValueBuilder.DefaultCount);
+        results.Should().OnlyContain(r => r.OptionalValue == EntityWithDefaultValueBuilder.DefaultOptionalValue);
+    }
 }
