@@ -88,7 +88,33 @@ internal sealed class PropertiesStringGenerator
 		if (defaultValueName is null)
 			return string.Empty;
 		
+		// Validate that the defaultValueName is a valid C# identifier to prevent code injection
+		if (!IsValidCSharpIdentifier(defaultValueName))
+			return string.Empty;
+		
 		return $" = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({defaultValueName})";
+	}
+	
+	/// <summary>
+	/// Validates that a name is a valid C# identifier.
+	/// </summary>
+	private static bool IsValidCSharpIdentifier(string name)
+	{
+		if (string.IsNullOrEmpty(name))
+			return false;
+		
+		// First character must be a letter or underscore
+		if (!char.IsLetter(name[0]) && name[0] != '_')
+			return false;
+		
+		// Remaining characters must be letters, digits, or underscores
+		for (int i = 1; i < name.Length; i++)
+		{
+			if (!char.IsLetterOrDigit(name[i]) && name[i] != '_')
+				return false;
+		}
+		
+		return true;
 	}
 
 	private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
