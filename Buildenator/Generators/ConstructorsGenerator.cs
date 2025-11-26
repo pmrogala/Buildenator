@@ -58,6 +58,7 @@ internal static class ConstructorsGenerator
 
     /// <summary>
     /// Determines if a typed symbol should be considered for empty collection initialization.
+    /// This method is called for collection-type properties only (caller filters via GetCollectionMetadata).
     /// Excludes fields that already have initialization (NeedsFieldInit), are mockable, or have a user-defined default value.
     /// </summary>
     private static bool ShouldInitializeCollectionField(ITypedSymbol typedSymbol, IBuilderProperties builder)
