@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 8.6.0.0 - 2025-11-26
 
 ### Added
+- **initializeCollectionsWithEmpty option**: New configuration option for initializing collection fields with empty collections instead of null
+  - Available at assembly level via `[BuildenatorConfiguration(initializeCollectionsWithEmpty: true)]`
+  - Available at builder level via `[MakeBuilder(typeof(MyClass), initializeCollectionsWithEmpty: true)]`
+  - Supports all collection types: `IEnumerable<T>`, `IList<T>`, `ICollection<T>`, `IReadOnlyList<T>`, `List<T>`, `HashSet<T>`, etc.
+  - Supports dictionary types: `Dictionary<K,V>`, `IDictionary<K,V>`, `IReadOnlyDictionary<K,V>`
+  - When enabled, calling `Build()` without setting collection values will result in empty collections instead of null
+  - This helps avoid `NullReferenceException` when the entity iterates over collections
 - **Default field initialization support**: User-defined default values in builders are now used to initialize generated fields
   - Define a static field or constant with the naming convention `Default{PropertyName}` (e.g., `DefaultName` for a `Name` property)
   - The generator will use this value to initialize the corresponding field in the generated builder

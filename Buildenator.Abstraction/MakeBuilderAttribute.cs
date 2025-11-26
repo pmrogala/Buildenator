@@ -17,6 +17,7 @@ public sealed class MakeBuilderAttribute : Attribute
     /// <param name="generateMethodsForUnreachableProperties">It will create methods for setting up properties that does not have public setter.</param>
     /// <param name="staticFactoryMethodName">if you want to use a static factory method for constructing an entity, you can bring here the name.</param>
     /// <param name="generateStaticPropertyForBuilderCreation">If you want to generate static property that will return a new builder instance.</param>
+    /// <param name="initializeCollectionsWithEmpty">If true, collection fields will be initialized with empty collections in the constructor instead of null.</param>
     public MakeBuilderAttribute(
         Type typeForBuilder,
         string? buildingMethodsPrefix = "With",
@@ -25,7 +26,8 @@ public sealed class MakeBuilderAttribute : Attribute
         object? generateMethodsForUnreachableProperties = null,
         object? implicitCast = null,
         string? staticFactoryMethodName = null,
-        object? generateStaticPropertyForBuilderCreation = null
+        object? generateStaticPropertyForBuilderCreation = null,
+        object? initializeCollectionsWithEmpty = null
     )
     {
         }

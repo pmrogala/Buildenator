@@ -24,6 +24,7 @@ internal interface IBuilderProperties
     bool IsBuildManyMethodOverriden { get; }
     IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
     bool GenerateStaticPropertyForBuilderCreation { get; }
+    bool InitializeCollectionsWithEmpty { get; }
     
     /// <summary>
     /// Gets the user-defined default value expression for a property with the given pascal case name, if any.
