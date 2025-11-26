@@ -16,6 +16,7 @@ internal interface IBuilderProperties
     NullableStrategy NullableStrategy { get; }
     bool GenerateDefaultBuildMethod { get; }
     bool ImplicitCast { get; }
+    bool IsPreBuildMethodOverriden { get; }
     bool IsPostBuildMethodOverriden { get; }
     bool IsDefaultConstructorOverriden { get; }
     bool ShouldGenerateMethodsForUnreachableProperties { get; }

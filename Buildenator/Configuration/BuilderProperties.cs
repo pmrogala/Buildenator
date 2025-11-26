@@ -94,6 +94,9 @@ internal readonly struct BuilderProperties : IBuilderProperties
                     }
                     methods.Add(method);
                     break;
+                case IMethodSymbol { MethodKind: MethodKind.Ordinary, Name: DefaultConstants.PreBuildMethodName }:
+                    IsPreBuildMethodOverriden = true;
+                    break;
                 case IMethodSymbol { MethodKind: MethodKind.Ordinary, Name: DefaultConstants.PostBuildMethodName }:
                     IsPostBuildMethodOverriden = true;
                     break;
@@ -129,6 +132,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public NullableStrategy NullableStrategy { get; }
     public bool GenerateDefaultBuildMethod { get; }
     public bool ImplicitCast { get; }
+    public bool IsPreBuildMethodOverriden { get; }
     public bool IsPostBuildMethodOverriden { get; }
     public bool IsDefaultConstructorOverriden { get; }
     public bool ShouldGenerateMethodsForUnreachableProperties { get; }

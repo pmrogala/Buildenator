@@ -1,4 +1,5 @@
-﻿using Buildenator.Configuration.Contract;
+﻿using Buildenator.Configuration;
+using Buildenator.Configuration.Contract;
 using System.Linq;
 using System.Text;
 
@@ -11,7 +12,6 @@ internal static class ConstructorsGenerator
         IEntityToBuild entity,
         IFixtureProperties? fixtureConfiguration)
     {
-            var hasAnyBody = false;
             var parameters = entity.AllUniqueSettablePropertiesAndParameters;
 
             var output = new StringBuilder();
@@ -21,18 +21,18 @@ internal static class ConstructorsGenerator
             foreach (var typedSymbol in parameters.Where(a => a.NeedsFieldInit()))
             {
                 output = output.AppendLine($@"            {typedSymbol.GenerateFieldInitialization()}");
-                hasAnyBody = true;
             }
 
             if (fixtureConfiguration is not null && fixtureConfiguration.NeedsAdditionalConfiguration())
             {
                 output = output.AppendLine($@"            {fixtureConfiguration.GenerateAdditionalConfiguration()};");
-                hasAnyBody = true;
             }
+
+            output = output.AppendLine($@"            {DefaultConstants.PreBuildMethodName}();");
 
             output = output.AppendLine($@"
         }}");
 
-            return hasAnyBody ? output.ToString() : string.Empty;
+            return output.ToString();
         }
 }
