@@ -24,4 +24,12 @@ internal interface IBuilderProperties
     bool IsBuildManyMethodOverriden { get; }
     IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
     bool GenerateStaticPropertyForBuilderCreation { get; }
+    
+    /// <summary>
+    /// Gets the user-defined default value expression for a property with the given pascal case name, if any.
+    /// Looks for static fields or constants named "Default{PropertyPascalName}".
+    /// </summary>
+    /// <param name="propertyPascalName">The pascal case name of the property (e.g., "Name" for a property named "name").</param>
+    /// <returns>The default value name (e.g., "DefaultName") if found, otherwise null.</returns>
+    string? GetDefaultValueName(string propertyPascalName);
 }
