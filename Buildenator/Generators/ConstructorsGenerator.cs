@@ -12,7 +12,8 @@ internal static class ConstructorsGenerator
         string builderName,
         IEntityToBuild entity,
         IFixtureProperties? fixtureConfiguration,
-        bool initializeCollectionsWithEmpty)
+        bool initializeCollectionsWithEmpty,
+        IBuilderProperties builder)
     {
             var parameters = entity.AllUniqueSettablePropertiesAndParameters;
 
@@ -28,7 +29,7 @@ internal static class ConstructorsGenerator
             // Generate empty collection initializations if the option is enabled
             if (initializeCollectionsWithEmpty)
             {
-                foreach (var typedSymbol in parameters.Where(ShouldInitializeCollectionField))
+                foreach (var typedSymbol in parameters.Where(ts => ShouldInitializeCollectionField(ts, builder)))
                 {
                     var collectionMetadata = typedSymbol.GetCollectionMetadata();
                     if (collectionMetadata != null)
@@ -57,10 +58,22 @@ internal static class ConstructorsGenerator
 
     /// <summary>
     /// Determines if a typed symbol should be considered for empty collection initialization.
-    /// Excludes fields that already have initialization (NeedsFieldInit) or are mockable.
+    /// Excludes fields that already have initialization (NeedsFieldInit), are mockable, or have a user-defined default value.
     /// </summary>
-    private static bool ShouldInitializeCollectionField(ITypedSymbol typedSymbol)
-        => !typedSymbol.NeedsFieldInit() && !typedSymbol.IsMockable();
+    private static bool ShouldInitializeCollectionField(ITypedSymbol typedSymbol, IBuilderProperties builder)
+    {
+        // Exclude fields that have auto-initialization or are mockable
+        if (typedSymbol.NeedsFieldInit() || typedSymbol.IsMockable())
+            return false;
+        
+        // Exclude fields that have a user-defined default value (e.g., Default{PropertyName})
+        // to avoid redundant initialization
+        var defaultValueName = builder.GetDefaultValueName(typedSymbol.SymbolPascalName);
+        if (defaultValueName != null)
+            return false;
+        
+        return true;
+    }
 
     /// <summary>
     /// Generates code to initialize a collection field with an empty collection.
