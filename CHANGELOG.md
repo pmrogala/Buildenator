@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.5.0.1 - 2025-11-26
+
+### Fixed
+- Generator: fixed crash when builders contain overloaded methods (methods with the same name but different parameter types). Previously, this would cause an `ArgumentException: An item with the same key has already been added` error. The generator now correctly handles multiple method overloads under the same name.
+
 ## 8.5.0.0 - 2025-11-11
 
 ### Added

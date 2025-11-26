@@ -1037,5 +1037,45 @@ public class BuildersGeneratorTests
         
         var addToSettings = methods.FirstOrDefault(m => m.Name == "AddToSettings");
         _ = addToSettings.Should().NotBeNull("IReadOnlyDictionary properties should have AddTo methods generated");
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_OverloadedMethods_ShouldNotBreakGeneration(int aValue)
+    {
+        // Arrange - Using builder with overloaded WithValue methods
+        var builder = EntityWithOverloadedMethodsBuilder.Default(aValue);
+        
+        // Act - Build should work without throwing
+        var result = builder.Build();
+        
+        // Assert - The property should have been set via the constructor
+        _ = result.AValue.Should().Be(aValue);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_OverloadedMethods_CanUseIntOverload(int originalValue, int newValue)
+    {
+        // Arrange
+        var builder = EntityWithOverloadedMethodsBuilder.Default(originalValue);
+        
+        // Act - Use the overloaded method with int parameter
+        var builderReturned = builder.WithValue(newValue);
+        
+        // Assert - The fluent pattern should work
+        _ = builderReturned.Should().Be(builder);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_OverloadedMethods_CanUseStringOverload(int originalValue, string stringValue)
+    {
+        // Arrange
+        var builder = EntityWithOverloadedMethodsBuilder.Default(originalValue);
+        
+        // Act - Use the overloaded method with string parameter
+        var builderReturned = builder.WithValue(stringValue);
+        
+        // Assert - The fluent pattern should work
+        _ = builderReturned.Should().Be(builder);
     }
 }

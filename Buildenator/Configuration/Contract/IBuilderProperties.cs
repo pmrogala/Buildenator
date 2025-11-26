@@ -7,7 +7,7 @@ namespace Buildenator.Configuration.Contract;
 
 internal interface IBuilderProperties
 {
-    IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods { get; }
+    IReadOnlyDictionary<string, List<IMethodSymbol>> BuildingMethods { get; }
     string BuildingMethodsPrefix { get; }
     string ContainingNamespace { get; }
     IReadOnlyDictionary<string, IFieldSymbol> Fields { get; }
