@@ -241,7 +241,6 @@ public partial class UserBuilder
     // Define default values using the Default{PropertyName} naming convention
     public const string DefaultName = "John Doe";
     public const int DefaultAge = 25;
-    public static readonly string DefaultEmail = "default@example.com";
 }
 
 // Usage - builds with default values when not explicitly set
