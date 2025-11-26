@@ -14,7 +14,6 @@ internal static class ConstructorsGenerator
         IFixtureProperties? fixtureConfiguration,
         bool initializeCollectionsWithEmpty)
     {
-            var hasAnyBody = false;
             var parameters = entity.AllUniqueSettablePropertiesAndParameters;
 
             var output = new StringBuilder();
@@ -24,7 +23,6 @@ internal static class ConstructorsGenerator
             foreach (var typedSymbol in parameters.Where(a => a.NeedsFieldInit()))
             {
                 output = output.AppendLine($@"            {typedSymbol.GenerateFieldInitialization()}");
-                hasAnyBody = true;
             }
 
             // Generate empty collection initializations if the option is enabled
@@ -39,7 +37,6 @@ internal static class ConstructorsGenerator
                         if (!string.IsNullOrEmpty(initCode))
                         {
                             output = output.AppendLine($@"            {initCode}");
-                            hasAnyBody = true;
                         }
                     }
                 }
@@ -48,13 +45,14 @@ internal static class ConstructorsGenerator
             if (fixtureConfiguration is not null && fixtureConfiguration.NeedsAdditionalConfiguration())
             {
                 output = output.AppendLine($@"            {fixtureConfiguration.GenerateAdditionalConfiguration()};");
-                hasAnyBody = true;
             }
+
+            output = output.AppendLine($@"            {DefaultConstants.PreBuildMethodName}();");
 
             output = output.AppendLine($@"
         }}");
 
-            return hasAnyBody ? output.ToString() : string.Empty;
+            return output.ToString();
         }
 
     /// <summary>

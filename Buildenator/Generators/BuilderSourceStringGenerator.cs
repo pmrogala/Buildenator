@@ -72,9 +72,16 @@ namespace {_builder.ContainingNamespace}
 {(_builder.GenerateStaticPropertyForBuilderCreation ? $"        public static {_builder.FullName} {_entity.Name} => new {_builder.FullName}();" : "")}
 {(_builder.GenerateDefaultBuildMethod ? _entity.GenerateDefaultBuildsCode() : string.Empty)}
 {(_builder.ImplicitCast ? GenerateImplicitCastCode() : string.Empty)}
+{GeneratePreBuildMethod()}
 {GeneratePostBuildMethod()}
     }}
 }}";
+
+    private object GeneratePreBuildMethod()
+        => _builder.IsPreBuildMethodOverriden
+            ? string.Empty
+            : @$"{CommentsGenerator.GenerateSummaryOverrideComment()}
+        public void {DefaultConstants.PreBuildMethodName}() {{ }}";
 
     private object GeneratePostBuildMethod()
         => _builder.IsPostBuildMethodOverriden
