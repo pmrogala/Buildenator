@@ -3,6 +3,7 @@ using System.Text;
 using Buildenator.CodeAnalysis;
 using Buildenator.Configuration;
 using Buildenator.Configuration.Contract;
+using Microsoft.CodeAnalysis;
 
 namespace Buildenator.Generators;
 
@@ -56,7 +57,23 @@ internal sealed class PropertiesStringGenerator
 		bool IsNotYetDeclaredWithMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var methods)
 		                                               || !methods.Any(method => method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
 
-		bool IsNotYetDeclaredAddToMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(x), out _);
+		bool IsNotYetDeclaredAddToMethod(ITypedSymbol x)
+		{
+			if (!_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(x), out var methods))
+				return true;
+
+			var collectionMetadata = x.GetCollectionMetadata();
+			if (collectionMetadata == null)
+				return true;
+
+			var elementTypeName = collectionMetadata.ElementType.Name;
+			// Check if any method has a matching params array parameter
+			return !methods.Any(method => 
+				method.Parameters.Length == 1 && 
+				method.Parameters[0].IsParams &&
+				method.Parameters[0].Type is IArrayTypeSymbol arrayType &&
+				arrayType.ElementType.Name == elementTypeName);
+		}
 
 		bool IsCollectionProperty(ITypedSymbol x) => x.GetCollectionMetadata() != null && !x.IsMockable();
 	}
