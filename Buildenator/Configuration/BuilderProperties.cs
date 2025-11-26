@@ -180,12 +180,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
 
     public IReadOnlyDictionary<string, List<IMethodSymbol>> BuildingMethods => _buildingMethods;
     public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
+    public IReadOnlyCollection<string> DefaultValueNames => _defaultValueNames;
 
     public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
-    
-    public string? GetDefaultValueName(string propertyPascalName)
-    {
-        var defaultFieldName = $"{DefaultConstants.DefaultFieldPrefix}{propertyPascalName}";
-        return _defaultValueNames.Contains(defaultFieldName) ? defaultFieldName : null;
-    }
 }

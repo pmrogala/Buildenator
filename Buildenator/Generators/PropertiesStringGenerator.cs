@@ -84,7 +84,7 @@ internal sealed class PropertiesStringGenerator
 		if (typedSymbol.IsMockable())
 			return string.Empty;
 		
-		var defaultValueName = _builder.GetDefaultValueName(typedSymbol.SymbolPascalName);
+		var defaultValueName = typedSymbol.GetDefaultValueName();
 		if (defaultValueName is null)
 			return string.Empty;
 		
