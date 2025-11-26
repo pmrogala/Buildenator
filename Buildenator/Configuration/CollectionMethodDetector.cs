@@ -11,9 +11,16 @@ internal static class CollectionMethodDetector
     /// Returns ConcreteCollectionMetadata for concrete collection types,
     /// InterfaceCollectionMetadata for interface collection types,
     /// or null if the type is not a collection.
+    /// Dictionary types are explicitly excluded as they require special handling.
     /// </summary>
     public static CollectionMetadata? CreateCollectionMetadata(ITypeSymbol propertyType)
     {
+        // Exclude dictionary types - they should not be treated as regular collections
+        if (IsDictionaryType(propertyType))
+        {
+            return null;
+        }
+        
         // Check for concrete collection types FIRST (before interface check)
         if (IsConcreteCollectionProperty(propertyType))
         {
@@ -35,6 +42,43 @@ internal static class CollectionMethodDetector
         }
         
         return null;
+    }
+    
+    /// <summary>
+    /// Checks if the type is a dictionary type (Dictionary, IDictionary, or IReadOnlyDictionary).
+    /// Dictionary types should not be treated as regular collections because:
+    /// 1. They require key-value pair handling, not single element handling
+    /// 2. Their Add methods take two parameters (key, value), not a single item
+    /// 3. List&lt;KeyValuePair&lt;K,V&gt;&gt; is not assignable to dictionary interfaces
+    /// </summary>
+    private static bool IsDictionaryType(ITypeSymbol propertyType)
+    {
+        if (propertyType is not INamedTypeSymbol namedType || !namedType.IsGenericType)
+        {
+            return false;
+        }
+        
+        var constructedFrom = namedType.ConstructedFrom;
+        if (constructedFrom == null)
+        {
+            return false;
+        }
+        
+        var typeName = constructedFrom.ToDisplayString();
+        
+        // Check for common dictionary types
+        if (typeName == "System.Collections.Generic.Dictionary<TKey, TValue>" ||
+            typeName == "System.Collections.Generic.IDictionary<TKey, TValue>" ||
+            typeName == "System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>")
+        {
+            return true;
+        }
+        
+        // Also check if the type implements IDictionary<K,V> (for concrete dictionary types)
+        return namedType.AllInterfaces.Any(i =>
+            i.IsGenericType &&
+            i.ConstructedFrom != null &&
+            i.ConstructedFrom.ToDisplayString() == "System.Collections.Generic.IDictionary<TKey, TValue>");
     }
     
     /// <summary>
