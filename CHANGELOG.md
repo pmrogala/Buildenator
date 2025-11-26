@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 8.5.0.3 - 2025-11-26
 
 ### Added
-- `PreBuild()` hook method: Similar to `PostBuild()`, this is an instance method that `Build()` calls in the constructor of the generated builder. This allows the builder a chance for further configuration before the object is built.
+- `PreBuild()` hook method: Similar to `PostBuild()`, this is an instance method that gets called in the constructor of the generated builder. This allows the builder a chance for further configuration before the object is built.
   - To override it, simply define your own implementation: `public void PreBuild() { /*your code here*/ }`
 
 ## 8.5.0.2 - 2025-11-26
