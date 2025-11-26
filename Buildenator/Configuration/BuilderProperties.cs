@@ -120,20 +120,37 @@ internal readonly struct BuilderProperties : IBuilderProperties
                 case IFieldSymbol field:
                     _fields.Add(field.Name, field);
                     // Track fields that follow the Default{PropertyName} naming convention
-                    if (field.IsStatic && field.Name.StartsWith(DefaultConstants.DefaultFieldPrefix) && field.Name.Length > DefaultConstants.DefaultFieldPrefix.Length)
+                    if (IsAccessibleDefaultValueMember(field.IsStatic, field.DeclaredAccessibility, field.Name))
                     {
                         _defaultValueNames.Add(field.Name);
                     }
                     break;
                 case IPropertySymbol property:
                     // Track static properties that follow the Default{PropertyName} naming convention
-                    if (property.IsStatic && property.Name.StartsWith(DefaultConstants.DefaultFieldPrefix) && property.Name.Length > DefaultConstants.DefaultFieldPrefix.Length)
+                    if (IsAccessibleDefaultValueMember(property.IsStatic, property.DeclaredAccessibility, property.Name))
                     {
                         _defaultValueNames.Add(property.Name);
                     }
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// Checks if a member is a valid default value member based on naming convention and accessibility.
+    /// </summary>
+    private static bool IsAccessibleDefaultValueMember(bool isStatic, Accessibility accessibility, string memberName)
+    {
+        // Must be static
+        if (!isStatic)
+            return false;
+        
+        // Must follow Default{PropertyName} naming convention
+        if (!memberName.StartsWith(DefaultConstants.DefaultFieldPrefix) || memberName.Length <= DefaultConstants.DefaultFieldPrefix.Length)
+            return false;
+        
+        // Must be accessible (public or internal) to be used in generated code
+        return accessibility == Accessibility.Public || accessibility == Accessibility.Internal;
     }
 
     public string ContainingNamespace { get; }
