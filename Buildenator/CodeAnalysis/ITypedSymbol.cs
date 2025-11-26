@@ -59,3 +59,35 @@ internal sealed class ConcreteCollectionMetadata : CollectionMetadata
     {
     }
 }
+
+/// <summary>
+/// Metadata for concrete dictionary types (e.g., Dictionary<TKey, TValue>).
+/// </summary>
+internal sealed class ConcreteDictionaryMetadata : CollectionMetadata
+{
+    public ITypeSymbol KeyType { get; }
+    public ITypeSymbol ValueType { get; }
+    
+    public ConcreteDictionaryMetadata(ITypeSymbol keyType, ITypeSymbol valueType, ITypeSymbol elementType) 
+        : base(elementType)
+    {
+        KeyType = keyType;
+        ValueType = valueType;
+    }
+}
+
+/// <summary>
+/// Metadata for interface dictionary types (e.g., IDictionary<TKey, TValue>, IReadOnlyDictionary<TKey, TValue>).
+/// </summary>
+internal sealed class InterfaceDictionaryMetadata : CollectionMetadata
+{
+    public ITypeSymbol KeyType { get; }
+    public ITypeSymbol ValueType { get; }
+    
+    public InterfaceDictionaryMetadata(ITypeSymbol keyType, ITypeSymbol valueType, ITypeSymbol elementType) 
+        : base(elementType)
+    {
+        KeyType = keyType;
+        ValueType = valueType;
+    }
+}

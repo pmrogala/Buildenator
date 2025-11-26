@@ -768,6 +768,277 @@ public class BuildersGeneratorTests
         _ = result.ConcreteListItems.Should().ContainInOrder(item1, item2);
     }
 
+    // ===== Tests for Dictionary Types =====
+    // These tests verify that dictionary types are handled correctly as collections with key-value pairs
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DictionaryProperty_WithMethodShouldSetDictionary(string key1, int value1, string key2, int value2)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        var scores = new Dictionary<string, int> { { key1, value1 }, { key2, value2 } };
+        
+        // Act
+        var result = builder
+            .WithScores(scores)
+            .Build();
+        
+        // Assert
+        _ = result.Scores.Should().NotBeNull();
+        _ = result.Scores.Should().HaveCount(2);
+        _ = result.Scores[key1].Should().Be(value1);
+        _ = result.Scores[key2].Should().Be(value2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_IDictionaryConstructorParameter_WithMethodShouldPassThroughCorrectly(string key, string value)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        var metadata = new Dictionary<string, string> { { key, value } };
+        
+        // Act - IDictionary constructor parameter should be passed correctly
+        var result = builder
+            .WithMetadata(metadata)
+            .Build();
+        
+        // Assert - The IReadOnlyDictionary Metadata property should have the value
+        _ = result.Metadata.Should().NotBeNull();
+        _ = result.Metadata.Should().HaveCount(1);
+        _ = result.Metadata[key].Should().Be(value);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_IReadOnlyDictionaryProperty_WithMethodShouldSetValue(string key, object value)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        var settings = new Dictionary<string, object> { { key, value } };
+        
+        // Act
+        var result = builder
+            .WithSettings(settings)
+            .Build();
+        
+        // Assert
+        _ = result.Settings.Should().NotBeNull();
+        _ = result.Settings.Should().HaveCount(1);
+        _ = result.Settings[key].Should().Be(value);
+    }
+    
+    [Fact]
+    public void BuildersGenerator_DictionaryProperty_BuildDefaultMethodShouldHaveCorrectParameterTypes()
+    {
+        // Arrange & Act - Verify BuildDefault has correct parameter types (not List<KeyValuePair<...>>)
+        var method = typeof(EntityWithDictionaryBuilder).GetMethod("BuildDefault", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public);
+        
+        // Assert
+        _ = method.Should().NotBeNull();
+        var parameters = method.GetParameters();
+        
+        // Check that IDictionary parameters are correct
+        var metadataParam = parameters.FirstOrDefault(p => p.Name == "_metadata");
+        _ = metadataParam.Should().NotBeNull();
+        _ = metadataParam.ParameterType.Should().BeAssignableTo<IDictionary<string, string>>();
+        
+        var itemsParam = parameters.FirstOrDefault(p => p.Name == "_items");
+        _ = itemsParam.Should().NotBeNull();
+        _ = itemsParam.ParameterType.Should().BeAssignableTo<IDictionary<int, string>>();
+        
+        // Check that concrete Dictionary parameter is correct
+        var scoresParam = parameters.FirstOrDefault(p => p.Name == "_scores");
+        _ = scoresParam.Should().NotBeNull();
+        _ = scoresParam.ParameterType.Should().Be(typeof(Dictionary<string, int>));
+        
+        // Check that IReadOnlyDictionary parameter is correct
+        var settingsParam = parameters.FirstOrDefault(p => p.Name == "_settings");
+        _ = settingsParam.Should().NotBeNull();
+        _ = settingsParam.ParameterType.Should().BeAssignableTo<IReadOnlyDictionary<string, object>>();
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DictionaryProperty_BuildDefaultShouldCreateEntityWithDictionaryValues(
+        string metaKey, string metaValue, int itemKey, string itemValue)
+    {
+        // Arrange
+        var metadata = new Dictionary<string, string> { { metaKey, metaValue } };
+        var items = new Dictionary<int, string> { { itemKey, itemValue } };
+        
+        // Act - Use BuildDefault with dictionary parameters
+        var result = EntityWithDictionaryBuilder.BuildDefault(
+            _metadata: metadata,
+            _items: items);
+        
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.Metadata.Should().NotBeNull();
+        _ = result.Metadata[metaKey].Should().Be(metaValue);
+        _ = result.Items.Should().NotBeNull();
+        _ = result.Items[itemKey].Should().Be(itemValue);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_MultipleDictionaryProperties_ShouldAllBeSetCorrectly(
+        string metaKey, string metaValue, 
+        int itemKey, string itemValue, 
+        string scoreKey, int scoreValue,
+        string settingKey, object settingValue,
+        string name)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        var metadata = new Dictionary<string, string> { { metaKey, metaValue } };
+        var items = new Dictionary<int, string> { { itemKey, itemValue } };
+        var scores = new Dictionary<string, int> { { scoreKey, scoreValue } };
+        var settings = new Dictionary<string, object> { { settingKey, settingValue } };
+        
+        // Act
+        var result = builder
+            .WithMetadata(metadata)
+            .WithItems(items)
+            .WithScores(scores)
+            .WithSettings(settings)
+            .WithName(name)
+            .Build();
+        
+        // Assert
+        _ = result.Metadata.Should().NotBeNull();
+        _ = result.Metadata[metaKey].Should().Be(metaValue);
+        
+        _ = result.Items.Should().NotBeNull();
+        _ = result.Items[itemKey].Should().Be(itemValue);
+        
+        _ = result.Scores.Should().NotBeNull();
+        _ = result.Scores[scoreKey].Should().Be(scoreValue);
+        
+        _ = result.Settings.Should().NotBeNull();
+        _ = result.Settings[settingKey].Should().Be(settingValue);
+        
+        _ = result.Name.Should().Be(name);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DictionaryProperty_AddToMethodShouldAddKeyValuePairs(string key1, int value1, string key2, int value2)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        
+        // Act - Use AddTo method with KeyValuePair
+        var result = builder
+            .AddToScores(new KeyValuePair<string, int>(key1, value1), new KeyValuePair<string, int>(key2, value2))
+            .Build();
+        
+        // Assert
+        _ = result.Scores.Should().NotBeNull();
+        _ = result.Scores.Should().HaveCount(2);
+        _ = result.Scores[key1].Should().Be(value1);
+        _ = result.Scores[key2].Should().Be(value2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_IDictionaryProperty_AddToMethodShouldAddKeyValuePairs(string key1, string value1, string key2, string value2)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        
+        // Act - Use AddTo method on IDictionary property
+        var result = builder
+            .AddToMetadata(new KeyValuePair<string, string>(key1, value1), new KeyValuePair<string, string>(key2, value2))
+            .Build();
+        
+        // Assert - The IReadOnlyDictionary Metadata property should have the values
+        _ = result.Metadata.Should().NotBeNull();
+        _ = result.Metadata.Should().HaveCount(2);
+        _ = result.Metadata[key1].Should().Be(value1);
+        _ = result.Metadata[key2].Should().Be(value2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_IReadOnlyDictionaryProperty_AddToMethodShouldAddKeyValuePairs(string key, object value)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        
+        // Act - Use AddTo method on IReadOnlyDictionary property
+        var result = builder
+            .AddToSettings(new KeyValuePair<string, object>(key, value))
+            .Build();
+        
+        // Assert
+        _ = result.Settings.Should().NotBeNull();
+        _ = result.Settings.Should().ContainSingle();
+        _ = result.Settings[key].Should().Be(value);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DictionaryProperty_WithThenAddToShouldAppendItems(string key1, int value1, string key2, int value2)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        var initialScores = new Dictionary<string, int> { { key1, value1 } };
+        
+        // Act - With sets initial value, AddTo appends
+        var result = builder
+            .WithScores(initialScores)
+            .AddToScores(new KeyValuePair<string, int>(key2, value2))
+            .Build();
+        
+        // Assert
+        _ = result.Scores.Should().NotBeNull();
+        _ = result.Scores.Should().HaveCount(2);
+        _ = result.Scores[key1].Should().Be(value1);
+        _ = result.Scores[key2].Should().Be(value2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DictionaryProperty_AddToThenWithShouldReplaceCompletely(string key1, int value1, string key2, int value2)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        var replacementScores = new Dictionary<string, int> { { key2, value2 } };
+        
+        // Act - AddTo first, then With replaces everything
+        var result = builder
+            .AddToScores(new KeyValuePair<string, int>(key1, value1))
+            .WithScores(replacementScores)
+            .Build();
+        
+        // Assert - Should only have key2
+        _ = result.Scores.Should().ContainSingle();
+        _ = result.Scores[key2].Should().Be(value2);
+    }
+    
+    [Fact]
+    public void BuildersGenerator_DictionaryProperty_AddToMethodsShouldExist()
+    {
+        // Dictionary types SHOULD have AddTo methods generated
+        
+        // Assert - Verify AddTo methods exist for dictionary properties
+        var methods = typeof(EntityWithDictionaryBuilder).GetMethods();
+        
+        var addToScores = methods.FirstOrDefault(m => m.Name == "AddToScores");
+        _ = addToScores.Should().NotBeNull("Dictionary properties should have AddTo methods generated");
+        
+        var addToMetadata = methods.FirstOrDefault(m => m.Name == "AddToMetadata");
+        _ = addToMetadata.Should().NotBeNull("IDictionary properties should have AddTo methods generated");
+        
+        var addToItems = methods.FirstOrDefault(m => m.Name == "AddToItems");
+        _ = addToItems.Should().NotBeNull("IDictionary properties should have AddTo methods generated");
+        
+        var addToSettings = methods.FirstOrDefault(m => m.Name == "AddToSettings");
+        _ = addToSettings.Should().NotBeNull("IReadOnlyDictionary properties should have AddTo methods generated");
+    }
+
     [Theory]
     [AutoData]
     public void BuildersGenerator_OverloadedMethods_ShouldNotBreakGeneration(int aValue)

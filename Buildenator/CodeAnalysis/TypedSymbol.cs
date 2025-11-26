@@ -108,6 +108,14 @@ internal sealed class TypedSymbol : ITypedSymbol
         if (IsMockable())
             return GenerateMockableFieldType();
         
+        // For concrete dictionary types, use the actual type name
+        if (collectionMetadata is ConcreteDictionaryMetadata)
+            return TypeFullName;
+        
+        // For interface dictionary types, use Dictionary<K,V>
+        if (collectionMetadata is InterfaceDictionaryMetadata dictMetadata)
+            return $"System.Collections.Generic.Dictionary<{dictMetadata.KeyType.ToDisplayString()}, {dictMetadata.ValueType.ToDisplayString()}>";
+        
         // For concrete collection types, use the actual type name
         if (collectionMetadata is ConcreteCollectionMetadata)
             return TypeFullName;

@@ -105,6 +105,53 @@ internal sealed class PropertiesStringGenerator
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
 		
+		// For concrete dictionary types, use Dictionary's indexer for adding
+		if (collectionMetadata is ConcreteDictionaryMetadata concreteDictMetadata)
+		{
+			var keyTypeName = concreteDictMetadata.KeyType.ToDisplayString();
+			var valueTypeName = concreteDictMetadata.ValueType.ToDisplayString();
+			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>[] items)
+        {{
+            {typedSymbol.TypeFullName} dictionary;
+            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+            {{
+                dictionary = {fieldName}.Value.Object;
+            }}
+            else
+            {{
+                dictionary = new {typedSymbol.TypeFullName}();
+            }}
+            
+            foreach (var item in items)
+            {{
+                dictionary[item.Key] = item.Value;
+            }}
+            
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(dictionary);
+            return this;
+        }}";
+		}
+		
+		// For interface dictionary types, create a new Dictionary and use indexer
+		if (collectionMetadata is InterfaceDictionaryMetadata interfaceDictMetadata)
+		{
+			var keyTypeName = interfaceDictMetadata.KeyType.ToDisplayString();
+			var valueTypeName = interfaceDictMetadata.ValueType.ToDisplayString();
+			var dictionaryType = $"System.Collections.Generic.Dictionary<{keyTypeName}, {valueTypeName}>";
+			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>[] items)
+        {{
+            var dictionary = {fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null
+                ? new {dictionaryType}({fieldName}.Value.Object) 
+                : new {dictionaryType}();
+            foreach (var item in items)
+            {{
+                dictionary[item.Key] = item.Value;
+            }}
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(dictionary);
+            return this;
+        }}";
+		}
+		
 		// For concrete types, use new() and .Add() method from ICollection<T>
 		if (collectionMetadata is ConcreteCollectionMetadata)
 		{
