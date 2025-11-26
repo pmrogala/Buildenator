@@ -25,6 +25,13 @@ internal interface ITypedSymbol
     /// Returns null if not a collection.
     /// </summary>
     CollectionMetadata? GetCollectionMetadata();
+    
+    /// <summary>
+    /// Gets the user-defined default value name for this symbol, if one exists.
+    /// Looks for static fields or constants named "Default{PropertyPascalName}" in the builder class.
+    /// </summary>
+    /// <returns>The default value name (e.g., "DefaultName") if found, otherwise null.</returns>
+    string? GetDefaultValueName();
 }
 
 /// <summary>

@@ -28,10 +28,8 @@ internal interface IBuilderProperties
     bool InitializeCollectionsWithEmpty { get; }
     
     /// <summary>
-    /// Gets the user-defined default value expression for a property with the given pascal case name, if any.
-    /// Looks for static fields or constants named "Default{PropertyPascalName}".
+    /// Gets the set of user-defined default value names available in this builder.
+    /// Contains names like "DefaultName", "DefaultEmail", etc.
     /// </summary>
-    /// <param name="propertyPascalName">The pascal case name of the property (e.g., "Name" for a property named "name").</param>
-    /// <returns>The default value name (e.g., "DefaultName") if found, otherwise null.</returns>
-    string? GetDefaultValueName(string propertyPascalName);
+    IReadOnlyCollection<string> DefaultValueNames { get; }
 }
