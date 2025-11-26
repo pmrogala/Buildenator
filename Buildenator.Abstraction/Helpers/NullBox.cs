@@ -1,4 +1,8 @@
-﻿namespace Buildenator.Abstraction.Helpers;
+﻿using System.Diagnostics;
+
+namespace Buildenator.Abstraction.Helpers;
+
+[DebuggerDisplay("{ToString()}")]
 public readonly struct NullBox<T>
 {
     public T Object { get; }
@@ -10,4 +14,6 @@ public readonly struct NullBox<T>
 
     public static implicit operator NullBox<T>(T obj) => new(obj);
     public static explicit operator T(NullBox<T> nullBox) => nullBox.Object;
+
+    public override string ToString() => Object?.ToString() ?? "null";
 }
