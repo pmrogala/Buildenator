@@ -9,7 +9,7 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <!-- Do not include the generator as a lib dependency -->
-  <Version>8.4.0.2</Version>
+  <Version>8.5.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
