@@ -53,8 +53,8 @@ internal sealed class PropertiesStringGenerator
 
 		bool IsNotYetDeclaredField(ITypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out _);
 
-		bool IsNotYetDeclaredWithMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var method)
-		                                               || !(method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
+		bool IsNotYetDeclaredWithMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var methods)
+		                                               || !methods.Any(method => method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
 
 		bool IsNotYetDeclaredAddToMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(x), out _);
 
