@@ -14,6 +14,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
 {
     private readonly Dictionary<string, List<IMethodSymbol>> _buildingMethods;
     private readonly Dictionary<string, IFieldSymbol> _fields;
+    private readonly HashSet<string> _defaultValueNames;
     private readonly List<BuildenatorDiagnostic> _diagnostics = [];
 
     public static BuilderProperties Create(
@@ -79,6 +80,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
 
         _buildingMethods = [];
         _fields = [];
+        _defaultValueNames = [];
         var members = builderSymbol.GetMembers();
         foreach (var member in members)
         {
@@ -117,6 +119,18 @@ internal readonly struct BuilderProperties : IBuilderProperties
                     break;
                 case IFieldSymbol field:
                     _fields.Add(field.Name, field);
+                    // Track fields that follow the Default{PropertyName} naming convention
+                    if (field.IsStatic && field.Name.StartsWith(DefaultConstants.DefaultFieldPrefix) && field.Name.Length > DefaultConstants.DefaultFieldPrefix.Length)
+                    {
+                        _defaultValueNames.Add(field.Name);
+                    }
+                    break;
+                case IPropertySymbol property:
+                    // Track static properties that follow the Default{PropertyName} naming convention
+                    if (property.IsStatic && property.Name.StartsWith(DefaultConstants.DefaultFieldPrefix) && property.Name.Length > DefaultConstants.DefaultFieldPrefix.Length)
+                    {
+                        _defaultValueNames.Add(property.Name);
+                    }
                     break;
             }
         }
@@ -142,4 +156,10 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
 
     public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
+    
+    public string? GetDefaultValueName(string propertyPascalName)
+    {
+        var defaultFieldName = $"{DefaultConstants.DefaultFieldPrefix}{propertyPascalName}";
+        return _defaultValueNames.Contains(defaultFieldName) ? defaultFieldName : null;
+    }
 }
