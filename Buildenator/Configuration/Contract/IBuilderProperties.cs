@@ -24,4 +24,5 @@ internal interface IBuilderProperties
     bool IsBuildManyMethodOverriden { get; }
     IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
     bool GenerateStaticPropertyForBuilderCreation { get; }
+    bool InitializeCollectionsWithEmpty { get; }
 }

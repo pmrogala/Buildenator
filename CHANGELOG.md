@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.5.0.3 - 2025-11-26
+
+### Added
+- **initializeCollectionsWithEmpty option**: New configuration option for initializing collection fields with empty collections instead of null
+  - Available at assembly level via `[BuildenatorConfiguration(initializeCollectionsWithEmpty: true)]`
+  - Available at builder level via `[MakeBuilder(typeof(MyClass), initializeCollectionsWithEmpty: true)]`
+  - Supports all collection types: `IEnumerable<T>`, `IList<T>`, `ICollection<T>`, `IReadOnlyList<T>`, `List<T>`, `HashSet<T>`, etc.
+  - Supports dictionary types: `Dictionary<K,V>`, `IDictionary<K,V>`, `IReadOnlyDictionary<K,V>`
+  - When enabled, calling `Build()` without setting collection values will result in empty collections instead of null
+  - This helps avoid `NullReferenceException` when the entity iterates over collections
+
 ## 8.5.0.2 - 2025-11-26
 
 ### Fixed
