@@ -65,7 +65,7 @@ namespace {_builder.ContainingNamespace}
 {GenerateGlobalNullable()}{GenerateBuilderDefinition()}
     {{
 {(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {DefaultConstants.FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
-{(_builder.IsDefaultConstructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration))}
+{(_builder.IsDefaultConstructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration, _builder.InitializeCollectionsWithEmpty))}
 {_propertiesStringGenerator.GeneratePropertiesCode()}
 {(_builder.IsBuildMethodOverriden ? string.Empty : _entity.GenerateBuildsCode(_builder.ShouldGenerateMethodsForUnreachableProperties))}
 {(_builder.IsBuildManyMethodOverriden ? string.Empty : GenerateBuildManyCode())}

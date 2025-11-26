@@ -1090,4 +1090,189 @@ public class BuildersGeneratorTests
         // Assert - The fluent pattern should work
         _ = builderReturned.Should().Be(builder);
     }
+
+    // ===== Tests for initializeCollectionsWithEmpty feature =====
+    
+    [Fact]
+    public void BuildersGenerator_InitializeCollectionsWithEmpty_CollectionsShouldBeEmptyNotNull()
+    {
+        // Arrange - Build without setting any collection values
+        var builder = EntityWithCollectionsForEmptyInitBuilder.EntityWithCollectionsForEmptyInit;
+        
+        // Act
+        var result = builder.Build();
+        
+        // Assert - All collections should be empty, not null
+        _ = result.EnumerableItems.Should().NotBeNull().And.BeEmpty();
+        _ = result.ConcreteListItems.Should().NotBeNull().And.BeEmpty();
+        _ = result.DictionaryItems.Should().NotBeNull().And.BeEmpty();
+        _ = result.ReadOnlyListProperty.Should().NotBeNull().And.BeEmpty();
+        _ = result.HashSetProperty.Should().NotBeNull().And.BeEmpty();
+        _ = result.ReadOnlyDictProperty.Should().NotBeNull().And.BeEmpty();
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_InitializeCollectionsWithEmpty_CanAddToCollections(string item1, string item2)
+    {
+        // Arrange
+        var builder = EntityWithCollectionsForEmptyInitBuilder.EntityWithCollectionsForEmptyInit;
+        
+        // Act - Use AddTo methods to add items
+        var result = builder
+            .AddToEnumerableItems(item1, item2)
+            .Build();
+        
+        // Assert - The AddTo method should have added items to the collection
+        _ = result.EnumerableItems.Should().HaveCount(2);
+        _ = result.EnumerableItems.Should().ContainInOrder(item1, item2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_InitializeCollectionsWithEmpty_WithMethodReplacesEmptyCollection(string item1, string item2, string item3)
+    {
+        // Arrange
+        var builder = EntityWithCollectionsForEmptyInitBuilder.EntityWithCollectionsForEmptyInit;
+        var items = new List<string> { item1, item2, item3 };
+        
+        // Act - With method should replace the empty collection
+        var result = builder
+            .WithEnumerableItems(items)
+            .Build();
+        
+        // Assert
+        _ = result.EnumerableItems.Should().HaveCount(3);
+        _ = result.EnumerableItems.Should().ContainInOrder(item1, item2, item3);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_InitializeCollectionsWithEmpty_NonCollectionPropertiesStillWorkNormally(string name, int value)
+    {
+        // Arrange
+        var builder = EntityWithCollectionsForEmptyInitBuilder.EntityWithCollectionsForEmptyInit;
+        
+        // Act
+        var result = builder
+            .WithName(name)
+            .WithValue(value)
+            .Build();
+        
+        // Assert - Non-collection properties should work as before
+        _ = result.Name.Should().Be(name);
+        _ = result.Value.Should().Be(value);
+        
+        // Collections should still be empty
+        _ = result.EnumerableItems.Should().BeEmpty();
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_InitializeCollectionsWithEmpty_DictionariesWorkCorrectly(string key, string value)
+    {
+        // Arrange
+        var builder = EntityWithCollectionsForEmptyInitBuilder.EntityWithCollectionsForEmptyInit;
+        
+        // Act - Add to dictionary
+        var result = builder
+            .AddToDictionaryItems(new KeyValuePair<string, string>(key, value))
+            .Build();
+        
+        // Assert
+        _ = result.DictionaryItems.Should().HaveCount(1);
+        _ = result.DictionaryItems[key].Should().Be(value);
+    }
+
+    // ===== Tests for Default Field Initialization =====
+    // These tests verify that user-defined Default{PropertyName} values are used as field initializers
+
+    [Fact]
+    public void BuildersGenerator_DefaultFieldValue_ShouldUseConstDefaultForName()
+    {
+        // Arrange - Use builder with DefaultName constant defined
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Build without setting Name, should use the DefaultName constant
+        var result = builder.Build();
+        
+        // Assert - Name should be the DefaultName value
+        _ = result.Name.Should().Be(EntityWithDefaultValueBuilder.DefaultName);
+    }
+
+    [Fact]
+    public void BuildersGenerator_DefaultFieldValue_ShouldUseConstDefaultForCount()
+    {
+        // Arrange - Use builder with DefaultCount constant defined
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Build without setting Count, should use the DefaultCount constant
+        var result = builder.Build();
+        
+        // Assert - Count should be the DefaultCount value
+        _ = result.Count.Should().Be(EntityWithDefaultValueBuilder.DefaultCount);
+    }
+
+    [Fact]
+    public void BuildersGenerator_DefaultFieldValue_ShouldUseStaticReadonlyDefault()
+    {
+        // Arrange - Use builder with DefaultOptionalValue static readonly field defined
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Build without setting OptionalValue, should use the DefaultOptionalValue field
+        var result = builder.Build();
+        
+        // Assert - OptionalValue should be the DefaultOptionalValue value
+        _ = result.OptionalValue.Should().Be(EntityWithDefaultValueBuilder.DefaultOptionalValue);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DefaultFieldValue_WithMethodShouldOverrideDefault(string customName)
+    {
+        // Arrange - Use builder with default values
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Use WithName to override the default
+        var result = builder.WithName(customName).Build();
+        
+        // Assert - Name should be the custom value, not the default
+        _ = result.Name.Should().Be(customName);
+        _ = result.Count.Should().Be(EntityWithDefaultValueBuilder.DefaultCount); // Other defaults still apply
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DefaultFieldValue_AllPropertiesCanBeOverridden(string name, int count, string optionalValue)
+    {
+        // Arrange - Use builder with default values
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Override all properties
+        var result = builder
+            .WithName(name)
+            .WithCount(count)
+            .WithOptionalValue(optionalValue)
+            .Build();
+        
+        // Assert - All values should be the custom values
+        _ = result.Name.Should().Be(name);
+        _ = result.Count.Should().Be(count);
+        _ = result.OptionalValue.Should().Be(optionalValue);
+    }
+
+    [Fact]
+    public void BuildersGenerator_DefaultFieldValue_BuildManyShouldUseDefaultsForEachInstance()
+    {
+        // Arrange - Use builder with default values
+        var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
+        
+        // Act - Build multiple instances
+        var results = builder.BuildMany(3).ToList();
+        
+        // Assert - All instances should have the default values
+        results.Should().OnlyContain(r => r.Name == EntityWithDefaultValueBuilder.DefaultName);
+        results.Should().OnlyContain(r => r.Count == EntityWithDefaultValueBuilder.DefaultCount);
+        results.Should().OnlyContain(r => r.OptionalValue == EntityWithDefaultValueBuilder.DefaultOptionalValue);
+    }
 }

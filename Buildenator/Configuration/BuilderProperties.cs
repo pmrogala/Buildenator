@@ -14,6 +14,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
 {
     private readonly Dictionary<string, List<IMethodSymbol>> _buildingMethods;
     private readonly Dictionary<string, IFieldSymbol> _fields;
+    private readonly HashSet<string> _defaultValueNames;
     private readonly List<BuildenatorDiagnostic> _diagnostics = [];
 
     public static BuilderProperties Create(
@@ -28,6 +29,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
         bool? generateMethodsForUnreachableProperties = null;
         bool? implicitCast = null;
         bool? generateStaticPropertyForBuilderCreation = null;
+        bool? initializeCollectionsWithEmpty = null;
 
         if (globalAttributes.HasValue)
         {
@@ -37,6 +39,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
             generateMethodsForUnreachableProperties = globalAttributes.Value.GetOrThrow<bool>(3, nameof(MakeBuilderAttributeInternal.GenerateMethodsForUnreachableProperties));
             implicitCast = globalAttributes.Value.GetOrThrow<bool>(4, nameof(MakeBuilderAttributeInternal.ImplicitCast));
             generateStaticPropertyForBuilderCreation = globalAttributes.Value.GetOrThrow<bool>(5, nameof(MakeBuilderAttributeInternal.GenerateStaticPropertyForBuilderCreation));
+            initializeCollectionsWithEmpty = globalAttributes.Value.GetOrThrow<bool>(6, nameof(MakeBuilderAttributeInternal.InitializeCollectionsWithEmpty));
         }
 
         nullableStrategy = builderAttribute.NullableStrategy is null ? nullableStrategy: builderAttribute.NullableStrategy;
@@ -57,7 +60,8 @@ internal readonly struct BuilderProperties : IBuilderProperties
                 generateMethodsForUnreachableProperties,
                 builderAttribute.ImplicitCast ?? implicitCast,
                 builderAttribute.StaticFactoryMethodName,
-                builderAttribute.GenerateStaticPropertyForBuilderCreation ?? generateStaticPropertyForBuilderCreation));
+                builderAttribute.GenerateStaticPropertyForBuilderCreation ?? generateStaticPropertyForBuilderCreation,
+                builderAttribute.InitializeCollectionsWithEmpty ?? initializeCollectionsWithEmpty));
     }
 
     private BuilderProperties(INamespaceOrTypeSymbol builderSymbol, MakeBuilderAttributeInternal attributeData)
@@ -73,12 +77,14 @@ internal readonly struct BuilderProperties : IBuilderProperties
         OriginalLocation = builderSymbol.Locations.First();
         StaticFactoryMethodName = attributeData.StaticFactoryMethodName;
         GenerateStaticPropertyForBuilderCreation = attributeData.GenerateStaticPropertyForBuilderCreation ?? false;
+        InitializeCollectionsWithEmpty = attributeData.InitializeCollectionsWithEmpty ?? false;
 
         if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
             throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");
 
         _buildingMethods = [];
         _fields = [];
+        _defaultValueNames = [];
         var members = builderSymbol.GetMembers();
         foreach (var member in members)
         {
@@ -120,9 +126,38 @@ internal readonly struct BuilderProperties : IBuilderProperties
                     break;
                 case IFieldSymbol field:
                     _fields.Add(field.Name, field);
+                    // Track fields that follow the Default{PropertyName} naming convention
+                    if (IsAccessibleDefaultValueMember(field.IsStatic, field.DeclaredAccessibility, field.Name))
+                    {
+                        _defaultValueNames.Add(field.Name);
+                    }
+                    break;
+                case IPropertySymbol property:
+                    // Track static properties that follow the Default{PropertyName} naming convention
+                    if (IsAccessibleDefaultValueMember(property.IsStatic, property.DeclaredAccessibility, property.Name))
+                    {
+                        _defaultValueNames.Add(property.Name);
+                    }
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// Checks if a member is a valid default value member based on naming convention and accessibility.
+    /// </summary>
+    private static bool IsAccessibleDefaultValueMember(bool isStatic, Accessibility accessibility, string memberName)
+    {
+        // Must be static
+        if (!isStatic)
+            return false;
+        
+        // Must follow Default{PropertyName} naming convention
+        if (!memberName.StartsWith(DefaultConstants.DefaultFieldPrefix) || memberName.Length <= DefaultConstants.DefaultFieldPrefix.Length)
+            return false;
+        
+        // Must be accessible (public or internal) to be used in generated code
+        return accessibility == Accessibility.Public || accessibility == Accessibility.Internal;
     }
 
     public string ContainingNamespace { get; }
@@ -141,9 +176,16 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public Location OriginalLocation { get; }
     public string? StaticFactoryMethodName { get; }
     public bool GenerateStaticPropertyForBuilderCreation { get; }
+    public bool InitializeCollectionsWithEmpty { get; }
 
     public IReadOnlyDictionary<string, List<IMethodSymbol>> BuildingMethods => _buildingMethods;
     public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
 
     public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
+    
+    public string? GetDefaultValueName(string propertyPascalName)
+    {
+        var defaultFieldName = $"{DefaultConstants.DefaultFieldPrefix}{propertyPascalName}";
+        return _defaultValueNames.Contains(defaultFieldName) ? defaultFieldName : null;
+    }
 }

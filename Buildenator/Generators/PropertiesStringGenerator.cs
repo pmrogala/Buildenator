@@ -31,7 +31,7 @@ internal sealed class PropertiesStringGenerator
 
 		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
 		{
-            output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName};");
+            output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName}{GenerateFieldInitializer(typedSymbol)};");
 		}
 
 		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredWithMethod))
@@ -76,6 +76,19 @@ internal sealed class PropertiesStringGenerator
 		}
 
 		bool IsCollectionProperty(ITypedSymbol x) => x.GetCollectionMetadata() != null && !x.IsMockable();
+	}
+	
+	private string GenerateFieldInitializer(ITypedSymbol typedSymbol)
+	{
+		// Mockable types should not use user-defined defaults (they have their own mocking initialization)
+		if (typedSymbol.IsMockable())
+			return string.Empty;
+		
+		var defaultValueName = _builder.GetDefaultValueName(typedSymbol.SymbolPascalName);
+		if (defaultValueName is null)
+			return string.Empty;
+		
+		return $" = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({defaultValueName})";
 	}
 
 	private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
