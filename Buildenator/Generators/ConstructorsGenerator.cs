@@ -12,7 +12,7 @@ internal static class ConstructorsGenerator
         string builderName,
         IEntityToBuild entity,
         IFixtureProperties? fixtureConfiguration,
-        IBuilderProperties builderProperties)
+        bool initializeCollectionsWithEmpty)
     {
             var hasAnyBody = false;
             var parameters = entity.AllUniqueSettablePropertiesAndParameters;
@@ -28,7 +28,7 @@ internal static class ConstructorsGenerator
             }
 
             // Generate empty collection initializations if the option is enabled
-            if (builderProperties.InitializeCollectionsWithEmpty)
+            if (initializeCollectionsWithEmpty)
             {
                 foreach (var typedSymbol in parameters.Where(ShouldInitializeCollectionField))
                 {

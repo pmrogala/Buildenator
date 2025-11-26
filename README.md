@@ -256,7 +256,8 @@ using Buildenator.Abstraction.Moq;
     nullableStrategy: NullableStrategy.Default,
     generateMethodsForUnreachableProperties: false,
     implicitCast: false,
-    generateStaticPropertyForBuilderCreation: true
+    generateStaticPropertyForBuilderCreation: true,
+    initializeCollectionsWithEmpty: false  // Initialize collections with empty instead of null
 )]
 
 // Optional: AutoFixture configuration
@@ -281,7 +282,8 @@ Override global settings for specific builders:
     generateMethodsForUnreachableProperties: true, // Generate methods for private setters
     implicitCast: true,                        // Enable implicit casting
     staticFactoryMethodName: nameof(User.CreateUser), // Use static factory method
-    generateStaticPropertyForBuilderCreation: true // Generate static User property
+    generateStaticPropertyForBuilderCreation: true, // Generate static User property
+    initializeCollectionsWithEmpty: true       // Initialize collections with empty instead of null
 )]
 public partial class UserBuilder { }
 ```
@@ -343,6 +345,41 @@ var user = UserBuilder.User.WithName("John").Build();
 
 // When false:
 var user = new UserBuilder().WithName("John").Build();
+```
+
+#### `initializeCollectionsWithEmpty` (default: `false`)
+When `true`, collection fields are initialized with empty collections in the builder constructor instead of null. This prevents `NullReferenceException` when the entity iterates over collections that weren't explicitly set.
+
+**Supported collection types:**
+- Interface types: `IEnumerable<T>`, `IList<T>`, `ICollection<T>`, `IReadOnlyList<T>`, etc.
+- Concrete types: `List<T>`, `HashSet<T>`, and any class implementing `ICollection<T>`
+- Dictionary types: `Dictionary<K,V>`, `IDictionary<K,V>`, `IReadOnlyDictionary<K,V>`
+
+```csharp
+// Assembly-level
+[assembly: BuildenatorConfiguration(initializeCollectionsWithEmpty: true)]
+
+// Or per-builder
+[MakeBuilder(typeof(Order), initializeCollectionsWithEmpty: true)]
+public partial class OrderBuilder { }
+```
+
+**Usage:**
+
+```csharp
+public class Order
+{
+    public Order(List<string> items)
+    {
+        Items = items.ToList(); // Would throw if items is null
+    }
+    public IReadOnlyList<string> Items { get; }
+}
+
+// Without initializeCollectionsWithEmpty: calling Build() without setting items → NullReferenceException
+// With initializeCollectionsWithEmpty: items is automatically initialized as empty list
+var order = OrderBuilder.Order.Build(); // Safe - Items is empty, not null
+foreach (var item in order.Items) { } // No exception
 ```
 
 ---
