@@ -1,5 +1,4 @@
-﻿using Buildenator.Configuration;
-using Buildenator.Configuration.Contract;
+﻿using Buildenator.Configuration.Contract;
 using System.Linq;
 using System.Text;
 using Buildenator.CodeAnalysis;
@@ -38,7 +37,6 @@ internal static class ConstructorsGenerator
                         if (!string.IsNullOrEmpty(initCode))
                         {
                             output = output.AppendLine($@"            {initCode}");
-                            hasAnyBody = true;
                         }
                     }
                 }
