@@ -769,7 +769,7 @@ public class BuildersGeneratorTests
     }
 
     // ===== Tests for Dictionary Types =====
-    // These tests verify that dictionary types are handled correctly and not treated as collections
+    // These tests verify that dictionary types are handled correctly as collections with key-value pairs
     
     [Theory]
     [AutoData]
@@ -922,25 +922,120 @@ public class BuildersGeneratorTests
         _ = result.Name.Should().Be(name);
     }
     
-    [Fact]
-    public void BuildersGenerator_DictionaryProperty_NoAddToMethodShouldBeGenerated()
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DictionaryProperty_AddToMethodShouldAddKeyValuePairs(string key1, int value1, string key2, int value2)
     {
-        // Dictionary types should NOT have AddTo methods generated because they would be incorrect
-        // (Dictionary.Add takes two parameters, not a single KeyValuePair)
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
         
-        // Assert - Verify no AddTo methods exist for dictionary properties
+        // Act - Use AddTo method with KeyValuePair
+        var result = builder
+            .AddToScores(new KeyValuePair<string, int>(key1, value1), new KeyValuePair<string, int>(key2, value2))
+            .Build();
+        
+        // Assert
+        _ = result.Scores.Should().NotBeNull();
+        _ = result.Scores.Should().HaveCount(2);
+        _ = result.Scores[key1].Should().Be(value1);
+        _ = result.Scores[key2].Should().Be(value2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_IDictionaryProperty_AddToMethodShouldAddKeyValuePairs(string key1, string value1, string key2, string value2)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        
+        // Act - Use AddTo method on IDictionary property
+        var result = builder
+            .AddToMetadata(new KeyValuePair<string, string>(key1, value1), new KeyValuePair<string, string>(key2, value2))
+            .Build();
+        
+        // Assert - The IReadOnlyDictionary Metadata property should have the values
+        _ = result.Metadata.Should().NotBeNull();
+        _ = result.Metadata.Should().HaveCount(2);
+        _ = result.Metadata[key1].Should().Be(value1);
+        _ = result.Metadata[key2].Should().Be(value2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_IReadOnlyDictionaryProperty_AddToMethodShouldAddKeyValuePairs(string key, object value)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        
+        // Act - Use AddTo method on IReadOnlyDictionary property
+        var result = builder
+            .AddToSettings(new KeyValuePair<string, object>(key, value))
+            .Build();
+        
+        // Assert
+        _ = result.Settings.Should().NotBeNull();
+        _ = result.Settings.Should().ContainSingle();
+        _ = result.Settings[key].Should().Be(value);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DictionaryProperty_WithThenAddToShouldAppendItems(string key1, int value1, string key2, int value2)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        var initialScores = new Dictionary<string, int> { { key1, value1 } };
+        
+        // Act - With sets initial value, AddTo appends
+        var result = builder
+            .WithScores(initialScores)
+            .AddToScores(new KeyValuePair<string, int>(key2, value2))
+            .Build();
+        
+        // Assert
+        _ = result.Scores.Should().NotBeNull();
+        _ = result.Scores.Should().HaveCount(2);
+        _ = result.Scores[key1].Should().Be(value1);
+        _ = result.Scores[key2].Should().Be(value2);
+    }
+    
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DictionaryProperty_AddToThenWithShouldReplaceCompletely(string key1, int value1, string key2, int value2)
+    {
+        // Arrange
+        var builder = EntityWithDictionaryBuilder.EntityWithDictionary;
+        var replacementScores = new Dictionary<string, int> { { key2, value2 } };
+        
+        // Act - AddTo first, then With replaces everything
+        var result = builder
+            .AddToScores(new KeyValuePair<string, int>(key1, value1))
+            .WithScores(replacementScores)
+            .Build();
+        
+        // Assert - Should only have key2
+        _ = result.Scores.Should().ContainSingle();
+        _ = result.Scores[key2].Should().Be(value2);
+    }
+    
+    [Fact]
+    public void BuildersGenerator_DictionaryProperty_AddToMethodsShouldExist()
+    {
+        // Dictionary types SHOULD have AddTo methods generated
+        
+        // Assert - Verify AddTo methods exist for dictionary properties
         var methods = typeof(EntityWithDictionaryBuilder).GetMethods();
         
         var addToScores = methods.FirstOrDefault(m => m.Name == "AddToScores");
-        _ = addToScores.Should().BeNull("Dictionary properties should not have AddTo methods generated");
+        _ = addToScores.Should().NotBeNull("Dictionary properties should have AddTo methods generated");
         
         var addToMetadata = methods.FirstOrDefault(m => m.Name == "AddToMetadata");
-        _ = addToMetadata.Should().BeNull("IDictionary properties should not have AddTo methods generated");
+        _ = addToMetadata.Should().NotBeNull("IDictionary properties should have AddTo methods generated");
         
         var addToItems = methods.FirstOrDefault(m => m.Name == "AddToItems");
-        _ = addToItems.Should().BeNull("IDictionary properties should not have AddTo methods generated");
+        _ = addToItems.Should().NotBeNull("IDictionary properties should have AddTo methods generated");
         
         var addToSettings = methods.FirstOrDefault(m => m.Name == "AddToSettings");
-        _ = addToSettings.Should().BeNull("IReadOnlyDictionary properties should not have AddTo methods generated");
+        _ = addToSettings.Should().NotBeNull("IReadOnlyDictionary properties should have AddTo methods generated");
     }
 }

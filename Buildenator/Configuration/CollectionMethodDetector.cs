@@ -8,20 +8,21 @@ internal static class CollectionMethodDetector
 {
     /// <summary>
     /// Factory method that creates CollectionMetadata for a given type symbol.
-    /// Returns ConcreteCollectionMetadata for concrete collection types,
+    /// Returns ConcreteDictionaryMetadata or InterfaceDictionaryMetadata for dictionary types,
+    /// ConcreteCollectionMetadata for concrete collection types,
     /// InterfaceCollectionMetadata for interface collection types,
     /// or null if the type is not a collection.
-    /// Dictionary types are explicitly excluded as they require special handling.
     /// </summary>
     public static CollectionMetadata? CreateCollectionMetadata(ITypeSymbol propertyType)
     {
-        // Exclude dictionary types - they should not be treated as regular collections
-        if (IsDictionaryType(propertyType))
+        // Check for dictionary types FIRST (before collection check)
+        var dictionaryMetadata = CreateDictionaryMetadata(propertyType);
+        if (dictionaryMetadata != null)
         {
-            return null;
+            return dictionaryMetadata;
         }
         
-        // Check for concrete collection types FIRST (before interface check)
+        // Check for concrete collection types (before interface check)
         if (IsConcreteCollectionProperty(propertyType))
         {
             var elementType = GetCollectionElementType(propertyType);
@@ -45,41 +46,79 @@ internal static class CollectionMethodDetector
     }
     
     /// <summary>
-    /// Checks if the type is a dictionary type (Dictionary, IDictionary, or IReadOnlyDictionary).
-    /// Dictionary types should not be treated as regular collections because:
-    /// 1. They require key-value pair handling, not single element handling
-    /// 2. Their Add methods take two parameters (key, value), not a single item
-    /// 3. List&lt;KeyValuePair&lt;K,V&gt;&gt; is not assignable to dictionary interfaces
+    /// Creates dictionary metadata for the given type if it's a dictionary type.
+    /// Returns ConcreteDictionaryMetadata for Dictionary&lt;K,V&gt;, 
+    /// InterfaceDictionaryMetadata for IDictionary&lt;K,V&gt; and IReadOnlyDictionary&lt;K,V&gt;,
+    /// or null if not a dictionary type.
     /// </summary>
-    private static bool IsDictionaryType(ITypeSymbol propertyType)
+    private static CollectionMetadata? CreateDictionaryMetadata(ITypeSymbol propertyType)
     {
         if (propertyType is not INamedTypeSymbol namedType || !namedType.IsGenericType)
         {
-            return false;
+            return null;
         }
         
         var constructedFrom = namedType.ConstructedFrom;
         if (constructedFrom == null)
         {
-            return false;
+            return null;
         }
         
         var typeName = constructedFrom.ToDisplayString();
         
-        // Check for common dictionary types
-        if (typeName == "System.Collections.Generic.Dictionary<TKey, TValue>" ||
-            typeName == "System.Collections.Generic.IDictionary<TKey, TValue>" ||
-            typeName == "System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>")
+        // Check for concrete Dictionary<TKey, TValue>
+        if (typeName == "System.Collections.Generic.Dictionary<TKey, TValue>")
         {
-            return true;
+            if (namedType.TypeArguments.Length >= 2)
+            {
+                var keyType = namedType.TypeArguments[0];
+                var valueType = namedType.TypeArguments[1];
+                var elementType = GetCollectionElementType(propertyType);
+                if (elementType != null)
+                {
+                    return new ConcreteDictionaryMetadata(keyType, valueType, elementType);
+                }
+            }
         }
         
-        // Also check if the type implements IDictionary<K,V> (for derived dictionary types like
-        // SortedDictionary<K,V> and ConcurrentDictionary<K,V>)
-        return namedType.AllInterfaces.Any(i =>
+        // Check for IDictionary<TKey, TValue> or IReadOnlyDictionary<TKey, TValue>
+        if (typeName == "System.Collections.Generic.IDictionary<TKey, TValue>" ||
+            typeName == "System.Collections.Generic.IReadOnlyDictionary<TKey, TValue>")
+        {
+            if (namedType.TypeArguments.Length >= 2)
+            {
+                var keyType = namedType.TypeArguments[0];
+                var valueType = namedType.TypeArguments[1];
+                var elementType = GetCollectionElementType(propertyType);
+                if (elementType != null)
+                {
+                    return new InterfaceDictionaryMetadata(keyType, valueType, elementType);
+                }
+            }
+        }
+        
+        // Check if the type implements IDictionary<K,V> (for derived dictionary types)
+        var dictionaryInterface = namedType.AllInterfaces.FirstOrDefault(i =>
             i.IsGenericType &&
             i.ConstructedFrom != null &&
             i.ConstructedFrom.ToDisplayString() == "System.Collections.Generic.IDictionary<TKey, TValue>");
+            
+        if (dictionaryInterface != null && dictionaryInterface.TypeArguments.Length >= 2)
+        {
+            var keyType = dictionaryInterface.TypeArguments[0];
+            var valueType = dictionaryInterface.TypeArguments[1];
+            var elementType = GetCollectionElementType(propertyType);
+            if (elementType != null)
+            {
+                // If it's a concrete class, return ConcreteDictionaryMetadata
+                if (propertyType.TypeKind == TypeKind.Class)
+                {
+                    return new ConcreteDictionaryMetadata(keyType, valueType, elementType);
+                }
+            }
+        }
+        
+        return null;
     }
     
     /// <summary>
