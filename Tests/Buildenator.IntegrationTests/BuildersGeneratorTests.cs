@@ -1037,6 +1037,8 @@ public class BuildersGeneratorTests
         
         var addToSettings = methods.FirstOrDefault(m => m.Name == "AddToSettings");
         _ = addToSettings.Should().NotBeNull("IReadOnlyDictionary properties should have AddTo methods generated");
+    }
+
     [Theory]
     [AutoData]
     public void BuildersGenerator_OverloadedMethods_ShouldNotBreakGeneration(int aValue)

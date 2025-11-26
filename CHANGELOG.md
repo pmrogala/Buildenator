@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.5.0.2 - 2025-11-26
+
+### Fixed
+- Generator: fixed dictionary types (`Dictionary<K,V>`, `IDictionary<K,V>`, `IReadOnlyDictionary<K,V>`) handling in code generation. Previously, dictionary types were incorrectly treated as collections of `KeyValuePair<K,V>`, causing `BuildDefault` to generate `List<KeyValuePair<K,V>>` parameters and invalid `AddTo` methods. Now:
+  - `BuildDefault` correctly uses dictionary types as parameters
+  - `AddTo` methods for dictionaries accept `KeyValuePair<K,V>[]` and use indexer syntax `dictionary[item.Key] = item.Value`
+  - Interface dictionary types (`IDictionary<K,V>`, `IReadOnlyDictionary<K,V>`) create proper `Dictionary<K,V>` instances
+
 ## 8.5.0.1 - 2025-11-26
 
 ### Fixed
