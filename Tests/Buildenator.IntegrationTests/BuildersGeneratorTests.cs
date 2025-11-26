@@ -5,12 +5,22 @@ using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;
 using FluentAssertions;
 using Xunit;
 using PostBuildEntityBuilder = Buildenator.IntegrationTests.Source.Builders.PostBuildEntityBuilder;
+using PreBuildEntityBuilder = Buildenator.IntegrationTests.Source.Builders.PreBuildEntityBuilder;
 using Newtonsoft.Json.Linq;
 
 namespace Buildenator.IntegrationTests;
 
 public class BuildersGeneratorTests
 {
+    [Fact]
+    public void BuildersGenerator_GeneratesPreBuildMethod()
+    {
+        var builder = PreBuildEntityBuilder.PreBuildEntity;
+
+        // PreBuild should be called once in the constructor
+        _ = builder.GetPreBuildCalledCount().Should().Be(1);
+    }
+
     [Fact]
     public void BuildersGenerator_GeneratesPostBuildMethod()
     {
