@@ -12,7 +12,7 @@ namespace Buildenator.Configuration;
 
 internal readonly struct BuilderProperties : IBuilderProperties
 {
-    private readonly Dictionary<string, IMethodSymbol> _buildingMethods;
+    private readonly Dictionary<string, List<IMethodSymbol>> _buildingMethods;
     private readonly Dictionary<string, IFieldSymbol> _fields;
     private readonly List<BuildenatorDiagnostic> _diagnostics = [];
 
@@ -87,7 +87,12 @@ internal readonly struct BuilderProperties : IBuilderProperties
                 case IMethodSymbol { MethodKind: MethodKind.Ordinary } method
                 when method.Name.StartsWith(BuildingMethodsPrefix)
                 && method.Name != DefaultConstants.BuildMethodName:
-                    _buildingMethods.Add(method.Name, method);
+                    if (!_buildingMethods.TryGetValue(method.Name, out var methods))
+                    {
+                        methods = [];
+                        _buildingMethods.Add(method.Name, methods);
+                    }
+                    methods.Add(method);
                     break;
                 case IMethodSymbol { MethodKind: MethodKind.Ordinary, Name: DefaultConstants.PostBuildMethodName }:
                     IsPostBuildMethodOverriden = true;
@@ -133,7 +138,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public string? StaticFactoryMethodName { get; }
     public bool GenerateStaticPropertyForBuilderCreation { get; }
 
-    public IReadOnlyDictionary<string, IMethodSymbol> BuildingMethods => _buildingMethods;
+    public IReadOnlyDictionary<string, List<IMethodSymbol>> BuildingMethods => _buildingMethods;
     public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
 
     public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
