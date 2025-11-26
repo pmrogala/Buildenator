@@ -12,8 +12,7 @@ internal static class ConstructorsGenerator
         string builderName,
         IEntityToBuild entity,
         IFixtureProperties? fixtureConfiguration,
-        bool initializeCollectionsWithEmpty,
-        IBuilderProperties builder)
+        bool initializeCollectionsWithEmpty)
     {
             var parameters = entity.AllUniqueSettablePropertiesAndParameters;
 
@@ -29,7 +28,7 @@ internal static class ConstructorsGenerator
             // Generate empty collection initializations if the option is enabled
             if (initializeCollectionsWithEmpty)
             {
-                foreach (var typedSymbol in parameters.Where(ts => ShouldInitializeCollectionField(ts, builder)))
+                foreach (var typedSymbol in parameters.Where(ShouldInitializeCollectionField))
                 {
                     var collectionMetadata = typedSymbol.GetCollectionMetadata();
                     if (collectionMetadata != null)
@@ -61,7 +60,7 @@ internal static class ConstructorsGenerator
     /// This method is called for collection-type properties only (caller filters via GetCollectionMetadata).
     /// Excludes fields that already have initialization (NeedsFieldInit), are mockable, or have a user-defined default value.
     /// </summary>
-    private static bool ShouldInitializeCollectionField(ITypedSymbol typedSymbol, IBuilderProperties builder)
+    private static bool ShouldInitializeCollectionField(ITypedSymbol typedSymbol)
     {
         // Exclude fields that have auto-initialization or are mockable
         if (typedSymbol.NeedsFieldInit() || typedSymbol.IsMockable())
@@ -69,7 +68,7 @@ internal static class ConstructorsGenerator
         
         // Exclude fields that have a user-defined default value (e.g., Default{PropertyName})
         // to avoid redundant initialization
-        var defaultValueName = builder.GetDefaultValueName(typedSymbol.SymbolPascalName);
+        var defaultValueName = typedSymbol.GetDefaultValueName();
         if (defaultValueName != null)
             return false;
         

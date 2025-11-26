@@ -107,7 +107,8 @@ public class BuildersGenerator : IIncrementalGenerator
                         mockingProperties,
                         fixtureProperties,
                         builderProperties.NullableStrategy,
-                        builderProperties.StaticFactoryMethodName),
+                        builderProperties.StaticFactoryMethodName,
+                        builderProperties.DefaultValueNames),
                     fixtureProperties,
                     mockingProperties);
             });

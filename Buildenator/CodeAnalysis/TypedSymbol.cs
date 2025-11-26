@@ -2,6 +2,7 @@
 using Buildenator.Configuration.Contract;
 using Buildenator.Extensions;
 using Microsoft.CodeAnalysis;
+using System.Collections.Generic;
 using System.Linq;
 using Buildenator.Configuration;
 
@@ -12,8 +13,9 @@ internal sealed class TypedSymbol : ITypedSymbol
         IPropertySymbol symbol,
         IMockingProperties? mockingInterfaceStrategy,
         IFixtureProperties? fixtureConfiguration,
-        NullableStrategy nullableStrategy)
-        : this(symbol, symbol.Type, mockingInterfaceStrategy, fixtureConfiguration, nullableStrategy)
+        NullableStrategy nullableStrategy,
+        IReadOnlyCollection<string>? defaultValueNames = null)
+        : this(symbol, symbol.Type, mockingInterfaceStrategy, fixtureConfiguration, nullableStrategy, defaultValueNames)
     {
     }
 
@@ -21,8 +23,9 @@ internal sealed class TypedSymbol : ITypedSymbol
         IParameterSymbol symbol,
         IMockingProperties? mockingInterfaceStrategy,
         IFixtureProperties? fixtureConfiguration,
-        NullableStrategy nullableStrategy)
-        : this(symbol, symbol.Type, mockingInterfaceStrategy, fixtureConfiguration, nullableStrategy)
+        NullableStrategy nullableStrategy,
+        IReadOnlyCollection<string>? defaultValueNames = null)
+        : this(symbol, symbol.Type, mockingInterfaceStrategy, fixtureConfiguration, nullableStrategy, defaultValueNames)
     {
     }
 
@@ -31,13 +34,15 @@ internal sealed class TypedSymbol : ITypedSymbol
         ITypeSymbol typeSymbol,
         IMockingProperties? mockingInterfaceStrategy,
         IFixtureProperties? fixtureConfiguration,
-        NullableStrategy nullableStrategy)
+        NullableStrategy nullableStrategy,
+        IReadOnlyCollection<string>? defaultValueNames)
     {
         Symbol = symbol;
         Type = typeSymbol;
         _mockingProperties = mockingInterfaceStrategy;
         _fixtureProperties = fixtureConfiguration;
         _nullableStrategy = nullableStrategy;
+        _defaultValueNames = defaultValueNames;
     }
 
     public bool NeedsFieldInit() => IsMockable();
@@ -84,6 +89,7 @@ internal sealed class TypedSymbol : ITypedSymbol
 
     private readonly IFixtureProperties? _fixtureProperties;
     private readonly NullableStrategy? _nullableStrategy;
+    private readonly IReadOnlyCollection<string>? _defaultValueNames;
     private bool? _isFakeable;
     public bool IsFakeable()
         => _isFakeable ??= _fixtureProperties?.Strategy switch
@@ -146,6 +152,15 @@ internal sealed class TypedSymbol : ITypedSymbol
 
     public string GenerateMethodParameterDefinition()
         => IsMockable() ? $"Action<{GenerateMockableFieldType()}> {DefaultConstants.SetupActionLiteral}" : $"{TypeFullName} {DefaultConstants.ValueLiteral}";
+
+    public string? GetDefaultValueName()
+    {
+        if (_defaultValueNames == null)
+            return null;
+        
+        var defaultFieldName = $"{DefaultConstants.DefaultFieldPrefix}{SymbolPascalName}";
+        return _defaultValueNames.Contains(defaultFieldName) ? defaultFieldName : null;
+    }
 
     private string GenerateMockableFieldType() => string.Format(_mockingProperties!.TypeDeclarationFormat, TypeFullName);
 }

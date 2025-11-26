@@ -27,7 +27,8 @@ internal sealed class EntityToBuild : IEntityToBuild
         IMockingProperties? mockingConfiguration,
         IFixtureProperties? fixtureConfiguration,
         NullableStrategy nullableStrategy,
-        string? staticFactoryMethodName)
+        string? staticFactoryMethodName,
+        IReadOnlyCollection<string>? defaultValueNames = null)
     {
         INamedTypeSymbol? entityToBuildSymbol;
         var additionalNamespaces = Enumerable.Empty<string>();
@@ -49,8 +50,8 @@ internal sealed class EntityToBuild : IEntityToBuild
         FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
             genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters | SymbolDisplayGenericsOptions.IncludeTypeConstraints | SymbolDisplayGenericsOptions.IncludeVariance));
 
-        ConstructorToBuild = Constructor.CreateConstructorOrDefault(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy, staticFactoryMethodName);
-        (_properties, _uniqueReadOnlyTypedSymbols) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy);
+        ConstructorToBuild = Constructor.CreateConstructorOrDefault(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy, staticFactoryMethodName, defaultValueNames);
+        (_properties, _uniqueReadOnlyTypedSymbols) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy, defaultValueNames);
         _uniqueTypedSymbols = _properties;
         if (ConstructorToBuild is not null)
         {
@@ -128,12 +129,13 @@ internal sealed class EntityToBuild : IEntityToBuild
 
     private static (TypedSymbol[] Settable, TypedSymbol[] ReadOnly) DividePropertiesBySetability(
         INamedTypeSymbol entityToBuildSymbol, IMockingProperties? mockingConfiguration,
-        IFixtureProperties? fixtureConfiguration, NullableStrategy nullableStrategy)
+        IFixtureProperties? fixtureConfiguration, NullableStrategy nullableStrategy,
+        IReadOnlyCollection<string>? defaultValueNames)
     {
         var (settable, readOnly) = entityToBuildSymbol.DividePublicPropertiesBySetability();
         return (
-            settable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration, nullableStrategy)).ToArray(),
-            readOnly.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration, nullableStrategy)).ToArray());
+            settable.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration, nullableStrategy, defaultValueNames)).ToArray(),
+            readOnly.Select(a => new TypedSymbol(a, mockingConfiguration, fixtureConfiguration, nullableStrategy, defaultValueNames)).ToArray());
     }
 
     public string GenerateDefaultBuildsCode()
@@ -198,7 +200,8 @@ internal sealed class EntityToBuild : IEntityToBuild
             IMockingProperties? mockingConfiguration,
             IFixtureProperties? fixtureConfiguration,
             NullableStrategy nullableStrategy,
-            string? staticFactoryMethodName)
+            string? staticFactoryMethodName,
+            IReadOnlyCollection<string>? defaultValueNames)
         {
             IEnumerable<IMethodSymbol> constructors;
             if (staticFactoryMethodName is null)
@@ -222,7 +225,7 @@ internal sealed class EntityToBuild : IEntityToBuild
                             .First();
             var parameters = selectedConstructor
                 .Parameters
-                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, mockingConfiguration, fixtureConfiguration, nullableStrategy));
+                .ToDictionary(x => x.PascalCaseName(), s => new TypedSymbol(s, mockingConfiguration, fixtureConfiguration, nullableStrategy, defaultValueNames));
 
             return staticFactoryMethodName is null
                 ? new ObjectConstructor(parameters)
