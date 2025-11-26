@@ -74,7 +74,8 @@ internal static class CollectionMethodDetector
             return true;
         }
         
-        // Also check if the type implements IDictionary<K,V> (for concrete dictionary types)
+        // Also check if the type implements IDictionary<K,V> (for derived dictionary types like
+        // SortedDictionary<K,V> and ConcurrentDictionary<K,V>)
         return namedType.AllInterfaces.Any(i =>
             i.IsGenericType &&
             i.ConstructedFrom != null &&
