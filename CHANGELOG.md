@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Supports dictionary types: `Dictionary<K,V>`, `IDictionary<K,V>`, `IReadOnlyDictionary<K,V>`
   - When enabled, calling `Build()` without setting collection values will result in empty collections instead of null
   - This helps avoid `NullReferenceException` when the entity iterates over collections
+- **Default field initialization support**: User-defined default values in builders are now used to initialize generated fields
+  - Define a static field or constant with the naming convention `Default{PropertyName}` (e.g., `DefaultName` for a `Name` property)
+  - The generator will use this value to initialize the corresponding field in the generated builder
+  - Example: `public const string DefaultName = "DefaultValue";` will generate `private NullBox<string>? _name = new NullBox<string>(DefaultName);`
+  - Works with constants (`const`), static readonly fields (`static readonly`), and static properties (`static`)
+  - When `With{PropertyName}` is called, it overrides the default value
 
 ## 8.5.0.2 - 2025-11-26
 

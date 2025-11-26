@@ -14,6 +14,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
 {
     private readonly Dictionary<string, List<IMethodSymbol>> _buildingMethods;
     private readonly Dictionary<string, IFieldSymbol> _fields;
+    private readonly HashSet<string> _defaultValueNames;
     private readonly List<BuildenatorDiagnostic> _diagnostics = [];
 
     public static BuilderProperties Create(
@@ -83,6 +84,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
 
         _buildingMethods = [];
         _fields = [];
+        _defaultValueNames = [];
         var members = builderSymbol.GetMembers();
         foreach (var member in members)
         {
@@ -121,9 +123,38 @@ internal readonly struct BuilderProperties : IBuilderProperties
                     break;
                 case IFieldSymbol field:
                     _fields.Add(field.Name, field);
+                    // Track fields that follow the Default{PropertyName} naming convention
+                    if (IsAccessibleDefaultValueMember(field.IsStatic, field.DeclaredAccessibility, field.Name))
+                    {
+                        _defaultValueNames.Add(field.Name);
+                    }
+                    break;
+                case IPropertySymbol property:
+                    // Track static properties that follow the Default{PropertyName} naming convention
+                    if (IsAccessibleDefaultValueMember(property.IsStatic, property.DeclaredAccessibility, property.Name))
+                    {
+                        _defaultValueNames.Add(property.Name);
+                    }
                     break;
             }
         }
+    }
+
+    /// <summary>
+    /// Checks if a member is a valid default value member based on naming convention and accessibility.
+    /// </summary>
+    private static bool IsAccessibleDefaultValueMember(bool isStatic, Accessibility accessibility, string memberName)
+    {
+        // Must be static
+        if (!isStatic)
+            return false;
+        
+        // Must follow Default{PropertyName} naming convention
+        if (!memberName.StartsWith(DefaultConstants.DefaultFieldPrefix) || memberName.Length <= DefaultConstants.DefaultFieldPrefix.Length)
+            return false;
+        
+        // Must be accessible (public or internal) to be used in generated code
+        return accessibility == Accessibility.Public || accessibility == Accessibility.Internal;
     }
 
     public string ContainingNamespace { get; }
@@ -147,4 +178,10 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;
 
     public IEnumerable<BuildenatorDiagnostic> Diagnostics => _diagnostics;
+    
+    public string? GetDefaultValueName(string propertyPascalName)
+    {
+        var defaultFieldName = $"{DefaultConstants.DefaultFieldPrefix}{propertyPascalName}";
+        return _defaultValueNames.Contains(defaultFieldName) ? defaultFieldName : null;
+    }
 }
