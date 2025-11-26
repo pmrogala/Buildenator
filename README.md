@@ -200,6 +200,7 @@ var user = UserBuilder.User.Build();
 Override default behavior by implementing your own methods:
 - Custom `Build()` method
 - Custom `BuildMany()` method
+- Custom `PreBuild()` hook for pre-construction setup
 - Custom `PostBuild()` hook for post-processing
 - Custom `With*` methods for specific properties
 
@@ -207,6 +208,13 @@ Override default behavior by implementing your own methods:
 [MakeBuilder(typeof(User))]
 public partial class UserBuilder
 {
+    // Custom PreBuild hook - called in constructor
+    public void PreBuild()
+    {
+        // Perform setup before building starts
+        // e.g., configure default values, initialize state
+    }
+
     // Custom PostBuild hook
     public void PostBuild(User user)
     {
@@ -396,6 +404,29 @@ var order4 = OrderBuilder.Order
     .AddToQuantities(1, 2, 5)
     .Build();
 ```
+
+### Custom Build Logic with PreBuild
+
+Add custom logic in the builder constructor, executed before `Build()` is called:
+
+```csharp
+[MakeBuilder(typeof(User))]
+public partial class UserBuilder
+{
+    private bool _initialized = false;
+
+    public void PreBuild()
+    {
+        // Custom initialization in constructor
+        _initialized = true;
+        
+        // Set up default state
+        // This runs once when the builder is created
+    }
+}
+```
+
+The `PreBuild()` method is called automatically in the generated constructor, allowing you to perform setup before any `Build()` call.
 
 ### Custom Build Logic with PostBuild
 
