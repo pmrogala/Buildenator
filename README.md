@@ -216,6 +216,42 @@ public partial class UserBuilder
 }
 ```
 
+#### 🎯 **Default Field Initialization**
+Define default values for builder fields using the `Default{PropertyName}` naming convention. The generator will automatically use these values to initialize fields.
+
+```csharp
+public class User
+{
+    public User(string name, int age) { Name = name; Age = age; }
+    public string Name { get; }
+    public int Age { get; }
+}
+
+[MakeBuilder(typeof(User))]
+public partial class UserBuilder
+{
+    // Define default values using the Default{PropertyName} naming convention
+    public const string DefaultName = "John Doe";
+    public const int DefaultAge = 25;
+    public static readonly string DefaultEmail = "default@example.com";
+}
+
+// Usage - builds with default values when not explicitly set
+var user = new UserBuilder().Build();
+// user.Name = "John Doe", user.Age = 25
+
+// Override defaults when needed
+var customUser = new UserBuilder()
+    .WithName("Jane Doe")
+    .Build();
+// customUser.Name = "Jane Doe", customUser.Age = 25 (default)
+```
+
+**Supported member types:**
+- `const` fields
+- `static readonly` fields  
+- `static` properties
+
 #### ⚡ **Performance Optimized**
 Uses incremental source generators for fast compilation with minimal build-time impact. See [performance benchmarks](Tests/Buildenator.Benchmarks).
 
