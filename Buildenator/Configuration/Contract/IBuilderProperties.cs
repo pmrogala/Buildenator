@@ -26,6 +26,7 @@ internal interface IBuilderProperties
     IEnumerable<BuildenatorDiagnostic> Diagnostics { get; }
     bool GenerateStaticPropertyForBuilderCreation { get; }
     bool InitializeCollectionsWithEmpty { get; }
+    bool UseChildBuilders { get; }
     
     /// <summary>
     /// Gets the set of user-defined default value names available in this builder.

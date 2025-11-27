@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.7.0.0 - 2025-11-27
+
+### Added
+- **useChildBuilders option**: New configuration option that enables generating additional `With` methods that accept `Func<ChildBuilder, ChildBuilder>` for properties that have their own builders
+  - Available at assembly level via `[BuildenatorConfiguration(useChildBuilders: true)]`
+  - Available at builder level via `[MakeBuilder(typeof(MyClass), useChildBuilders: true)]`
+  - When enabled, properties whose types have builders will get an additional method signature:
+    - `WithProperty(Func<PropertyBuilder, PropertyBuilder> configure)` in addition to `WithProperty(PropertyType value)`
+  - This allows for fluent nested builder configuration:
+    ```csharp
+    var parent = ParentBuilder.Parent
+        .WithChild(child => child
+            .WithName("John")
+            .WithValue(42))
+        .Build();
+    ```
+  - The generator automatically discovers all builders in the compilation and maps them to their entity types
+  - Works with both constructor parameters and settable properties
+
 ## 8.6.0.0 - 2025-11-26
 
 ### Added

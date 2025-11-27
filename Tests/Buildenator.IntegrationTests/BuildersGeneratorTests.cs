@@ -1283,4 +1283,85 @@ public class BuildersGeneratorTests
         results.Should().OnlyContain(r => r.Count == EntityWithDefaultValueBuilder.DefaultCount);
         results.Should().OnlyContain(r => r.OptionalValue == EntityWithDefaultValueBuilder.DefaultOptionalValue);
     }
+
+    // ===== Tests for UseChildBuilders feature =====
+    // These tests verify that child builder methods are generated when useChildBuilders is enabled
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuilders_ShouldGenerateChildBuilderMethod(string childName, int childValue, int parentValue)
+    {
+        // Arrange - ParentWithChildEntityBuilder has useChildBuilders: true
+        var builder = ParentWithChildEntityBuilder.ParentWithChildEntity;
+
+        // Act - Use the generated child builder method with Func<ChildBuilder, ChildBuilder>
+        var result = builder
+            .WithChild(child => child
+                .WithName(childName)
+                .WithValue(childValue))
+            .WithParentValue(parentValue)
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.Child.Should().NotBeNull();
+        _ = result.Child.Name.Should().Be(childName);
+        _ = result.Child.Value.Should().Be(childValue);
+        _ = result.ParentValue.Should().Be(parentValue);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuilders_DirectWithMethodStillWorks(string childName, int childValue, int parentValue)
+    {
+        // Arrange - Create a child entity directly
+        var childEntity = new ChildForParentEntity(childName, childValue);
+        var builder = ParentWithChildEntityBuilder.ParentWithChildEntity;
+
+        // Act - Use the direct With method (not the child builder method)
+        var result = builder
+            .WithChild(childEntity)
+            .WithParentValue(parentValue)
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.Child.Should().Be(childEntity);
+        _ = result.ParentValue.Should().Be(parentValue);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuilders_SettablePropertyShouldAlsoHaveChildBuilderMethod(string childName, int childValue, int parentValue)
+    {
+        // Arrange - ParentWithChildEntity has an OptionalChild settable property
+        var builder = ParentWithChildEntityBuilder.ParentWithChildEntity;
+        var childEntity = new ChildForParentEntity("constructor-child", 42);
+
+        // Act - Use the generated child builder method for the settable property
+        var result = builder
+            .WithChild(childEntity)
+            .WithParentValue(parentValue)
+            .WithOptionalChild(child => child
+                .WithName(childName)
+                .WithValue(childValue))
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.OptionalChild.Should().NotBeNull();
+        _ = result.OptionalChild.Name.Should().Be(childName);
+        _ = result.OptionalChild.Value.Should().Be(childValue);
+    }
+
+    [Fact]
+    public void BuildersGenerator_UseChildBuilders_ChildBuilderMethodShouldExist()
+    {
+        // Arrange & Act - Verify the method signature exists
+        var methodInfo = typeof(ParentWithChildEntityBuilder).GetMethod("WithChild", 
+            new[] { typeof(Func<ChildForParentEntityBuilder, ChildForParentEntityBuilder>) });
+
+        // Assert
+        _ = methodInfo.Should().NotBeNull("WithChild method with Func<ChildBuilder, ChildBuilder> should be generated");
+    }
 }
