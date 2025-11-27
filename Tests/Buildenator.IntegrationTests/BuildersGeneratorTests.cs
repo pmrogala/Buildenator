@@ -1445,7 +1445,7 @@ public class BuildersGeneratorTests
         // Note: We might have no WithChildren methods at all if it's only AddTo
         _ = withChildrenMethods.Should().NotContain(m => 
             m.GetParameters().Length == 1 && 
-            m.GetParameters()[0].ParameterType.Name.Contains("IEnumerable") ||
-            m.GetParameters()[0].ParameterType.Name.Contains("IReadOnlyList"));
+            (m.GetParameters()[0].ParameterType.Name.Contains("IEnumerable") ||
+            m.GetParameters()[0].ParameterType.Name.Contains("IReadOnlyList")));
     }
 }

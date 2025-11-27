@@ -388,7 +388,7 @@ internal sealed class PropertiesStringGenerator
                 list.Add(childBuilder.Build());
             }}
             
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>((({typedSymbol.TypeFullName})list));
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(({typedSymbol.TypeFullName})list);
             return this;
         }}";
 	}
