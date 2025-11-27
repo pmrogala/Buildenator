@@ -40,7 +40,8 @@ internal sealed class PropertiesStringGenerator
             output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName}{GenerateFieldInitializer(typedSymbol)};");
 		}
 
-		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredWithMethod))
+		// Generate With methods for properties (skip collections with child builders when UseChildBuilders is enabled)
+		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredWithMethod).Where(ShouldGenerateWithMethod))
 		{
             output = output.AppendLine($@"
 
@@ -48,8 +49,8 @@ internal sealed class PropertiesStringGenerator
 
 		}
 
-		// Generate AddTo methods for collection properties
-		foreach (var typedSymbol in properties.Where(IsCollectionProperty).Where(IsNotYetDeclaredAddToMethod))
+		// Generate AddTo methods for collection properties (skip collections with child builders when UseChildBuilders is enabled)
+		foreach (var typedSymbol in properties.Where(IsCollectionProperty).Where(IsNotYetDeclaredAddToMethod).Where(x => !IsCollectionWithChildBuilder(x)))
 		{
 			output = output.AppendLine($@"
 
@@ -65,6 +66,14 @@ internal sealed class PropertiesStringGenerator
 
         {GenerateChildBuilderMethodDefinition(typedSymbol)}");
 			}
+			
+			// Generate AddTo methods with Func<ChildBuilder, ChildBuilder> for collections with child builders
+			foreach (var typedSymbol in properties.Where(IsCollectionWithChildBuilder).Where(IsNotYetDeclaredChildBuilderAddToMethod))
+			{
+				output = output.AppendLine($@"
+
+        {GenerateChildBuilderAddToMethodDefinition(typedSymbol)}");
+			}
 		}
 
 		return output.ToString();
@@ -73,6 +82,14 @@ internal sealed class PropertiesStringGenerator
 
 		bool IsNotYetDeclaredWithMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var methods)
 		                                               || !methods.Any(method => method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
+
+		bool ShouldGenerateWithMethod(ITypedSymbol x)
+		{
+			// When UseChildBuilders is enabled, skip generating With methods for collections with child builders
+			if (_builder.UseChildBuilders && IsCollectionWithChildBuilder(x))
+				return false;
+			return true;
+		}
 
 		bool IsNotYetDeclaredAddToMethod(ITypedSymbol x)
 		{
@@ -100,6 +117,18 @@ internal sealed class PropertiesStringGenerator
 		{
 			// Check if a method with Func<ChildBuilder, ChildBuilder> signature already exists
 			if (!_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var methods))
+				return true;
+			
+			// Check if any method has a Func parameter
+			return !methods.Any(method => 
+				method.Parameters.Length == 1 && 
+				method.Parameters[0].Type.Name.StartsWith("Func"));
+		}
+		
+		bool IsNotYetDeclaredChildBuilderAddToMethod(ITypedSymbol x)
+		{
+			// Check if a method with Func<ChildBuilder, ChildBuilder> signature already exists
+			if (!_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(x), out var methods))
 				return true;
 			
 			// Check if any method has a Func parameter
@@ -236,6 +265,42 @@ internal sealed class PropertiesStringGenerator
 	private string CreateAddToMethodName(ITypedSymbol property) => $"AddTo{property.SymbolPascalName}";
 
 	/// <summary>
+	/// Checks if a typed symbol represents a collection whose element type has a builder.
+	/// </summary>
+	private bool IsCollectionWithChildBuilder(ITypedSymbol typedSymbol)
+	{
+		if (!_builder.UseChildBuilders || _entityToBuilderMappings == null)
+			return false;
+			
+		var collectionMetadata = typedSymbol.GetCollectionMetadata();
+		if (collectionMetadata == null)
+			return false;
+		
+		var elementTypeFullName = collectionMetadata.ElementType.ToDisplayString();
+		return _entityToBuilderMappings.ContainsKey(elementTypeFullName);
+	}
+	
+	/// <summary>
+	/// Tries to get the builder name for a collection's element type.
+	/// Returns true if a child builder exists for the element type.
+	/// </summary>
+	private bool TryGetCollectionChildBuilderName(ITypedSymbol typedSymbol, out string childBuilderName, out string elementTypeName)
+	{
+		childBuilderName = string.Empty;
+		elementTypeName = string.Empty;
+		
+		if (_entityToBuilderMappings == null)
+			return false;
+		
+		var collectionMetadata = typedSymbol.GetCollectionMetadata();
+		if (collectionMetadata == null)
+			return false;
+		
+		elementTypeName = collectionMetadata.ElementType.ToDisplayString();
+		return _entityToBuilderMappings.TryGetValue(elementTypeName, out childBuilderName!);
+	}
+
+	/// <summary>
 	/// Tries to get the builder name for a property's type.
 	/// Returns true if a child builder exists for the property's type.
 	/// </summary>
@@ -266,6 +331,64 @@ internal sealed class PropertiesStringGenerator
             var childBuilder = new {childBuilderName}();
             childBuilder = configure{typedSymbol.SymbolPascalName}(childBuilder);
             {fieldName} = new {DefaultConstants.NullBox}<{entityTypeName}>(childBuilder.Build());
+            return this;
+        }}";
+	}
+	
+	/// <summary>
+	/// Generates an AddTo method that accepts Func&lt;ChildBuilder, ChildBuilder&gt; for adding child entities to a collection.
+	/// </summary>
+	private string GenerateChildBuilderAddToMethodDefinition(ITypedSymbol typedSymbol)
+	{
+		if (!TryGetCollectionChildBuilderName(typedSymbol, out var childBuilderName, out var elementTypeName))
+			return string.Empty;
+
+		var methodName = CreateAddToMethodName(typedSymbol);
+		var fieldName = typedSymbol.UnderScoreName;
+		var collectionMetadata = typedSymbol.GetCollectionMetadata();
+		
+		// For concrete collection types
+		if (collectionMetadata is ConcreteCollectionMetadata)
+		{
+			return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
+        {{
+            {typedSymbol.TypeFullName} collection;
+            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+            {{
+                collection = {fieldName}.Value.Object;
+            }}
+            else
+            {{
+                collection = new {typedSymbol.TypeFullName}();
+            }}
+            
+            foreach (var configure in configures)
+            {{
+                var childBuilder = new {childBuilderName}();
+                childBuilder = configure(childBuilder);
+                collection.Add(childBuilder.Build());
+            }}
+            
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(collection);
+            return this;
+        }}";
+		}
+		
+		// For interface collection types, use List<T>
+		return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
+        {{
+            var list = {fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null
+                ? new System.Collections.Generic.List<{elementTypeName}>({fieldName}.Value.Object) 
+                : new System.Collections.Generic.List<{elementTypeName}>();
+            
+            foreach (var configure in configures)
+            {{
+                var childBuilder = new {childBuilderName}();
+                childBuilder = configure(childBuilder);
+                list.Add(childBuilder.Build());
+            }}
+            
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>((({typedSymbol.TypeFullName})list));
             return this;
         }}";
 	}

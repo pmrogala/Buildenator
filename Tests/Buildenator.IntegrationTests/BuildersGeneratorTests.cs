@@ -1353,4 +1353,99 @@ public class BuildersGeneratorTests
         _ = result.OptionalChild.Name.Should().Be(childName);
         _ = result.OptionalChild.Value.Should().Be(childValue);
     }
+
+    // ===== Tests for UseChildBuilders with Collections =====
+    // These tests verify that child builder methods are generated for collections when useChildBuilders is enabled
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuildersWithCollection_AddToMethodShouldAcceptFuncParameter(
+        string childName1, int childValue1, string childName2, int childValue2, int parentValue)
+    {
+        // Arrange - ParentWithChildCollectionEntityBuilder has useChildBuilders: true
+        var builder = ParentWithChildCollectionEntityBuilder.ParentWithChildCollectionEntity;
+
+        // Act - Use the generated AddTo method with Func<ChildBuilder, ChildBuilder> parameters
+        var result = builder
+            .AddToChildren(
+                child => child.WithName(childName1).WithValue(childValue1),
+                child => child.WithName(childName2).WithValue(childValue2))
+            .WithParentValue(parentValue)
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.Children.Should().HaveCount(2);
+        _ = result.Children[0].Name.Should().Be(childName1);
+        _ = result.Children[0].Value.Should().Be(childValue1);
+        _ = result.Children[1].Name.Should().Be(childName2);
+        _ = result.Children[1].Value.Should().Be(childValue2);
+        _ = result.ParentValue.Should().Be(parentValue);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuildersWithCollection_SettablePropertyAddToShouldAcceptFuncParameter(
+        string childName1, int childValue1, string childName2, int childValue2, int parentValue)
+    {
+        // Arrange
+        var builder = ParentWithChildCollectionEntityBuilder.ParentWithChildCollectionEntity;
+
+        // Act - Use the AddTo method for the settable OptionalChildren property
+        var result = builder
+            .AddToChildren(child => child.WithName("constructor-child").WithValue(0))
+            .WithParentValue(parentValue)
+            .AddToOptionalChildren(
+                child => child.WithName(childName1).WithValue(childValue1),
+                child => child.WithName(childName2).WithValue(childValue2))
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.OptionalChildren.Should().HaveCount(2);
+        _ = result.OptionalChildren[0].Name.Should().Be(childName1);
+        _ = result.OptionalChildren[0].Value.Should().Be(childValue1);
+        _ = result.OptionalChildren[1].Name.Should().Be(childName2);
+        _ = result.OptionalChildren[1].Value.Should().Be(childValue2);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuildersWithCollection_MultipleAddToCalls_ShouldAccumulate(
+        string childName1, int childValue1, string childName2, int childValue2, int parentValue)
+    {
+        // Arrange
+        var builder = ParentWithChildCollectionEntityBuilder.ParentWithChildCollectionEntity;
+
+        // Act - Use AddTo multiple times - items should accumulate
+        var result = builder
+            .AddToChildren(child => child.WithName(childName1).WithValue(childValue1))
+            .AddToChildren(child => child.WithName(childName2).WithValue(childValue2))
+            .WithParentValue(parentValue)
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.Children.Should().HaveCount(2);
+        _ = result.Children[0].Name.Should().Be(childName1);
+        _ = result.Children[1].Name.Should().Be(childName2);
+    }
+
+    [Fact]
+    public void BuildersGenerator_UseChildBuildersWithCollection_ShouldNotHaveWithMethodForCollectionWithBuilders()
+    {
+        // The WithChildren(IEnumerable<ChildForParentEntity>) method should NOT be generated 
+        // because we only want the Func<> version for collections with buildable elements
+        var methods = typeof(ParentWithChildCollectionEntityBuilder).GetMethods();
+        
+        // Check that there is no WithChildren method that takes the raw collection type
+        var withChildrenMethods = methods.Where(m => m.Name == "WithChildren").ToList();
+        
+        // Should only have the Func<> version, not the raw entity collection version
+        // Note: We might have no WithChildren methods at all if it's only AddTo
+        _ = withChildrenMethods.Should().NotContain(m => 
+            m.GetParameters().Length == 1 && 
+            m.GetParameters()[0].ParameterType.Name.Contains("IEnumerable") ||
+            m.GetParameters()[0].ParameterType.Name.Contains("IReadOnlyList"));
+    }
 }
