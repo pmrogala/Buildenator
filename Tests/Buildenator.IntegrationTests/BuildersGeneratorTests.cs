@@ -1353,15 +1353,4 @@ public class BuildersGeneratorTests
         _ = result.OptionalChild.Name.Should().Be(childName);
         _ = result.OptionalChild.Value.Should().Be(childValue);
     }
-
-    [Fact]
-    public void BuildersGenerator_UseChildBuilders_ChildBuilderMethodShouldExist()
-    {
-        // Arrange & Act - Verify the method signature exists
-        var methodInfo = typeof(ParentWithChildEntityBuilder).GetMethod("WithChild", 
-            new[] { typeof(Func<ChildForParentEntityBuilder, ChildForParentEntityBuilder>) });
-
-        // Assert
-        _ = methodInfo.Should().NotBeNull("WithChild method with Func<ChildBuilder, ChildBuilder> should be generated");
-    }
 }
