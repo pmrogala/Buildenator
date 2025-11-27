@@ -14,6 +14,7 @@ using Buildenator.Extensions;
 using System.Collections.Immutable;
 using System.Threading;
 using Buildenator.Diagnostics;
+using System.Collections.Generic;
 
 [assembly: InternalsVisibleTo("Buildenator.UnitTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
@@ -76,16 +77,41 @@ public class BuildersGenerator : IIncrementalGenerator
                 return (globalFixtureProperties, mockingConfigurationBuilder, globalBuilderProperties);
             });
 
+        // Collect all builders and their entity types to create a mapping
+        // This allows us to find child builders for properties when useChildBuilders is enabled
+        var allBuilderMappings = classSymbols
+            .Collect()
+            .Select(static (builders, _) =>
+            {
+                var mapping = new Dictionary<string, string>();
+                foreach (var builder in builders)
+                {
+                    var entityFullName = builder.BuilderAttribute.TypeForBuilder.ToDisplayString(
+                        new SymbolDisplayFormat(
+                            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
+                    var builderFullName = builder.BuilderSymbol.ToDisplayString(
+                        new SymbolDisplayFormat(
+                            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
+                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
+                    // If there are multiple builders for the same entity, the last one wins
+                    mapping[entityFullName] = builderFullName;
+                }
+                return mapping.ToImmutableDictionary();
+            });
+
         var generators = classSymbols
             .Combine(configurationBuilders)
             .Combine(nullableOptions)
-            .Select(static (leftRightAndNullable, _) =>
+            .Combine(allBuilderMappings)
+            .Select(static (combined, _) =>
             {
-                var (builderNamedTypeSymbol, builderAttribute, mockingAttribute, fixtureAttribute) = leftRightAndNullable.Left.Left;
+                var (builderNamedTypeSymbol, builderAttribute, mockingAttribute, fixtureAttribute) = combined.Left.Left.Left;
                 var (globalFixtureProperties,
                     globalMockingConfiguration,
-                    globalBuilderProperties) = leftRightAndNullable.Left.Right;
-                var nullableOptions = leftRightAndNullable.Right;
+                    globalBuilderProperties) = combined.Left.Left.Right;
+                var nullableOptions = combined.Left.Right;
+                var builderMappings = combined.Right;
 
                 var mockingProperties = MockingProperties.CreateOrDefault(globalMockingConfiguration, mockingAttribute);
 
@@ -96,11 +122,11 @@ public class BuildersGenerator : IIncrementalGenerator
                     BuilderProperties.Create(builderNamedTypeSymbol, builderAttribute, globalBuilderProperties, nullableOptions.AnnotationsEnabled());
 
                 return (fixtureProperties, mockingConfiguration: mockingProperties, builderProperties,
-                    builderAttribute.TypeForBuilder);
+                    builderAttribute.TypeForBuilder, builderMappings);
             })
             .Select(static (properties, _) =>
             {
-                var (fixtureProperties, mockingProperties, builderProperties, typeForBuilder) = properties;
+                var (fixtureProperties, mockingProperties, builderProperties, typeForBuilder, builderMappings) = properties;
                 return new BuilderSourceStringGenerator(builderProperties,
                     new EntityToBuild(
                         typeForBuilder,
@@ -110,7 +136,8 @@ public class BuildersGenerator : IIncrementalGenerator
                         builderProperties.StaticFactoryMethodName,
                         builderProperties.DefaultValueNames),
                     fixtureProperties,
-                    mockingProperties);
+                    mockingProperties,
+                    builderMappings);
             });
 
         context.RegisterSourceOutput(generators, static (productionContext, generator) =>

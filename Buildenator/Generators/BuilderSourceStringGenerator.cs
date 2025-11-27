@@ -7,6 +7,7 @@ using static Buildenator.Generators.NamespacesGenerator;
 using static Buildenator.Generators.ConstructorsGenerator;
 using System.Reflection;
 using Buildenator.Diagnostics;
+using System.Collections.Immutable;
 
 namespace Buildenator.Generators;
 
@@ -23,7 +24,8 @@ internal sealed class BuilderSourceStringGenerator
         IBuilderProperties builder,
         IEntityToBuild entity,
         IFixtureProperties? fixtureConfiguration,
-        IMockingProperties? mockingConfiguration)
+        IMockingProperties? mockingConfiguration,
+        ImmutableDictionary<string, string>? entityToBuilderMappings = null)
     {
         _builder = builder;
         _entity = entity;
@@ -37,7 +39,7 @@ internal sealed class BuilderSourceStringGenerator
 
         _fixtureConfiguration = fixtureConfiguration;
         _mockingConfiguration = mockingConfiguration;
-        _propertiesStringGenerator = new PropertiesStringGenerator(_builder, _entity);
+        _propertiesStringGenerator = new PropertiesStringGenerator(_builder, _entity, entityToBuilderMappings);
     }
 
     private BuildenatorDiagnostic? GetBuiltTypeWithoutPublicConstructorDiagnosticOrDefault()
