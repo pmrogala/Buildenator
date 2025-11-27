@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 8.6.0.0 - 2025-11-26
 
 ### Added
-- `PreBuild()` hook method: Similar to `PostBuild()`, this is an instance method that gets called in the constructor of the generated builder. This allows the builder a chance for further configuration before the object is built.
+- `PreBuild()` hook method: Similar to `PostBuild()`, this is an instance method that gets called in the Build method of the generated builder. This allows the builder a chance for further configuration before the object is built.
   - To override it, simply define your own implementation: `public void PreBuild() { /*your code here*/ }`
 - **NullBox DebuggerDisplay**: Added `DebuggerDisplay` attribute and `ToString()` override to `NullBox<T>` struct for improved debugging experience
   - Values inside `NullBox<T>` are now visible at a glance in the debugger without expanding the object
