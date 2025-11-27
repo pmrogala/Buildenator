@@ -40,8 +40,8 @@ internal sealed class PropertiesStringGenerator
             output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName}{GenerateFieldInitializer(typedSymbol)};");
 		}
 
-		// Generate With methods for properties (skip collections with child builders when UseChildBuilders is enabled)
-		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredWithMethod).Where(ShouldGenerateWithMethod))
+		// Generate With methods for properties
+		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredWithMethod))
 		{
             output = output.AppendLine($@"
 
@@ -49,8 +49,8 @@ internal sealed class PropertiesStringGenerator
 
 		}
 
-		// Generate AddTo methods for collection properties (skip collections with child builders when UseChildBuilders is enabled)
-		foreach (var typedSymbol in properties.Where(IsCollectionProperty).Where(IsNotYetDeclaredAddToMethod).Where(x => !IsCollectionWithChildBuilder(x)))
+		// Generate AddTo methods for collection properties
+		foreach (var typedSymbol in properties.Where(IsCollectionProperty).Where(IsNotYetDeclaredAddToMethod))
 		{
 			output = output.AppendLine($@"
 
@@ -82,14 +82,6 @@ internal sealed class PropertiesStringGenerator
 
 		bool IsNotYetDeclaredWithMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var methods)
 		                                               || !methods.Any(method => method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
-
-		bool ShouldGenerateWithMethod(ITypedSymbol x)
-		{
-			// When UseChildBuilders is enabled, skip generating With methods for collections with child builders
-			if (_builder.UseChildBuilders && IsCollectionWithChildBuilder(x))
-				return false;
-			return true;
-		}
 
 		bool IsNotYetDeclaredAddToMethod(ITypedSymbol x)
 		{
