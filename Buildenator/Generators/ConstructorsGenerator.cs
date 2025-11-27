@@ -47,8 +47,6 @@ internal static class ConstructorsGenerator
                 output = output.AppendLine($@"            {fixtureConfiguration.GenerateAdditionalConfiguration()};");
             }
 
-            output = output.AppendLine($@"            {DefaultConstants.PreBuildMethodName}();");
-
             output = output.AppendLine($@"
         }}");
 
