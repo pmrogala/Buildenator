@@ -488,6 +488,64 @@ var parent2 = ParentBuilder.Parent
     .Build();
 ```
 
+#### Collections with Child Builders
+
+When `useChildBuilders` is enabled, collections containing entities with builders also get `AddTo` methods that accept `Func<ChildBuilder, ChildBuilder>`. This works alongside the existing methods:
+
+```csharp
+// Entity with collection of children
+public class Parent
+{
+    public Parent(IEnumerable<Child> children, int value) 
+    { 
+        Children = children.ToList(); 
+        Value = value; 
+    }
+    public IReadOnlyList<Child> Children { get; }
+    public int Value { get; }
+    public List<Child> OptionalChildren { get; set; } = new();
+}
+
+// Builders
+[MakeBuilder(typeof(Child))]
+public partial class ChildBuilder { }
+
+[MakeBuilder(typeof(Parent), useChildBuilders: true)]
+public partial class ParentBuilder { }
+```
+
+**Generated methods for collection properties:**
+```csharp
+// Direct collection method (always generated)
+public ParentBuilder WithChildren(IEnumerable<Child> value) { ... }
+
+// Traditional AddTo method (always generated)
+public ParentBuilder AddToChildren(params Child[] items) { ... }
+
+// Child builder AddTo method (generated when useChildBuilders: true)
+public ParentBuilder AddToChildren(params Func<ChildBuilder, ChildBuilder>[] configures) { ... }
+```
+
+**Usage with collections:**
+```csharp
+// Using the Func-based AddTo for fluent configuration
+var parent = ParentBuilder.Parent
+    .AddToChildren(
+        child => child.WithName("Child1").WithAge(5),
+        child => child.WithName("Child2").WithAge(8))
+    .WithValue(100)
+    .AddToOptionalChildren(
+        child => child.WithName("Optional1").WithAge(10))
+    .Build();
+
+// All methods can be combined
+var child1 = new Child("Pre-built", 3);
+var parent2 = ParentBuilder.Parent
+    .AddToChildren(child1)  // Add pre-built child
+    .AddToChildren(child => child.WithName("Configured").WithAge(7))  // Add via builder
+    .Build();
+```
+
 ---
 
 ## Advanced Usage

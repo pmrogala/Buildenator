@@ -22,6 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     ```
   - The generator automatically discovers all builders in the compilation and maps them to their entity types
   - Works with both constructor parameters and settable properties
+- **Collection child builders support**: When `useChildBuilders: true` is set, collections containing entities with builders also get `AddTo` methods that accept `Func<ChildBuilder, ChildBuilder>` configuration:
+  - Works alongside existing `AddTo(params T[])` and `With(collection)` methods
+  - Allows fluent configuration of collection items:
+    ```csharp
+    var parent = ParentBuilder.Parent
+        .AddToChildren(
+            child => child.WithName("Child1").WithValue(1),
+            child => child.WithName("Child2").WithValue(2))
+        .Build();
+    ```
+  - Supports both interface and concrete collection types
 
 ## 8.6.0.0 - 2025-11-26
 
