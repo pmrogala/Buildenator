@@ -41,9 +41,35 @@ internal abstract class CollectionMetadata
 {
     public ITypeSymbol ElementType { get; }
     
+    /// <summary>
+    /// The display string of the element type (eagerly loaded for performance).
+    /// </summary>
+    public string ElementTypeName { get; }
+    
+    /// <summary>
+    /// If the collection's element type has a builder, this contains the builder name.
+    /// Set via <see cref="SetChildBuilderInfo"/> when child builders are discovered.
+    /// </summary>
+    public string? ChildBuilderName { get; private set; }
+    
+    /// <summary>
+    /// Whether this collection has a child builder for its element type.
+    /// </summary>
+    public bool HasChildBuilder => ChildBuilderName != null;
+    
     protected CollectionMetadata(ITypeSymbol elementType)
     {
         ElementType = elementType;
+        ElementTypeName = elementType.ToDisplayString();
+    }
+    
+    /// <summary>
+    /// Sets the child builder information for this collection.
+    /// </summary>
+    /// <param name="childBuilderName">The name of the child builder for the element type.</param>
+    public void SetChildBuilderInfo(string childBuilderName)
+    {
+        ChildBuilderName = childBuilderName;
     }
 }
 
