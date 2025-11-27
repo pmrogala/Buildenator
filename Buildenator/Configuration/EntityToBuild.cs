@@ -77,6 +77,7 @@ internal sealed class EntityToBuild : IEntityToBuild
 
         return $@"{disableWarning}        public {FullName} {DefaultConstants.BuildMethodName}()
         {{
+            {DefaultConstants.PreBuildMethodName}();
             {GenerateLazyBuildEntityString(shouldGenerateMethodsForUnreachableProperties, ConstructorToBuild.Parameters)}
         }}
 {restoreWarning}
