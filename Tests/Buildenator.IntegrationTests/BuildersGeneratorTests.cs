@@ -17,8 +17,16 @@ public class BuildersGeneratorTests
     {
         var builder = PreBuildEntityBuilder.PreBuildEntity;
 
-        // PreBuild should be called once in the constructor
+        // PreBuild should not be called in the constructor
+        _ = builder.GetPreBuildCalledCount().Should().Be(0);
+
+        // PreBuild should be called once when Build() is called
+        _ = builder.Build();
         _ = builder.GetPreBuildCalledCount().Should().Be(1);
+
+        // PreBuild should be called again on second Build()
+        _ = builder.Build();
+        _ = builder.GetPreBuildCalledCount().Should().Be(2);
     }
 
     [Fact]
