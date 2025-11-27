@@ -33,6 +33,19 @@ internal sealed class PropertiesStringGenerator
 			properties = [.. properties, .. _entity.AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch];
 		}
 
+		// Populate child builder info for collections if UseChildBuilders is enabled
+		if (_builder.UseChildBuilders && _entityToBuilderMappings != null)
+		{
+			foreach (var typedSymbol in properties)
+			{
+				var collectionMetadata = typedSymbol.GetCollectionMetadata();
+				if (collectionMetadata != null && _entityToBuilderMappings.TryGetValue(collectionMetadata.ElementTypeName, out var childBuilderName))
+				{
+					collectionMetadata.SetChildBuilderInfo(childBuilderName);
+				}
+			}
+		}
+
 		var output = new StringBuilder();
 
 		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
@@ -68,11 +81,12 @@ internal sealed class PropertiesStringGenerator
 			}
 			
 			// Generate AddTo methods with Func<ChildBuilder, ChildBuilder> for collections with child builders
-			foreach (var typedSymbol in properties.Where(IsCollectionWithChildBuilder).Where(IsNotYetDeclaredChildBuilderAddToMethod))
+			foreach (var typedSymbol in properties.Where(HasCollectionWithChildBuilder).Where(IsNotYetDeclaredChildBuilderAddToMethod))
 			{
+				var collectionMetadata = typedSymbol.GetCollectionMetadata()!;
 				output = output.AppendLine($@"
 
-        {GenerateChildBuilderAddToMethodDefinition(typedSymbol)}");
+        {GenerateChildBuilderAddToMethodDefinition(typedSymbol, collectionMetadata)}");
 			}
 		}
 
@@ -92,18 +106,23 @@ internal sealed class PropertiesStringGenerator
 			if (collectionMetadata == null)
 				return true;
 
-			var elementTypeName = collectionMetadata.ElementType.Name;
 			// Check if any method has a matching params array parameter
 			return !methods.Any(method => 
 				method.Parameters.Length == 1 && 
 				method.Parameters[0].IsParams &&
 				method.Parameters[0].Type is IArrayTypeSymbol arrayType &&
-				arrayType.ElementType.Name == elementTypeName);
+				arrayType.ElementType.Name == collectionMetadata.ElementType.Name);
 		}
 
 		bool IsCollectionProperty(ITypedSymbol x) => x.GetCollectionMetadata() != null && !x.IsMockable();
 		
 		bool HasChildBuilder(ITypedSymbol x) => !x.IsMockable() && TryGetChildBuilderName(x, out _);
+		
+		bool HasCollectionWithChildBuilder(ITypedSymbol x)
+		{
+			var collectionMetadata = x.GetCollectionMetadata();
+			return collectionMetadata != null && collectionMetadata.HasChildBuilder;
+		}
 		
 		bool IsNotYetDeclaredChildBuilderMethod(ITypedSymbol x)
 		{
@@ -166,7 +185,7 @@ internal sealed class PropertiesStringGenerator
 		if (collectionMetadata == null)
 			return string.Empty;
 
-		var elementTypeName = collectionMetadata.ElementType.ToDisplayString();
+		var elementTypeName = collectionMetadata.ElementTypeName;
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
 		
@@ -249,48 +268,12 @@ internal sealed class PropertiesStringGenerator
                 ? new System.Collections.Generic.List<{elementTypeName}>({fieldName}.Value.Object) 
                 : new System.Collections.Generic.List<{elementTypeName}>();
             list.AddRange(items);
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>((({typedSymbol.TypeFullName})list));
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(({typedSymbol.TypeFullName})list);
             return this;
         }}";
 	}
 
 	private string CreateAddToMethodName(ITypedSymbol property) => $"AddTo{property.SymbolPascalName}";
-
-	/// <summary>
-	/// Checks if a typed symbol represents a collection whose element type has a builder.
-	/// </summary>
-	private bool IsCollectionWithChildBuilder(ITypedSymbol typedSymbol)
-	{
-		if (!_builder.UseChildBuilders || _entityToBuilderMappings == null)
-			return false;
-			
-		var collectionMetadata = typedSymbol.GetCollectionMetadata();
-		if (collectionMetadata == null)
-			return false;
-		
-		var elementTypeFullName = collectionMetadata.ElementType.ToDisplayString();
-		return _entityToBuilderMappings.ContainsKey(elementTypeFullName);
-	}
-	
-	/// <summary>
-	/// Tries to get the builder name for a collection's element type.
-	/// Returns true if a child builder exists for the element type.
-	/// </summary>
-	private bool TryGetCollectionChildBuilderName(ITypedSymbol typedSymbol, out string childBuilderName, out string elementTypeName)
-	{
-		childBuilderName = string.Empty;
-		elementTypeName = string.Empty;
-		
-		if (_entityToBuilderMappings == null)
-			return false;
-		
-		var collectionMetadata = typedSymbol.GetCollectionMetadata();
-		if (collectionMetadata == null)
-			return false;
-		
-		elementTypeName = collectionMetadata.ElementType.ToDisplayString();
-		return _entityToBuilderMappings.TryGetValue(elementTypeName, out childBuilderName!);
-	}
 
 	/// <summary>
 	/// Tries to get the builder name for a property's type.
@@ -330,14 +313,12 @@ internal sealed class PropertiesStringGenerator
 	/// <summary>
 	/// Generates an AddTo method that accepts Func&lt;ChildBuilder, ChildBuilder&gt; for adding child entities to a collection.
 	/// </summary>
-	private string GenerateChildBuilderAddToMethodDefinition(ITypedSymbol typedSymbol)
+	private string GenerateChildBuilderAddToMethodDefinition(ITypedSymbol typedSymbol, CollectionMetadata collectionMetadata)
 	{
-		if (!TryGetCollectionChildBuilderName(typedSymbol, out var childBuilderName, out var elementTypeName))
-			return string.Empty;
-
+		var childBuilderName = collectionMetadata.ChildBuilderName!;
+		var elementTypeName = collectionMetadata.ElementTypeName;
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
-		var collectionMetadata = typedSymbol.GetCollectionMetadata();
 		
 		// For concrete collection types
 		if (collectionMetadata is ConcreteCollectionMetadata)
