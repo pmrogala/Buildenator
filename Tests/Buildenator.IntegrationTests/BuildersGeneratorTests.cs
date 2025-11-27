@@ -1432,20 +1432,27 @@ public class BuildersGeneratorTests
     }
 
     [Fact]
-    public void BuildersGenerator_UseChildBuildersWithCollection_ShouldNotHaveWithMethodForCollectionWithBuilders()
+    public void BuildersGenerator_UseChildBuildersWithCollection_ShouldHaveBothWithAndFuncAddToMethods()
     {
-        // The WithChildren(IEnumerable<ChildForParentEntity>) method should NOT be generated 
-        // because we only want the Func<> version for collections with buildable elements
+        // Both the traditional With/AddTo methods AND the Func-based AddTo methods should be generated
         var methods = typeof(ParentWithChildCollectionEntityBuilder).GetMethods();
         
-        // Check that there is no WithChildren method that takes the raw collection type
+        // Check that WithChildren method exists (the traditional method)
         var withChildrenMethods = methods.Where(m => m.Name == "WithChildren").ToList();
+        _ = withChildrenMethods.Should().NotBeEmpty("the traditional WithChildren method should be generated");
         
-        // Should only have the Func<> version, not the raw entity collection version
-        // Note: We might have no WithChildren methods at all if it's only AddTo
-        _ = withChildrenMethods.Should().NotContain(m => 
+        // Check that AddToChildren method with Func<> parameter exists
+        var addToChildrenMethods = methods.Where(m => m.Name == "AddToChildren").ToList();
+        _ = addToChildrenMethods.Should().Contain(m => 
             m.GetParameters().Length == 1 && 
-            (m.GetParameters()[0].ParameterType.Name.Contains("IEnumerable") ||
-            m.GetParameters()[0].ParameterType.Name.Contains("IReadOnlyList")));
+            m.GetParameters()[0].ParameterType.Name.Contains("Func"),
+            "the Func-based AddToChildren method should be generated");
+        
+        // Check that AddToOptionalChildren method with Func<> parameter exists
+        var addToOptionalChildrenMethods = methods.Where(m => m.Name == "AddToOptionalChildren").ToList();
+        _ = addToOptionalChildrenMethods.Should().Contain(m => 
+            m.GetParameters().Length == 1 && 
+            m.GetParameters()[0].ParameterType.Name.Contains("Func"),
+            "the Func-based AddToOptionalChildren method should be generated");
     }
 }
