@@ -30,6 +30,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
         bool? implicitCast = null;
         bool? generateStaticPropertyForBuilderCreation = null;
         bool? initializeCollectionsWithEmpty = null;
+        bool? useChildBuilders = null;
 
         if (globalAttributes.HasValue)
         {
@@ -40,6 +41,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
             implicitCast = globalAttributes.Value.GetOrThrow<bool>(4, nameof(MakeBuilderAttributeInternal.ImplicitCast));
             generateStaticPropertyForBuilderCreation = globalAttributes.Value.GetOrThrow<bool>(5, nameof(MakeBuilderAttributeInternal.GenerateStaticPropertyForBuilderCreation));
             initializeCollectionsWithEmpty = globalAttributes.Value.GetOrThrow<bool>(6, nameof(MakeBuilderAttributeInternal.InitializeCollectionsWithEmpty));
+            useChildBuilders = globalAttributes.Value.GetOrThrow<bool>(7, nameof(MakeBuilderAttributeInternal.UseChildBuilders));
         }
 
         nullableStrategy = builderAttribute.NullableStrategy is null ? nullableStrategy: builderAttribute.NullableStrategy;
@@ -61,7 +63,8 @@ internal readonly struct BuilderProperties : IBuilderProperties
                 builderAttribute.ImplicitCast ?? implicitCast,
                 builderAttribute.StaticFactoryMethodName,
                 builderAttribute.GenerateStaticPropertyForBuilderCreation ?? generateStaticPropertyForBuilderCreation,
-                builderAttribute.InitializeCollectionsWithEmpty ?? initializeCollectionsWithEmpty));
+                builderAttribute.InitializeCollectionsWithEmpty ?? initializeCollectionsWithEmpty,
+                builderAttribute.UseChildBuilders ?? useChildBuilders));
     }
 
     private BuilderProperties(INamespaceOrTypeSymbol builderSymbol, MakeBuilderAttributeInternal attributeData)
@@ -78,6 +81,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
         StaticFactoryMethodName = attributeData.StaticFactoryMethodName;
         GenerateStaticPropertyForBuilderCreation = attributeData.GenerateStaticPropertyForBuilderCreation ?? false;
         InitializeCollectionsWithEmpty = attributeData.InitializeCollectionsWithEmpty ?? false;
+        UseChildBuilders = attributeData.UseChildBuilders ?? false;
 
         if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
             throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");
@@ -177,6 +181,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
     public string? StaticFactoryMethodName { get; }
     public bool GenerateStaticPropertyForBuilderCreation { get; }
     public bool InitializeCollectionsWithEmpty { get; }
+    public bool UseChildBuilders { get; }
 
     public IReadOnlyDictionary<string, List<IMethodSymbol>> BuildingMethods => _buildingMethods;
     public IReadOnlyDictionary<string, IFieldSymbol> Fields => _fields;

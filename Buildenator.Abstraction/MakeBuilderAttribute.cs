@@ -13,11 +13,12 @@ public sealed class MakeBuilderAttribute : Attribute
     /// <param name="buildingMethodsPrefix">How the builder methods should be named.</param>
     /// <param name="generateDefaultBuildMethod">The resulting builder will have a DefaultBuild method with default parameters passed to the entity. true/false/null</param>
     /// <param name="nullableStrategy">Change nullable context behaviour. Use the <see cref="NullableStrategy"/> enum.</param>
-    /// <param name="implicitCast">Should the builder have implicit cast to the target type.</param>
     /// <param name="generateMethodsForUnreachableProperties">It will create methods for setting up properties that does not have public setter.</param>
+    /// <param name="implicitCast">Should the builder have implicit cast to the target type.</param>
     /// <param name="staticFactoryMethodName">if you want to use a static factory method for constructing an entity, you can bring here the name.</param>
     /// <param name="generateStaticPropertyForBuilderCreation">If you want to generate static property that will return a new builder instance.</param>
     /// <param name="initializeCollectionsWithEmpty">If true, collection fields will be initialized with empty collections in the constructor instead of null.</param>
+    /// <param name="useChildBuilders">If true, generates additional With methods that accept Func&lt;ChildBuilder, ChildBuilder&gt; for properties that have their own builders.</param>
     public MakeBuilderAttribute(
         Type typeForBuilder,
         string? buildingMethodsPrefix = "With",
@@ -27,7 +28,8 @@ public sealed class MakeBuilderAttribute : Attribute
         object? implicitCast = null,
         string? staticFactoryMethodName = null,
         object? generateStaticPropertyForBuilderCreation = null,
-        object? initializeCollectionsWithEmpty = null
+        object? initializeCollectionsWithEmpty = null,
+        object? useChildBuilders = null
     )
     {
         }

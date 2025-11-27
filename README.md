@@ -425,6 +425,69 @@ var order = OrderBuilder.Order.Build(); // Safe - Items is empty, not null
 foreach (var item in order.Items) { } // No exception
 ```
 
+#### `useChildBuilders` (default: `false`)
+When `true`, generates additional `With` methods that accept `Func<ChildBuilder, ChildBuilder>` for properties that have their own builders. This enables fluent nested builder configuration.
+
+**How it works:**
+- The generator discovers all builders in the compilation
+- For each property whose type has a corresponding builder, an additional method is generated
+- The original `With(PropertyType value)` method is still available
+
+```csharp
+// Entity classes
+public class Parent
+{
+    public Parent(Child child, int value) { Child = child; Value = value; }
+    public Child Child { get; }
+    public int Value { get; }
+    public Child OptionalChild { get; set; }
+}
+
+public class Child
+{
+    public Child(string name, int age) { Name = name; Age = age; }
+    public string Name { get; }
+    public int Age { get; }
+}
+
+// Builders
+[MakeBuilder(typeof(Child))]
+public partial class ChildBuilder { }
+
+[MakeBuilder(typeof(Parent), useChildBuilders: true)]
+public partial class ParentBuilder { }
+```
+
+**Generated methods for ParentBuilder:**
+```csharp
+// Direct value method (always generated)
+public ParentBuilder WithChild(Child value) { ... }
+
+// Child builder method (generated when useChildBuilders: true)
+public ParentBuilder WithChild(Func<ChildBuilder, ChildBuilder> configureChild) { ... }
+```
+
+**Usage:**
+```csharp
+// Using the child builder method for fluent nested configuration
+var parent = ParentBuilder.Parent
+    .WithChild(child => child
+        .WithName("John")
+        .WithAge(25))
+    .WithValue(100)
+    .WithOptionalChild(child => child
+        .WithName("Jane")
+        .WithAge(30))
+    .Build();
+
+// The direct method still works
+var child = new Child("Bob", 35);
+var parent2 = ParentBuilder.Parent
+    .WithChild(child)
+    .WithValue(200)
+    .Build();
+```
+
 ---
 
 ## Advanced Usage
