@@ -64,21 +64,8 @@ internal sealed class TypedSymbol : ITypedSymbol
     private CollectionMetadata? _collectionMetadata;
     private bool _collectionMetadataInitialized;
     
-    public CollectionMetadata? GetCollectionMetadata() => GetCollectionMetadata(null);
-    
-    /// <summary>
-    /// Gets collection metadata for this symbol, optionally with child builder lookup.
-    /// </summary>
-    /// <param name="childBuilderLookup">Optional function to look up child builder name by element type display name.</param>
-    public CollectionMetadata? GetCollectionMetadata(System.Func<string, string?>? childBuilderLookup)
+    public CollectionMetadata? GetCollectionMetadata()
     {
-        // When a child builder lookup is provided, always re-create the metadata to include builder info
-        if (childBuilderLookup != null)
-        {
-            return CollectionMethodDetector.CreateCollectionMetadata(Type, childBuilderLookup);
-        }
-        
-        // Cache the result when no lookup is provided
         if (!_collectionMetadataInitialized)
         {
             _collectionMetadataInitialized = true;
