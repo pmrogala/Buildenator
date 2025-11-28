@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using Buildenator.CodeAnalysis;
@@ -58,31 +59,7 @@ internal sealed class PropertiesStringGenerator
 		}
 
 		// Generate child builder methods if UseChildBuilders is enabled
-		if (_builder.UseChildBuilders && _entityToBuilderMappings != null)
-		{
-			foreach (var typedSymbol in properties.Where(HasChildBuilder).Where(IsNotYetDeclaredChildBuilderMethod))
-			{
-				output = output.AppendLine($@"
-
-        {GenerateChildBuilderMethodDefinition(typedSymbol)}");
-			}
-			
-			// Generate AddTo methods with Func<ChildBuilder, ChildBuilder> for collections with child builders
-			foreach (var typedSymbol in properties.Where(IsNotYetDeclaredChildBuilderAddToMethod))
-			{
-				var collectionMetadata = typedSymbol.GetCollectionMetadata();
-				if (collectionMetadata == null)
-					continue;
-					
-				// Look up the child builder name using the element type
-				if (!_entityToBuilderMappings.TryGetValue(collectionMetadata.ElementTypeDisplayName, out var childBuilderName))
-					continue;
-				
-				output = output.AppendLine($@"
-
-        {GenerateChildBuilderAddToMethodDefinition(typedSymbol, collectionMetadata, childBuilderName)}");
-			}
-		}
+		GenerateChildBuilderMethods(properties, output);
 
 		return output.ToString();
 
@@ -109,6 +86,40 @@ internal sealed class PropertiesStringGenerator
 		}
 
 		bool IsCollectionProperty(ITypedSymbol x) => x.GetCollectionMetadata() != null && !x.IsMockable();
+	}
+	
+	/// <summary>
+	/// Generates child builder methods for both single entities and collections.
+	/// Only runs if UseChildBuilders is enabled and entity-to-builder mappings are available.
+	/// </summary>
+	private void GenerateChildBuilderMethods(IReadOnlyList<ITypedSymbol> properties, StringBuilder output)
+	{
+		if (!_builder.UseChildBuilders || _entityToBuilderMappings == null)
+			return;
+			
+		// Generate With methods that accept Func<ChildBuilder, ChildBuilder> for single entity properties
+		foreach (var typedSymbol in properties.Where(HasChildBuilder).Where(IsNotYetDeclaredChildBuilderMethod))
+		{
+			output.AppendLine($@"
+
+        {GenerateChildBuilderMethodDefinition(typedSymbol)}");
+		}
+		
+		// Generate AddTo methods that accept Func<ChildBuilder, ChildBuilder>[] for collection properties
+		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredChildBuilderAddToMethod))
+		{
+			var collectionMetadata = typedSymbol.GetCollectionMetadata();
+			if (collectionMetadata == null)
+				continue;
+				
+			// Look up the child builder name using the element type
+			if (!_entityToBuilderMappings.TryGetValue(collectionMetadata.ElementTypeDisplayName, out var childBuilderName))
+				continue;
+			
+			output.AppendLine($@"
+
+        {GenerateChildBuilderAddToMethodDefinition(typedSymbol, collectionMetadata, childBuilderName)}");
+		}
 		
 		bool HasChildBuilder(ITypedSymbol x) => !x.IsMockable() && TryGetChildBuilderName(x, out _);
 		
