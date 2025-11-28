@@ -33,17 +33,12 @@ internal sealed class PropertiesStringGenerator
 			properties = [.. properties, .. _entity.AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch];
 		}
 
-		// Populate child builder info for collections if UseChildBuilders is enabled
+		// Create child builder lookup function if UseChildBuilders is enabled
+		System.Func<string, string?>? childBuilderLookup = null;
 		if (_builder.UseChildBuilders && _entityToBuilderMappings != null)
 		{
-			foreach (var typedSymbol in properties)
-			{
-				var collectionMetadata = typedSymbol.GetCollectionMetadata();
-				if (collectionMetadata != null && _entityToBuilderMappings.TryGetValue(collectionMetadata.ElementTypeName, out var childBuilderName))
-				{
-					collectionMetadata.SetChildBuilderInfo(childBuilderName);
-				}
-			}
+			childBuilderLookup = elementTypeName => 
+				_entityToBuilderMappings.TryGetValue(elementTypeName, out var builderName) ? builderName : null;
 		}
 
 		var output = new StringBuilder();
@@ -81,12 +76,15 @@ internal sealed class PropertiesStringGenerator
 			}
 			
 			// Generate AddTo methods with Func<ChildBuilder, ChildBuilder> for collections with child builders
-			foreach (var typedSymbol in properties.Where(HasCollectionWithChildBuilder).Where(IsNotYetDeclaredChildBuilderAddToMethod))
+			foreach (var typedSymbol in properties.Where(IsNotYetDeclaredChildBuilderAddToMethod))
 			{
-				var collectionMetadata = typedSymbol.GetCollectionMetadata()!;
-				output = output.AppendLine($@"
+				var collectionMetadata = typedSymbol.GetCollectionMetadata(childBuilderLookup);
+				if (collectionMetadata?.HasChildBuilder == true)
+				{
+					output = output.AppendLine($@"
 
         {GenerateChildBuilderAddToMethodDefinition(typedSymbol, collectionMetadata)}");
+				}
 			}
 		}
 
@@ -111,18 +109,12 @@ internal sealed class PropertiesStringGenerator
 				method.Parameters.Length == 1 && 
 				method.Parameters[0].IsParams &&
 				method.Parameters[0].Type is IArrayTypeSymbol arrayType &&
-				arrayType.ElementType.Name == collectionMetadata.ElementType.Name);
+				arrayType.ElementType.Name == collectionMetadata.ElementTypeName);
 		}
 
 		bool IsCollectionProperty(ITypedSymbol x) => x.GetCollectionMetadata() != null && !x.IsMockable();
 		
 		bool HasChildBuilder(ITypedSymbol x) => !x.IsMockable() && TryGetChildBuilderName(x, out _);
-		
-		bool HasCollectionWithChildBuilder(ITypedSymbol x)
-		{
-			var collectionMetadata = x.GetCollectionMetadata();
-			return collectionMetadata != null && collectionMetadata.HasChildBuilder;
-		}
 		
 		bool IsNotYetDeclaredChildBuilderMethod(ITypedSymbol x)
 		{
@@ -185,15 +177,15 @@ internal sealed class PropertiesStringGenerator
 		if (collectionMetadata == null)
 			return string.Empty;
 
-		var elementTypeName = collectionMetadata.ElementTypeName;
+		var elementTypeName = collectionMetadata.ElementTypeDisplayName;
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
 		
 		// For concrete dictionary types, use Dictionary's indexer for adding
 		if (collectionMetadata is ConcreteDictionaryMetadata concreteDictMetadata)
 		{
-			var keyTypeName = concreteDictMetadata.KeyType.ToDisplayString();
-			var valueTypeName = concreteDictMetadata.ValueType.ToDisplayString();
+			var keyTypeName = concreteDictMetadata.KeyTypeDisplayName;
+			var valueTypeName = concreteDictMetadata.ValueTypeDisplayName;
 			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>[] items)
         {{
             {typedSymbol.TypeFullName} dictionary;
@@ -219,8 +211,8 @@ internal sealed class PropertiesStringGenerator
 		// For interface dictionary types, create a new Dictionary and use indexer
 		if (collectionMetadata is InterfaceDictionaryMetadata interfaceDictMetadata)
 		{
-			var keyTypeName = interfaceDictMetadata.KeyType.ToDisplayString();
-			var valueTypeName = interfaceDictMetadata.ValueType.ToDisplayString();
+			var keyTypeName = interfaceDictMetadata.KeyTypeDisplayName;
+			var valueTypeName = interfaceDictMetadata.ValueTypeDisplayName;
 			var dictionaryType = $"System.Collections.Generic.Dictionary<{keyTypeName}, {valueTypeName}>";
 			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>[] items)
         {{
@@ -316,7 +308,7 @@ internal sealed class PropertiesStringGenerator
 	private string GenerateChildBuilderAddToMethodDefinition(ITypedSymbol typedSymbol, CollectionMetadata collectionMetadata)
 	{
 		var childBuilderName = collectionMetadata.ChildBuilderName!;
-		var elementTypeName = collectionMetadata.ElementTypeName;
+		var elementTypeName = collectionMetadata.ElementTypeDisplayName;
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
 		

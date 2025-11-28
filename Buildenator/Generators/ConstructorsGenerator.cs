@@ -94,7 +94,7 @@ internal static class ConstructorsGenerator
         // For interface dictionary types, create a Dictionary<K,V>
         if (collectionMetadata is InterfaceDictionaryMetadata dictMetadata)
         {
-            var dictionaryType = $"System.Collections.Generic.Dictionary<{dictMetadata.KeyType.ToDisplayString()}, {dictMetadata.ValueType.ToDisplayString()}>";
+            var dictionaryType = $"System.Collections.Generic.Dictionary<{dictMetadata.KeyTypeDisplayName}, {dictMetadata.ValueTypeDisplayName}>";
             return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {dictionaryType}());";
         }
         
@@ -109,7 +109,7 @@ internal static class ConstructorsGenerator
         // For interface collection types, create a List<T>
         if (collectionMetadata is InterfaceCollectionMetadata)
         {
-            var elementTypeName = collectionMetadata.ElementType.ToDisplayString();
+            var elementTypeName = collectionMetadata.ElementTypeDisplayName;
             var listType = $"System.Collections.Generic.List<{elementTypeName}>";
             return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {listType}());";
         }
