@@ -27,6 +27,13 @@ internal interface ITypedSymbol
     CollectionMetadata? GetCollectionMetadata();
     
     /// <summary>
+    /// Gets collection metadata if this symbol represents a collection type (interface or concrete).
+    /// Returns null if not a collection.
+    /// </summary>
+    /// <param name="childBuilderLookup">Optional function to look up child builder name by element type display name.</param>
+    CollectionMetadata? GetCollectionMetadata(System.Func<string, string?>? childBuilderLookup);
+    
+    /// <summary>
     /// Gets the user-defined default value name for this symbol, if one exists.
     /// Looks for static fields or constants named "Default{PropertyPascalName}" in the builder class.
     /// </summary>
@@ -39,36 +46,32 @@ internal interface ITypedSymbol
 /// </summary>
 internal abstract class CollectionMetadata
 {
-    public ITypeSymbol ElementType { get; }
-    
     /// <summary>
-    /// The display string of the element type (eagerly loaded for performance).
+    /// The short name of the element type (e.g., "ChildForParentEntity").
+    /// Used for type comparison purposes.
     /// </summary>
     public string ElementTypeName { get; }
     
     /// <summary>
-    /// If the collection's element type has a builder, this contains the builder name.
-    /// Set via <see cref="SetChildBuilderInfo"/> when child builders are discovered.
+    /// The full display string of the element type (e.g., "Namespace.ChildForParentEntity").
+    /// Used for code generation.
     /// </summary>
-    public string? ChildBuilderName { get; private set; }
+    public string ElementTypeDisplayName { get; }
+    
+    /// <summary>
+    /// If the collection's element type has a builder, this contains the builder name.
+    /// </summary>
+    public string? ChildBuilderName { get; }
     
     /// <summary>
     /// Whether this collection has a child builder for its element type.
     /// </summary>
     public bool HasChildBuilder => ChildBuilderName != null;
     
-    protected CollectionMetadata(ITypeSymbol elementType)
+    protected CollectionMetadata(ITypeSymbol elementType, string? childBuilderName)
     {
-        ElementType = elementType;
-        ElementTypeName = elementType.ToDisplayString();
-    }
-    
-    /// <summary>
-    /// Sets the child builder information for this collection.
-    /// </summary>
-    /// <param name="childBuilderName">The name of the child builder for the element type.</param>
-    public void SetChildBuilderInfo(string childBuilderName)
-    {
+        ElementTypeName = elementType.Name;
+        ElementTypeDisplayName = elementType.ToDisplayString();
         ChildBuilderName = childBuilderName;
     }
 }
@@ -78,7 +81,8 @@ internal abstract class CollectionMetadata
 /// </summary>
 internal sealed class InterfaceCollectionMetadata : CollectionMetadata
 {
-    public InterfaceCollectionMetadata(ITypeSymbol elementType) : base(elementType)
+    public InterfaceCollectionMetadata(ITypeSymbol elementType, string? childBuilderName = null) 
+        : base(elementType, childBuilderName)
     {
     }
 }
@@ -88,7 +92,8 @@ internal sealed class InterfaceCollectionMetadata : CollectionMetadata
 /// </summary>
 internal sealed class ConcreteCollectionMetadata : CollectionMetadata
 {
-    public ConcreteCollectionMetadata(ITypeSymbol elementType) : base(elementType)
+    public ConcreteCollectionMetadata(ITypeSymbol elementType, string? childBuilderName = null) 
+        : base(elementType, childBuilderName)
     {
     }
 }
@@ -98,14 +103,14 @@ internal sealed class ConcreteCollectionMetadata : CollectionMetadata
 /// </summary>
 internal sealed class ConcreteDictionaryMetadata : CollectionMetadata
 {
-    public ITypeSymbol KeyType { get; }
-    public ITypeSymbol ValueType { get; }
+    public string KeyTypeDisplayName { get; }
+    public string ValueTypeDisplayName { get; }
     
-    public ConcreteDictionaryMetadata(ITypeSymbol keyType, ITypeSymbol valueType, ITypeSymbol elementType) 
-        : base(elementType)
+    public ConcreteDictionaryMetadata(ITypeSymbol keyType, ITypeSymbol valueType, ITypeSymbol elementType, string? childBuilderName = null) 
+        : base(elementType, childBuilderName)
     {
-        KeyType = keyType;
-        ValueType = valueType;
+        KeyTypeDisplayName = keyType.ToDisplayString();
+        ValueTypeDisplayName = valueType.ToDisplayString();
     }
 }
 
@@ -114,13 +119,13 @@ internal sealed class ConcreteDictionaryMetadata : CollectionMetadata
 /// </summary>
 internal sealed class InterfaceDictionaryMetadata : CollectionMetadata
 {
-    public ITypeSymbol KeyType { get; }
-    public ITypeSymbol ValueType { get; }
+    public string KeyTypeDisplayName { get; }
+    public string ValueTypeDisplayName { get; }
     
-    public InterfaceDictionaryMetadata(ITypeSymbol keyType, ITypeSymbol valueType, ITypeSymbol elementType) 
-        : base(elementType)
+    public InterfaceDictionaryMetadata(ITypeSymbol keyType, ITypeSymbol valueType, ITypeSymbol elementType, string? childBuilderName = null) 
+        : base(elementType, childBuilderName)
     {
-        KeyType = keyType;
-        ValueType = valueType;
+        KeyTypeDisplayName = keyType.ToDisplayString();
+        ValueTypeDisplayName = valueType.ToDisplayString();
     }
 }

@@ -64,8 +64,21 @@ internal sealed class TypedSymbol : ITypedSymbol
     private CollectionMetadata? _collectionMetadata;
     private bool _collectionMetadataInitialized;
     
-    public CollectionMetadata? GetCollectionMetadata()
+    public CollectionMetadata? GetCollectionMetadata() => GetCollectionMetadata(null);
+    
+    /// <summary>
+    /// Gets collection metadata for this symbol, optionally with child builder lookup.
+    /// </summary>
+    /// <param name="childBuilderLookup">Optional function to look up child builder name by element type display name.</param>
+    public CollectionMetadata? GetCollectionMetadata(System.Func<string, string?>? childBuilderLookup)
     {
+        // When a child builder lookup is provided, always re-create the metadata to include builder info
+        if (childBuilderLookup != null)
+        {
+            return CollectionMethodDetector.CreateCollectionMetadata(Type, childBuilderLookup);
+        }
+        
+        // Cache the result when no lookup is provided
         if (!_collectionMetadataInitialized)
         {
             _collectionMetadataInitialized = true;
@@ -120,7 +133,7 @@ internal sealed class TypedSymbol : ITypedSymbol
         
         // For interface dictionary types, use Dictionary<K,V>
         if (collectionMetadata is InterfaceDictionaryMetadata dictMetadata)
-            return $"System.Collections.Generic.Dictionary<{dictMetadata.KeyType.ToDisplayString()}, {dictMetadata.ValueType.ToDisplayString()}>";
+            return $"System.Collections.Generic.Dictionary<{dictMetadata.KeyTypeDisplayName}, {dictMetadata.ValueTypeDisplayName}>";
         
         // For concrete collection types, use the actual type name
         if (collectionMetadata is ConcreteCollectionMetadata)
@@ -128,7 +141,7 @@ internal sealed class TypedSymbol : ITypedSymbol
         
         // For interface collection types, use List<T>
         if (collectionMetadata is InterfaceCollectionMetadata)
-            return $"System.Collections.Generic.List<{collectionMetadata.ElementType.ToDisplayString()}>";
+            return $"System.Collections.Generic.List<{collectionMetadata.ElementTypeDisplayName}>";
         
         // For all other types, use the type's full name
         return TypeFullName;
