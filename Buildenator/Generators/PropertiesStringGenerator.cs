@@ -33,14 +33,6 @@ internal sealed class PropertiesStringGenerator
 			properties = [.. properties, .. _entity.AllUniqueReadOnlyPropertiesWithoutConstructorsParametersMatch];
 		}
 
-		// Create child builder lookup function if UseChildBuilders is enabled
-		System.Func<string, string?>? childBuilderLookup = null;
-		if (_builder.UseChildBuilders && _entityToBuilderMappings != null)
-		{
-			childBuilderLookup = elementTypeName => 
-				_entityToBuilderMappings.TryGetValue(elementTypeName, out var builderName) ? builderName : null;
-		}
-
 		var output = new StringBuilder();
 
 		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
@@ -78,13 +70,17 @@ internal sealed class PropertiesStringGenerator
 			// Generate AddTo methods with Func<ChildBuilder, ChildBuilder> for collections with child builders
 			foreach (var typedSymbol in properties.Where(IsNotYetDeclaredChildBuilderAddToMethod))
 			{
-				var collectionMetadata = typedSymbol.GetCollectionMetadata(childBuilderLookup);
-				if (collectionMetadata?.HasChildBuilder == true)
-				{
-					output = output.AppendLine($@"
+				var collectionMetadata = typedSymbol.GetCollectionMetadata();
+				if (collectionMetadata == null)
+					continue;
+					
+				// Look up the child builder name using the element type
+				if (!_entityToBuilderMappings.TryGetValue(collectionMetadata.ElementTypeDisplayName, out var childBuilderName))
+					continue;
+				
+				output = output.AppendLine($@"
 
-        {GenerateChildBuilderAddToMethodDefinition(typedSymbol, collectionMetadata)}");
-				}
+        {GenerateChildBuilderAddToMethodDefinition(typedSymbol, collectionMetadata, childBuilderName)}");
 			}
 		}
 
@@ -305,9 +301,8 @@ internal sealed class PropertiesStringGenerator
 	/// <summary>
 	/// Generates an AddTo method that accepts Func&lt;ChildBuilder, ChildBuilder&gt; for adding child entities to a collection.
 	/// </summary>
-	private string GenerateChildBuilderAddToMethodDefinition(ITypedSymbol typedSymbol, CollectionMetadata collectionMetadata)
+	private string GenerateChildBuilderAddToMethodDefinition(ITypedSymbol typedSymbol, CollectionMetadata collectionMetadata, string childBuilderName)
 	{
-		var childBuilderName = collectionMetadata.ChildBuilderName!;
 		var elementTypeName = collectionMetadata.ElementTypeDisplayName;
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;

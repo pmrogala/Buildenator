@@ -1,6 +1,5 @@
 using Buildenator.CodeAnalysis;
 using Microsoft.CodeAnalysis;
-using System;
 using System.Linq;
 
 namespace Buildenator.Configuration;
@@ -15,11 +14,10 @@ internal static class CollectionMethodDetector
     /// or null if the type is not a collection.
     /// </summary>
     /// <param name="propertyType">The type symbol to analyze.</param>
-    /// <param name="childBuilderLookup">Optional function to look up child builder name by element type display name.</param>
-    public static CollectionMetadata? CreateCollectionMetadata(ITypeSymbol propertyType, Func<string, string?>? childBuilderLookup = null)
+    public static CollectionMetadata? CreateCollectionMetadata(ITypeSymbol propertyType)
     {
         // Check for dictionary types FIRST (before collection check)
-        var dictionaryMetadata = CreateDictionaryMetadata(propertyType, childBuilderLookup);
+        var dictionaryMetadata = CreateDictionaryMetadata(propertyType);
         if (dictionaryMetadata != null)
         {
             return dictionaryMetadata;
@@ -31,8 +29,7 @@ internal static class CollectionMethodDetector
             var elementType = GetCollectionElementType(propertyType);
             if (elementType != null)
             {
-                var childBuilderName = childBuilderLookup?.Invoke(elementType.ToDisplayString());
-                return new ConcreteCollectionMetadata(elementType, childBuilderName);
+                return new ConcreteCollectionMetadata(elementType);
             }
         }
         
@@ -42,8 +39,7 @@ internal static class CollectionMethodDetector
             var elementType = GetCollectionElementType(propertyType);
             if (elementType != null)
             {
-                var childBuilderName = childBuilderLookup?.Invoke(elementType.ToDisplayString());
-                return new InterfaceCollectionMetadata(elementType, childBuilderName);
+                return new InterfaceCollectionMetadata(elementType);
             }
         }
         
@@ -56,7 +52,7 @@ internal static class CollectionMethodDetector
     /// InterfaceDictionaryMetadata for IDictionary&lt;K,V&gt; and IReadOnlyDictionary&lt;K,V&gt;,
     /// or null if not a dictionary type.
     /// </summary>
-    private static CollectionMetadata? CreateDictionaryMetadata(ITypeSymbol propertyType, Func<string, string?>? childBuilderLookup)
+    private static CollectionMetadata? CreateDictionaryMetadata(ITypeSymbol propertyType)
     {
         if (propertyType is not INamedTypeSymbol namedType || !namedType.IsGenericType)
         {
@@ -81,8 +77,7 @@ internal static class CollectionMethodDetector
                 var elementType = GetCollectionElementType(propertyType);
                 if (elementType != null)
                 {
-                    var childBuilderName = childBuilderLookup?.Invoke(elementType.ToDisplayString());
-                    return new ConcreteDictionaryMetadata(keyType, valueType, elementType, childBuilderName);
+                    return new ConcreteDictionaryMetadata(keyType, valueType, elementType);
                 }
             }
         }
@@ -98,8 +93,7 @@ internal static class CollectionMethodDetector
                 var elementType = GetCollectionElementType(propertyType);
                 if (elementType != null)
                 {
-                    var childBuilderName = childBuilderLookup?.Invoke(elementType.ToDisplayString());
-                    return new InterfaceDictionaryMetadata(keyType, valueType, elementType, childBuilderName);
+                    return new InterfaceDictionaryMetadata(keyType, valueType, elementType);
                 }
             }
         }
@@ -120,8 +114,7 @@ internal static class CollectionMethodDetector
                 // If it's a concrete class, return ConcreteDictionaryMetadata
                 if (propertyType.TypeKind == TypeKind.Class)
                 {
-                    var childBuilderName = childBuilderLookup?.Invoke(elementType.ToDisplayString());
-                    return new ConcreteDictionaryMetadata(keyType, valueType, elementType, childBuilderName);
+                    return new ConcreteDictionaryMetadata(keyType, valueType, elementType);
                 }
             }
         }
