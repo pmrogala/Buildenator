@@ -36,37 +36,54 @@ internal sealed class PropertiesStringGenerator
 
 		var output = new StringBuilder();
 
-		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
-		{
-            output = output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName}{GenerateFieldInitializer(typedSymbol)};");
-		}
-
-		// Generate With methods for properties
-		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredWithMethod))
-		{
-            output = output.AppendLine($@"
-
-        {GenerateMethodDefinition(typedSymbol)}");
-
-		}
-
-		// Generate AddTo methods for collection properties
-		foreach (var typedSymbol in properties.Where(IsCollectionProperty).Where(IsNotYetDeclaredAddToMethod))
-		{
-			output = output.AppendLine($@"
-
-        {GenerateAddToMethodDefinition(typedSymbol)}");
-		}
-
-		// Generate child builder methods if UseChildBuilders is enabled
+		GenerateFieldDeclarations(properties, output);
+		GenerateWithMethods(properties, output);
+		GenerateAddToMethods(properties, output);
 		GenerateChildBuilderMethods(properties, output);
 
 		return output.ToString();
-
+	}
+	
+	/// <summary>
+	/// Generates field declarations for all properties.
+	/// </summary>
+	private void GenerateFieldDeclarations(IReadOnlyList<ITypedSymbol> properties, StringBuilder output)
+	{
+		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
+		{
+			output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName}{GenerateFieldInitializer(typedSymbol)};");
+		}
+		
 		bool IsNotYetDeclaredField(ITypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out _);
+	}
+	
+	/// <summary>
+	/// Generates With methods for all properties.
+	/// </summary>
+	private void GenerateWithMethods(IReadOnlyList<ITypedSymbol> properties, StringBuilder output)
+	{
+		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredWithMethod))
+		{
+			output.AppendLine($@"
 
+        {GenerateMethodDefinition(typedSymbol)}");
+		}
+		
 		bool IsNotYetDeclaredWithMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var methods)
 		                                               || !methods.Any(method => method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
+	}
+	
+	/// <summary>
+	/// Generates AddTo methods for collection properties.
+	/// </summary>
+	private void GenerateAddToMethods(IReadOnlyList<ITypedSymbol> properties, StringBuilder output)
+	{
+		foreach (var typedSymbol in properties.Where(IsCollectionProperty).Where(IsNotYetDeclaredAddToMethod))
+		{
+			output.AppendLine($@"
+
+        {GenerateAddToMethodDefinition(typedSymbol)}");
+		}
 
 		bool IsNotYetDeclaredAddToMethod(ITypedSymbol x)
 		{
@@ -121,7 +138,7 @@ internal sealed class PropertiesStringGenerator
         {GenerateChildBuilderAddToMethodDefinition(typedSymbol, collectionMetadata, childBuilderName)}");
 		}
 		
-		bool HasChildBuilder(ITypedSymbol x) => !x.IsMockable() && TryGetChildBuilderName(x, out _);
+		bool HasChildBuilder(ITypedSymbol x) => !x.IsMockable() && GetChildBuilderName(x) != null;
 		
 		bool IsNotYetDeclaredChildBuilderMethod(ITypedSymbol x)
 		{
@@ -275,17 +292,16 @@ internal sealed class PropertiesStringGenerator
 	private string CreateAddToMethodName(ITypedSymbol property) => $"AddTo{property.SymbolPascalName}";
 
 	/// <summary>
-	/// Tries to get the builder name for a property's type.
-	/// Returns true if a child builder exists for the property's type.
+	/// Gets the builder name for a property's type.
+	/// Returns null if no child builder exists for the property's type.
 	/// </summary>
-	private bool TryGetChildBuilderName(ITypedSymbol typedSymbol, out string childBuilderName)
+	private string? GetChildBuilderName(ITypedSymbol typedSymbol)
 	{
-		childBuilderName = string.Empty;
 		if (_entityToBuilderMappings == null)
-			return false;
+			return null;
 		
 		var typeFullName = typedSymbol.TypeFullName;
-		return _entityToBuilderMappings.TryGetValue(typeFullName, out childBuilderName!);
+		return _entityToBuilderMappings.TryGetValue(typeFullName, out var childBuilderName) ? childBuilderName : null;
 	}
 
 	/// <summary>
@@ -293,7 +309,8 @@ internal sealed class PropertiesStringGenerator
 	/// </summary>
 	private string GenerateChildBuilderMethodDefinition(ITypedSymbol typedSymbol)
 	{
-		if (!TryGetChildBuilderName(typedSymbol, out var childBuilderName))
+		var childBuilderName = GetChildBuilderName(typedSymbol);
+		if (childBuilderName == null)
 			return string.Empty;
 
 		var methodName = CreateMethodName(typedSymbol);
