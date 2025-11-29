@@ -24,8 +24,8 @@ public sealed class BuildenatorConfigurationAttribute : Attribute
         bool generateMethodsForUnreachableProperties = false,
         bool implicitCast = false,
         bool generateStaticPropertyForBuilderCreation = false,
-        bool initializeCollectionsWithEmpty = false,
-        bool useChildBuilders = false)
+        bool initializeCollectionsWithEmpty = true,
+        bool useChildBuilders = true)
     {
         }
 }

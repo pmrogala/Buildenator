@@ -80,8 +80,8 @@ internal readonly struct BuilderProperties : IBuilderProperties
         OriginalLocation = builderSymbol.Locations.First();
         StaticFactoryMethodName = attributeData.StaticFactoryMethodName;
         GenerateStaticPropertyForBuilderCreation = attributeData.GenerateStaticPropertyForBuilderCreation ?? false;
-        InitializeCollectionsWithEmpty = attributeData.InitializeCollectionsWithEmpty ?? false;
-        UseChildBuilders = attributeData.UseChildBuilders ?? false;
+        InitializeCollectionsWithEmpty = attributeData.InitializeCollectionsWithEmpty ?? true;
+        UseChildBuilders = attributeData.UseChildBuilders ?? true;
 
         if (string.IsNullOrWhiteSpace(BuildingMethodsPrefix))
             throw new ArgumentNullException(nameof(attributeData), "Prefix name shouldn't be empty!");
