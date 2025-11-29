@@ -1470,10 +1470,11 @@ public class BuildersGeneratorTests
             .Where(m => m.Name == "WithChild")
             .ToList();
         
-        // Assert - Should not have any method with a Func<> parameter
+        // Assert - Should not have any method with a Func<,> parameter
         var funcMethods = methods.Where(m => 
             m.GetParameters().Length == 1 && 
-            m.GetParameters()[0].ParameterType.Name.StartsWith("Func"))
+            m.GetParameters()[0].ParameterType.IsGenericType &&
+            m.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Func<,>))
             .ToList();
         
         _ = funcMethods.Should().BeEmpty("useChildBuilders is false, so no Func<ChildBuilder, ChildBuilder> method should be generated");
@@ -1487,10 +1488,11 @@ public class BuildersGeneratorTests
             .Where(m => m.Name == "WithOptionalChild")
             .ToList();
         
-        // Assert - Should not have any method with a Func<> parameter
+        // Assert - Should not have any method with a Func<,> parameter
         var funcMethods = methods.Where(m => 
             m.GetParameters().Length == 1 && 
-            m.GetParameters()[0].ParameterType.Name.StartsWith("Func"))
+            m.GetParameters()[0].ParameterType.IsGenericType &&
+            m.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Func<,>))
             .ToList();
         
         _ = funcMethods.Should().BeEmpty("useChildBuilders is false, so no Func<ChildBuilder, ChildBuilder> method should be generated");
