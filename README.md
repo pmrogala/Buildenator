@@ -300,7 +300,8 @@ using Buildenator.Abstraction.Moq;
     generateMethodsForUnreachableProperties: false,
     implicitCast: false,
     generateStaticPropertyForBuilderCreation: true,
-    initializeCollectionsWithEmpty: false  // Initialize collections with empty instead of null
+    initializeCollectionsWithEmpty: true,  // Default: true - collections are initialized with empty instead of null
+    useChildBuilders: true  // Default: true - generates Func<ChildBuilder, ChildBuilder> methods
 )]
 
 // Optional: AutoFixture configuration
@@ -326,7 +327,8 @@ Override global settings for specific builders:
     implicitCast: true,                        // Enable implicit casting
     staticFactoryMethodName: nameof(User.CreateUser), // Use static factory method
     generateStaticPropertyForBuilderCreation: true, // Generate static User property
-    initializeCollectionsWithEmpty: true       // Initialize collections with empty instead of null
+    initializeCollectionsWithEmpty: true,      // Default: true - Initialize collections with empty instead of null
+    useChildBuilders: true                     // Default: true - Generate Func<ChildBuilder, ChildBuilder> methods
 )]
 public partial class UserBuilder { }
 ```
@@ -390,7 +392,7 @@ var user = UserBuilder.User.WithName("John").Build();
 var user = new UserBuilder().WithName("John").Build();
 ```
 
-#### `initializeCollectionsWithEmpty` (default: `false`)
+#### `initializeCollectionsWithEmpty` (default: `true`)
 When `true`, collection fields are initialized with empty collections in the builder constructor instead of null. This prevents `NullReferenceException` when the entity iterates over collections that weren't explicitly set.
 
 **Supported collection types:**
@@ -399,11 +401,11 @@ When `true`, collection fields are initialized with empty collections in the bui
 - Dictionary types: `Dictionary<K,V>`, `IDictionary<K,V>`, `IReadOnlyDictionary<K,V>`
 
 ```csharp
-// Assembly-level
-[assembly: BuildenatorConfiguration(initializeCollectionsWithEmpty: true)]
+// To disable (restore previous behavior where collections are null by default):
+[assembly: BuildenatorConfiguration(initializeCollectionsWithEmpty: false)]
 
 // Or per-builder
-[MakeBuilder(typeof(Order), initializeCollectionsWithEmpty: true)]
+[MakeBuilder(typeof(Order), initializeCollectionsWithEmpty: false)]
 public partial class OrderBuilder { }
 ```
 
@@ -419,14 +421,13 @@ public class Order
     public IReadOnlyList<string> Items { get; }
 }
 
-// Without initializeCollectionsWithEmpty: calling Build() without setting items → NullReferenceException
-// With initializeCollectionsWithEmpty: items is automatically initialized as empty list
+// With initializeCollectionsWithEmpty (default): items is automatically initialized as empty list
 var order = OrderBuilder.Order.Build(); // Safe - Items is empty, not null
 foreach (var item in order.Items) { } // No exception
 ```
 
-#### `useChildBuilders` (default: `false`)
-When `true`, generates additional `With` methods that accept `Func<ChildBuilder, ChildBuilder>` for properties that have their own builders. This enables fluent nested builder configuration.
+#### `useChildBuilders` (default: `true`)
+Generates additional `With` methods that accept `Func<ChildBuilder, ChildBuilder>` for properties that have their own builders. This enables fluent nested builder configuration.
 
 **How it works:**
 - The generator discovers all builders in the compilation
