@@ -122,10 +122,6 @@ internal sealed class TypedSymbol : ITypedSymbol
         if (collectionMetadata is InterfaceDictionaryMetadata dictMetadata)
             return $"System.Collections.Generic.Dictionary<{dictMetadata.KeyTypeDisplayName}, {dictMetadata.ValueTypeDisplayName}>";
         
-        // For array types, use List<T> internally and convert to array in build method
-        if (collectionMetadata is ArrayCollectionMetadata)
-            return $"System.Collections.Generic.List<{collectionMetadata.ElementTypeDisplayName}>";
-        
         // For concrete collection types, use the actual type name
         if (collectionMetadata is ConcreteCollectionMetadata)
             return TypeFullName;
@@ -139,82 +135,20 @@ internal sealed class TypedSymbol : ITypedSymbol
     }
 
     public string GenerateLazyFieldType()
-    {
-        if (IsMockable())
-            return GenerateMockableFieldType();
-        
-        // For array types, the lazy field type should use List<T>
-        var collectionMetadata = GetCollectionMetadata();
-        if (collectionMetadata is ArrayCollectionMetadata)
-            return $"{DefaultConstants.NullBox}<{GenerateFieldType()}>?";
-        
-        return $"{DefaultConstants.NullBox}<{TypeFullName}>?";
-    }
+        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{TypeFullName}>?";
 
     public string GenerateLazyFieldValueReturn()
-    {
-        if (IsMockable())
-            return string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName);
-        
-        var collectionMetadata = GetCollectionMetadata();
-        
-        // Handle the default value or AutoFixture creation
-        string defaultOrFixtureValue;
-        string nullBoxType;
-        
-        if (collectionMetadata is ArrayCollectionMetadata)
-        {
-            // For arrays, we store as List<T> internally
-            nullBoxType = GenerateFieldType(); // List<T>
-            
-            if (IsFakeable())
-            {
-                var fixtureCreation = $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
-                    + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "");
-                defaultOrFixtureValue = $"new System.Collections.Generic.List<{collectionMetadata.ElementTypeDisplayName}>({fixtureCreation})";
-            }
-            else
-            {
-                defaultOrFixtureValue = $"default({nullBoxType})!";
-            }
-        }
-        else
-        {
-            // For all other types, use the original type
-            nullBoxType = TypeFullName;
-            
-            if (IsFakeable())
-            {
-                defaultOrFixtureValue = $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
-                    + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "");
-            }
-            else
-            {
-                defaultOrFixtureValue = $"default({nullBoxType})";
-            }
-        }
-        
-        var baseReturn = @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{nullBoxType}>({defaultOrFixtureValue})).Object";
-        
-        // For array types, convert the internal List<T> to T[] when returning
-        if (collectionMetadata is ArrayCollectionMetadata)
-            return $"{baseReturn}.ToArray()";
-        
-        return baseReturn;
-    }
+        => IsMockable()
+            ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
+            : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{TypeFullName}>({(IsFakeable()
+                ? $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
+                  + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "")
+                : $"default({TypeFullName})")})).Object";
 
     public string GenerateFieldValueReturn()
-    {
-        if (IsMockable())
-            return string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName);
-        
-        // For array types, convert the internal List<T> to T[] when returning
-        var collectionMetadata = GetCollectionMetadata();
-        if (collectionMetadata is ArrayCollectionMetadata)
-            return $"{UnderScoreName}.ToArray()";
-        
-        return UnderScoreName;
-    }
+        => IsMockable()
+            ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
+            : UnderScoreName;
 
     public string GenerateMethodParameterDefinition()
         => IsMockable() ? $"Action<{GenerateMockableFieldType()}> {DefaultConstants.SetupActionLiteral}" : $"{TypeFullName} {DefaultConstants.ValueLiteral}";
