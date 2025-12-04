@@ -189,9 +189,18 @@ internal sealed class PropertiesStringGenerator
 		=> $"public {_builder.FullName} {CreateMethodName(typedSymbol)}({typedSymbol.GenerateMethodParameterDefinition()})";
 
 	private static string GenerateValueAssignment(ITypedSymbol typedSymbol)
-		=> typedSymbol.IsMockable()
-			? $"{DefaultConstants.SetupActionLiteral}({typedSymbol.UnderScoreName})"
-			: $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({DefaultConstants.ValueLiteral})";
+	{
+		if (typedSymbol.IsMockable())
+			return $"{DefaultConstants.SetupActionLiteral}({typedSymbol.UnderScoreName})";
+		
+		var collectionMetadata = typedSymbol.GetCollectionMetadata();
+		
+		// For array types, store the array as a List (arrays will be converted via ToArray() in Build method)
+		if (collectionMetadata is ArrayCollectionMetadata)
+			return $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.GenerateFieldType()}>({DefaultConstants.ValueLiteral} != null ? new System.Collections.Generic.List<{collectionMetadata.ElementTypeDisplayName}>({DefaultConstants.ValueLiteral}) : default({typedSymbol.GenerateFieldType()})!)";
+		
+		return $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({DefaultConstants.ValueLiteral})";
+	}
 
 	private string CreateMethodName(ITypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
 
@@ -252,25 +261,24 @@ internal sealed class PropertiesStringGenerator
         }}";
 		}
 		
-		// For array types, concatenate arrays
+		// For array types, use List<T> internally
 		if (collectionMetadata is ArrayCollectionMetadata)
 		{
 			return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
         {{
-            {elementTypeName}[] array;
+            System.Collections.Generic.List<{elementTypeName}> list;
             if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
             {{
-                var existingArray = {fieldName}.Value.Object;
-                array = new {elementTypeName}[existingArray.Length + items.Length];
-                System.Array.Copy(existingArray, 0, array, 0, existingArray.Length);
-                System.Array.Copy(items, 0, array, existingArray.Length, items.Length);
+                list = {fieldName}.Value.Object;
             }}
             else
             {{
-                array = items;
+                list = new System.Collections.Generic.List<{elementTypeName}>();
             }}
             
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(array);
+            list.AddRange(items);
+            
+            {fieldName} = new {DefaultConstants.NullBox}<System.Collections.Generic.List<{elementTypeName}>>(list);
             return this;
         }}";
 		}
@@ -358,33 +366,29 @@ internal sealed class PropertiesStringGenerator
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
 		
-		// For array types
+		// For array types, use List<T> internally
 		if (collectionMetadata is ArrayCollectionMetadata)
 		{
 			return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
         {{
-            var newItems = new {elementTypeName}[configures.Length];
-            for (int i = 0; i < configures.Length; i++)
-            {{
-                var childBuilder = new {childBuilderName}();
-                childBuilder = configures[i](childBuilder);
-                newItems[i] = childBuilder.Build();
-            }}
-            
-            {elementTypeName}[] array;
+            System.Collections.Generic.List<{elementTypeName}> list;
             if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
             {{
-                var existingArray = {fieldName}.Value.Object;
-                array = new {elementTypeName}[existingArray.Length + newItems.Length];
-                System.Array.Copy(existingArray, 0, array, 0, existingArray.Length);
-                System.Array.Copy(newItems, 0, array, existingArray.Length, newItems.Length);
+                list = {fieldName}.Value.Object;
             }}
             else
             {{
-                array = newItems;
+                list = new System.Collections.Generic.List<{elementTypeName}>();
             }}
             
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(array);
+            foreach (var configure in configures)
+            {{
+                var childBuilder = new {childBuilderName}();
+                childBuilder = configure(childBuilder);
+                list.Add(childBuilder.Build());
+            }}
+            
+            {fieldName} = new {DefaultConstants.NullBox}<System.Collections.Generic.List<{elementTypeName}>>(list);
             return this;
         }}";
 		}

@@ -84,6 +84,7 @@ internal static class ConstructorsGenerator
     {
         var fieldName = typedSymbol.UnderScoreName;
         var typeFullName = typedSymbol.TypeFullName;
+        var fieldType = typedSymbol.GenerateFieldType();
         
         // For concrete dictionary types, create new instance
         if (collectionMetadata is ConcreteDictionaryMetadata)
@@ -96,6 +97,14 @@ internal static class ConstructorsGenerator
         {
             var dictionaryType = $"System.Collections.Generic.Dictionary<{dictMetadata.KeyTypeDisplayName}, {dictMetadata.ValueTypeDisplayName}>";
             return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {dictionaryType}());";
+        }
+        
+        // For array types, create an empty List<T>
+        if (collectionMetadata is ArrayCollectionMetadata)
+        {
+            var elementTypeName = collectionMetadata.ElementTypeDisplayName;
+            var listType = $"System.Collections.Generic.List<{elementTypeName}>";
+            return $"{fieldName} = new {DefaultConstants.NullBox}<{listType}>(new {listType}());";
         }
         
         // For concrete collection types, create new instance.
