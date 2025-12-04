@@ -7,6 +7,10 @@ internal interface ITypedSymbol
     string SymbolName { get; }
     string SymbolPascalName { get; }
     string TypeFullName { get; }
+    /// <summary>
+    /// Gets the full type name without nullable annotation.
+    /// Used for generic type parameters where nullable reference types are not allowed.
+    /// </summary>
     string NonNullableTypeFullName { get; }
     string TypeName { get; }
     string UnderScoreName { get; }
