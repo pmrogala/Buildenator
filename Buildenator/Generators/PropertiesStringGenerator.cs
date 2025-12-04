@@ -252,50 +252,45 @@ internal sealed class PropertiesStringGenerator
         }}";
 		}
 		
-		// For array types, concatenate arrays
-		if (collectionMetadata is ArrayCollectionMetadata)
+		// For array types and concrete collection types, use similar pattern
+		if (collectionMetadata is ArrayCollectionMetadata or ConcreteCollectionMetadata)
 		{
-			return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
-        {{
-            {elementTypeName}[] array;
-            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+			var isArray = collectionMetadata is ArrayCollectionMetadata;
+			var collectionVarName = isArray ? "array" : "collection";
+			var collectionTypeName = isArray ? $"{elementTypeName}[]" : typedSymbol.TypeFullName;
+			
+			var addItemsCode = isArray
+				? $@"if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
             {{
                 var existingArray = {fieldName}.Value.Object;
-                array = new {elementTypeName}[existingArray.Length + items.Length];
-                System.Array.Copy(existingArray, 0, array, 0, existingArray.Length);
-                System.Array.Copy(items, 0, array, existingArray.Length, items.Length);
+                {collectionVarName} = new {elementTypeName}[existingArray.Length + items.Length];
+                System.Array.Copy(existingArray, 0, {collectionVarName}, 0, existingArray.Length);
+                System.Array.Copy(items, 0, {collectionVarName}, existingArray.Length, items.Length);
             }}
             else
             {{
-                array = items;
-            }}
-            
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(array);
-            return this;
-        }}";
-		}
-		
-		// For concrete types, use new() and .Add() method from ICollection<T>
-		if (collectionMetadata is ConcreteCollectionMetadata)
-		{
-			return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
-        {{
-            {typedSymbol.TypeFullName} collection;
-            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+                {collectionVarName} = items;
+            }}"
+				: $@"if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
             {{
-                collection = {fieldName}.Value.Object;
+                {collectionVarName} = {fieldName}.Value.Object;
             }}
             else
             {{
-                collection = new {typedSymbol.TypeFullName}();
+                {collectionVarName} = new {typedSymbol.TypeFullName}();
             }}
             
             foreach (var item in items)
             {{
-                collection.Add(item);
-            }}
+                {collectionVarName}.Add(item);
+            }}";
+			
+			return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
+        {{
+            {collectionTypeName} {collectionVarName};
+            {addItemsCode}
             
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(collection);
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({collectionVarName});
             return this;
         }}";
 		}
@@ -358,60 +353,58 @@ internal sealed class PropertiesStringGenerator
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
 		
-		// For array types
-		if (collectionMetadata is ArrayCollectionMetadata)
+		// For array types and concrete collection types, use similar pattern
+		if (collectionMetadata is ArrayCollectionMetadata or ConcreteCollectionMetadata)
 		{
-			return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
-        {{
-            var newItems = new {elementTypeName}[configures.Length];
+			var isArray = collectionMetadata is ArrayCollectionMetadata;
+			var collectionVarName = isArray ? "array" : "collection";
+			var collectionTypeName = isArray ? $"{elementTypeName}[]" : typedSymbol.TypeFullName;
+			
+			// Build child items first - for arrays we need to know the count upfront
+			var buildItemsCode = isArray
+				? $@"var newItems = new {elementTypeName}[configures.Length];
             for (int i = 0; i < configures.Length; i++)
             {{
                 var childBuilder = new {childBuilderName}();
                 childBuilder = configures[i](childBuilder);
                 newItems[i] = childBuilder.Build();
-            }}
-            
-            {elementTypeName}[] array;
-            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+            }}"
+				: "";
+			
+			var addItemsCode = isArray
+				? $@"if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
             {{
                 var existingArray = {fieldName}.Value.Object;
-                array = new {elementTypeName}[existingArray.Length + newItems.Length];
-                System.Array.Copy(existingArray, 0, array, 0, existingArray.Length);
-                System.Array.Copy(newItems, 0, array, existingArray.Length, newItems.Length);
+                {collectionVarName} = new {elementTypeName}[existingArray.Length + newItems.Length];
+                System.Array.Copy(existingArray, 0, {collectionVarName}, 0, existingArray.Length);
+                System.Array.Copy(newItems, 0, {collectionVarName}, existingArray.Length, newItems.Length);
             }}
             else
             {{
-                array = newItems;
-            }}
-            
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(array);
-            return this;
-        }}";
-		}
-		
-		// For concrete collection types
-		if (collectionMetadata is ConcreteCollectionMetadata)
-		{
-			return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
-        {{
-            {typedSymbol.TypeFullName} collection;
-            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+                {collectionVarName} = newItems;
+            }}"
+				: $@"if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
             {{
-                collection = {fieldName}.Value.Object;
+                {collectionVarName} = {fieldName}.Value.Object;
             }}
             else
             {{
-                collection = new {typedSymbol.TypeFullName}();
+                {collectionVarName} = new {typedSymbol.TypeFullName}();
             }}
             
             foreach (var configure in configures)
             {{
                 var childBuilder = new {childBuilderName}();
                 childBuilder = configure(childBuilder);
-                collection.Add(childBuilder.Build());
-            }}
+                {collectionVarName}.Add(childBuilder.Build());
+            }}";
+			
+			return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
+        {{
+            {buildItemsCode}{(isArray ? "\n            \n            " : "")}{collectionTypeName} {collectionVarName};
+            {addItemsCode}
             
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(collection);
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({collectionVarName});
             return this;
         }}";
 		}
