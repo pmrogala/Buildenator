@@ -7,6 +7,12 @@ internal interface ITypedSymbol
     string SymbolName { get; }
     string SymbolPascalName { get; }
     string TypeFullName { get; }
+    /// <summary>
+    /// Gets the type name suitable for use as a NullBox generic parameter.
+    /// For nullable reference types, returns the non-nullable version.
+    /// For nullable value types, returns the type as-is since Nullable&lt;T&gt; is the actual type.
+    /// </summary>
+    string NonNullableTypeFullName { get; }
     string TypeName { get; }
     string UnderScoreName { get; }
 
@@ -32,12 +38,6 @@ internal interface ITypedSymbol
     /// </summary>
     /// <returns>The default value name (e.g., "DefaultName") if found, otherwise null.</returns>
     string? GetDefaultValueName();
-    
-    /// <summary>
-    /// Returns the type full name suitable for use as a generic type parameter.
-    /// For nullable reference types, strips the nullable annotation to avoid CS8628 errors.
-    /// </summary>
-    string GetTypeFullNameForGenericParameter();
 }
 
 /// <summary>
