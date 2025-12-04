@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+- **Array collection support**: Fixed an issue where `AddTo...` methods were not generated for array properties when `useChildBuilders` is enabled. Arrays now receive the same treatment as other collection types:
+  - `AddTo` methods with `params T[]` parameters for regular value additions
+  - `AddTo` methods with `params Func<ChildBuilder, ChildBuilder>[]` parameters when `useChildBuilders: true` is set
+  - Arrays are properly concatenated when using `AddTo` multiple times
+  - Both constructor parameter arrays and settable property arrays are supported
+
 ## 8.7.0.0 - 2025-11-27
 
 ### Added

@@ -252,6 +252,29 @@ internal sealed class PropertiesStringGenerator
         }}";
 		}
 		
+		// For array types, concatenate arrays
+		if (collectionMetadata is ArrayCollectionMetadata)
+		{
+			return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
+        {{
+            {elementTypeName}[] array;
+            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+            {{
+                var existingArray = {fieldName}.Value.Object;
+                array = new {elementTypeName}[existingArray.Length + items.Length];
+                System.Array.Copy(existingArray, 0, array, 0, existingArray.Length);
+                System.Array.Copy(items, 0, array, existingArray.Length, items.Length);
+            }}
+            else
+            {{
+                array = items;
+            }}
+            
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(array);
+            return this;
+        }}";
+		}
+		
 		// For concrete types, use new() and .Add() method from ICollection<T>
 		if (collectionMetadata is ConcreteCollectionMetadata)
 		{
@@ -334,6 +357,37 @@ internal sealed class PropertiesStringGenerator
 		var elementTypeName = collectionMetadata.ElementTypeDisplayName;
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
+		
+		// For array types
+		if (collectionMetadata is ArrayCollectionMetadata)
+		{
+			return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
+        {{
+            var newItems = new {elementTypeName}[configures.Length];
+            for (int i = 0; i < configures.Length; i++)
+            {{
+                var childBuilder = new {childBuilderName}();
+                childBuilder = configures[i](childBuilder);
+                newItems[i] = childBuilder.Build();
+            }}
+            
+            {elementTypeName}[] array;
+            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+            {{
+                var existingArray = {fieldName}.Value.Object;
+                array = new {elementTypeName}[existingArray.Length + newItems.Length];
+                System.Array.Copy(existingArray, 0, array, 0, existingArray.Length);
+                System.Array.Copy(newItems, 0, array, existingArray.Length, newItems.Length);
+            }}
+            else
+            {{
+                array = newItems;
+            }}
+            
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(array);
+            return this;
+        }}";
+		}
 		
 		// For concrete collection types
 		if (collectionMetadata is ConcreteCollectionMetadata)
