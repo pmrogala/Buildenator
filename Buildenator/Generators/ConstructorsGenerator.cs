@@ -83,7 +83,7 @@ internal static class ConstructorsGenerator
     private static string GenerateEmptyCollectionInitialization(ITypedSymbol typedSymbol, CollectionMetadata collectionMetadata)
     {
         var fieldName = typedSymbol.UnderScoreName;
-        var typeFullName = typedSymbol.TypeFullName;
+        var typeFullName = typedSymbol.NonNullableTypeFullName;
         
         // For concrete dictionary types, create new instance
         if (collectionMetadata is ConcreteDictionaryMetadata)
