@@ -258,5 +258,110 @@ namespace Buildenator.IntegrationTests
             builder.WithPrivateField(privateField);
             builder.Build().PrivateField.Should().BeEquivalentTo(privateField);
         }
+
+        [Theory]
+        [AutoData]
+        public void BuildersGenerator_NullableDictionary_WithMethodShouldSetValue(string key, string value)
+        {
+            // Arrange
+            var builder = EntityWithNullableDictionaryBuilder.EntityWithNullableDictionary;
+            var metadata = new Dictionary<string, string> { { key, value } };
+
+            // Act
+            var result = builder
+                .WithMetadata(metadata)
+                .Build();
+
+            // Assert
+            _ = result.Metadata.Should().NotBeNull();
+            _ = result.Metadata.Should().HaveCount(1);
+            _ = result.Metadata![key].Should().Be(value);
+        }
+
+        [Theory]
+        [AutoData]
+        public void BuildersGenerator_NullableIDictionary_WithMethodShouldSetValue(int key, string value)
+        {
+            // Arrange
+            var builder = EntityWithNullableDictionaryBuilder.EntityWithNullableDictionary;
+            var items = new Dictionary<int, string> { { key, value } };
+
+            // Act
+            var result = builder
+                .WithItems(items)
+                .Build();
+
+            // Assert
+            _ = result.Items.Should().NotBeNull();
+            _ = result.Items.Should().HaveCount(1);
+            _ = result.Items![key].Should().Be(value);
+        }
+
+        [Fact]
+        public void BuildersGenerator_NullableDictionary_WithNullValueShouldWork()
+        {
+            // Arrange
+            var builder = EntityWithNullableDictionaryBuilder.EntityWithNullableDictionary;
+
+            // Act
+            var result = builder
+                .WithMetadata(null)
+                .Build();
+
+            // Assert
+            _ = result.Metadata.Should().BeNull();
+        }
+
+        [Theory]
+        [AutoData]
+        public void BuildersGenerator_NullableDictionary_AddToMethodShouldAddItems(string key1, string value1, string key2, string value2)
+        {
+            // Arrange
+            var builder = EntityWithNullableDictionaryBuilder.EntityWithNullableDictionary;
+
+            // Act
+            var result = builder
+                .AddToMetadata(
+                    new KeyValuePair<string, string>(key1, value1),
+                    new KeyValuePair<string, string>(key2, value2))
+                .Build();
+
+            // Assert
+            _ = result.Metadata.Should().NotBeNull();
+            _ = result.Metadata.Should().HaveCount(2);
+            _ = result.Metadata![key1].Should().Be(value1);
+            _ = result.Metadata[key2].Should().Be(value2);
+        }
+
+        [Theory]
+        [AutoData]
+        public void BuildersGenerator_NullableValueType_WithMethodShouldSetValue(int value)
+        {
+            // Arrange
+            var builder = EntityWithNullableDictionaryBuilder.EntityWithNullableDictionary;
+
+            // Act
+            var result = builder
+                .WithCount(value)
+                .Build();
+
+            // Assert
+            _ = result.Count.Should().Be(value);
+        }
+
+        [Fact]
+        public void BuildersGenerator_NullableValueType_WithNullValueShouldWork()
+        {
+            // Arrange
+            var builder = EntityWithNullableDictionaryBuilder.EntityWithNullableDictionary;
+
+            // Act
+            var result = builder
+                .WithCount(null)
+                .Build();
+
+            // Assert
+            _ = result.Count.Should().BeNull();
+        }
     }
 }

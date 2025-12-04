@@ -189,9 +189,12 @@ internal sealed class PropertiesStringGenerator
 		=> $"public {_builder.FullName} {CreateMethodName(typedSymbol)}({typedSymbol.GenerateMethodParameterDefinition()})";
 
 	private static string GenerateValueAssignment(ITypedSymbol typedSymbol)
-		=> typedSymbol.IsMockable()
-			? $"{DefaultConstants.SetupActionLiteral}({typedSymbol.UnderScoreName})"
-			: $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({DefaultConstants.ValueLiteral})";
+	{
+		if (typedSymbol.IsMockable())
+			return $"{DefaultConstants.SetupActionLiteral}({typedSymbol.UnderScoreName})";
+		
+		return $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({DefaultConstants.ValueLiteral})";
+	}
 
 	private string CreateMethodName(ITypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
 
@@ -219,7 +222,7 @@ internal sealed class PropertiesStringGenerator
             }}
             else
             {{
-                dictionary = new {typedSymbol.TypeFullName}();
+                dictionary = new {typedSymbol.NonNullableTypeFullName}();
             }}
             
             foreach (var item in items)
@@ -277,7 +280,7 @@ internal sealed class PropertiesStringGenerator
             }}
             else
             {{
-                {collectionVarName} = new {typedSymbol.TypeFullName}();
+                {collectionVarName} = new {typedSymbol.NonNullableTypeFullName}();
             }}
             
             foreach (var item in items)
@@ -333,13 +336,12 @@ internal sealed class PropertiesStringGenerator
 
 		var methodName = CreateMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
-		var entityTypeName = typedSymbol.TypeFullName;
 
 		return $@"public {_builder.FullName} {methodName}(System.Func<{childBuilderName}, {childBuilderName}> configure{typedSymbol.SymbolPascalName})
         {{
             var childBuilder = new {childBuilderName}();
             childBuilder = configure{typedSymbol.SymbolPascalName}(childBuilder);
-            {fieldName} = new {DefaultConstants.NullBox}<{entityTypeName}>(childBuilder.Build());
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(childBuilder.Build());
             return this;
         }}";
 	}
@@ -389,7 +391,7 @@ internal sealed class PropertiesStringGenerator
             }}
             else
             {{
-                {collectionVarName} = new {typedSymbol.TypeFullName}();
+                {collectionVarName} = new {typedSymbol.NonNullableTypeFullName}();
             }}
             
             foreach (var configure in configures)

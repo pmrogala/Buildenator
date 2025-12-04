@@ -56,6 +56,35 @@ internal sealed class TypedSymbol : ITypedSymbol
     private string? _typeFullName;
     public string TypeFullName => _typeFullName ??= Type.ToDisplayString();
 
+    private string? _nonNullableTypeFullName;
+    /// <summary>
+    /// Gets the type name suitable for use as a NullBox generic parameter.
+    /// For nullable reference types (e.g., "string?", "Dictionary&lt;K,V&gt;?"), returns the non-nullable version.
+    /// For nullable value types (e.g., "int?"), returns the type as-is since Nullable&lt;T&gt; is the actual type.
+    /// </summary>
+    public string NonNullableTypeFullName => _nonNullableTypeFullName ??= GetNonNullableTypeFullName();
+
+    private string GetNonNullableTypeFullName()
+    {
+        // For nullable value types (e.g., int?, DateTime?), keep the nullable form
+        // because Nullable<T> is the actual type, not just an annotation
+        if (Type.TypeKind == TypeKind.Struct && Type is INamedTypeSymbol namedType && 
+            namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+        {
+            return TypeFullName;
+        }
+        
+        // For nullable reference types, strip the nullable annotation
+        // This handles cases like string?, Dictionary<K,V>?, etc.
+        if (Type.NullableAnnotation == NullableAnnotation.Annotated)
+        {
+            return Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString();
+        }
+        
+        // For non-nullable types, return as-is
+        return TypeFullName;
+    }
+
     public string TypeName => Type.Name;
 
     public string SymbolPascalName => Symbol.PascalCaseName();

@@ -84,11 +84,12 @@ internal static class ConstructorsGenerator
     {
         var fieldName = typedSymbol.UnderScoreName;
         var typeFullName = typedSymbol.TypeFullName;
+        var nonNullableTypeFullName = typedSymbol.NonNullableTypeFullName;
         
         // For concrete dictionary types, create new instance
         if (collectionMetadata is ConcreteDictionaryMetadata)
         {
-            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {typeFullName}());";
+            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {nonNullableTypeFullName}());";
         }
         
         // For interface dictionary types, create a Dictionary<K,V>
@@ -103,7 +104,7 @@ internal static class ConstructorsGenerator
         // Standard .NET collections (List<T>, HashSet<T>, Collection<T>, etc.) all support this.
         if (collectionMetadata is ConcreteCollectionMetadata)
         {
-            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {typeFullName}());";
+            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {nonNullableTypeFullName}());";
         }
         
         // For interface collection types, create a List<T>
