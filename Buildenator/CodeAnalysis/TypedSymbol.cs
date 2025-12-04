@@ -56,6 +56,9 @@ internal sealed class TypedSymbol : ITypedSymbol
     private string? _typeFullName;
     public string TypeFullName => _typeFullName ??= Type.ToDisplayString();
 
+    private string? _nonNullableTypeFullName;
+    public string NonNullableTypeFullName => _nonNullableTypeFullName ??= Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString();
+
     public string TypeName => Type.Name;
 
     public string SymbolPascalName => Symbol.PascalCaseName();
@@ -135,12 +138,12 @@ internal sealed class TypedSymbol : ITypedSymbol
     }
 
     public string GenerateLazyFieldType()
-        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{TypeFullName}>?";
+        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{NonNullableTypeFullName}>?";
 
     public string GenerateLazyFieldValueReturn()
         => IsMockable()
             ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
-            : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{TypeFullName}>({(IsFakeable()
+            : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{NonNullableTypeFullName}>({(IsFakeable()
                 ? $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
                   + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "")
                 : $"default({TypeFullName})")})).Object";

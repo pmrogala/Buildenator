@@ -7,6 +7,7 @@ internal interface ITypedSymbol
     string SymbolName { get; }
     string SymbolPascalName { get; }
     string TypeFullName { get; }
+    string NonNullableTypeFullName { get; }
     string TypeName { get; }
     string UnderScoreName { get; }
 
