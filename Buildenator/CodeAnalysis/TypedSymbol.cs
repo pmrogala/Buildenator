@@ -56,6 +56,35 @@ internal sealed class TypedSymbol : ITypedSymbol
     private string? _typeFullName;
     public string TypeFullName => _typeFullName ??= Type.ToDisplayString();
 
+    private string? _nonNullableTypeFullName;
+    /// <summary>
+    /// Gets the type name suitable for use as a NullBox generic parameter.
+    /// For nullable reference types (e.g., "string?", "Dictionary&lt;K,V&gt;?"), returns the non-nullable version.
+    /// For nullable value types (e.g., "int?"), returns the type as-is since Nullable&lt;T&gt; is the actual type.
+    /// </summary>
+    public string NonNullableTypeFullName => _nonNullableTypeFullName ??= GetNonNullableTypeFullName();
+
+    private string GetNonNullableTypeFullName()
+    {
+        // For nullable value types (e.g., int?, DateTime?), keep the nullable form
+        // because Nullable<T> is the actual type, not just an annotation
+        if (Type.TypeKind == TypeKind.Struct && Type is INamedTypeSymbol namedType && 
+            namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T)
+        {
+            return TypeFullName;
+        }
+        
+        // For nullable reference types, strip the nullable annotation
+        // This handles cases like string?, Dictionary<K,V>?, etc.
+        if (Type.NullableAnnotation == NullableAnnotation.Annotated)
+        {
+            return Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString();
+        }
+        
+        // For non-nullable types, return as-is
+        return TypeFullName;
+    }
+
     public string TypeName => Type.Name;
 
     public string SymbolPascalName => Symbol.PascalCaseName();
@@ -135,12 +164,12 @@ internal sealed class TypedSymbol : ITypedSymbol
     }
 
     public string GenerateLazyFieldType()
-        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{GetTypeFullNameForGenericParameter()}>?";
+        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{NonNullableTypeFullName}>?";
 
     public string GenerateLazyFieldValueReturn()
         => IsMockable()
             ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
-            : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{GetTypeFullNameForGenericParameter()}>({(IsFakeable()
+            : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{NonNullableTypeFullName}>({(IsFakeable()
                 ? $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
                   + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "")
                 : $"default({TypeFullName})")})).Object";
@@ -152,16 +181,6 @@ internal sealed class TypedSymbol : ITypedSymbol
 
     public string GenerateMethodParameterDefinition()
         => IsMockable() ? $"Action<{GenerateMockableFieldType()}> {DefaultConstants.SetupActionLiteral}" : $"{TypeFullName} {DefaultConstants.ValueLiteral}";
-
-    /// <summary>
-    /// Returns the type full name suitable for use as a generic type parameter.
-    /// For nullable reference types, strips the nullable annotation to avoid CS8628 errors.
-    /// For example, "Dictionary&lt;string, string&gt;?" becomes "Dictionary&lt;string, string&gt;".
-    /// </summary>
-    public string GetTypeFullNameForGenericParameter()
-        => Type.NullableAnnotation == NullableAnnotation.Annotated 
-            ? Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString() 
-            : TypeFullName;
 
     public string? GetDefaultValueName()
     {

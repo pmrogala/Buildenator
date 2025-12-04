@@ -332,5 +332,36 @@ namespace Buildenator.IntegrationTests
             _ = result.Metadata![key1].Should().Be(value1);
             _ = result.Metadata[key2].Should().Be(value2);
         }
+
+        [Theory]
+        [AutoData]
+        public void BuildersGenerator_NullableValueType_WithMethodShouldSetValue(int value)
+        {
+            // Arrange
+            var builder = EntityWithNullableDictionaryBuilder.EntityWithNullableDictionary;
+
+            // Act
+            var result = builder
+                .WithCount(value)
+                .Build();
+
+            // Assert
+            _ = result.Count.Should().Be(value);
+        }
+
+        [Fact]
+        public void BuildersGenerator_NullableValueType_WithNullValueShouldWork()
+        {
+            // Arrange
+            var builder = EntityWithNullableDictionaryBuilder.EntityWithNullableDictionary;
+
+            // Act
+            var result = builder
+                .WithCount(null)
+                .Build();
+
+            // Assert
+            _ = result.Count.Should().BeNull();
+        }
     }
 }

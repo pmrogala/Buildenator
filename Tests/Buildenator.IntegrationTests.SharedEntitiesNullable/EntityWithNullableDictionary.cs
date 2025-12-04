@@ -32,5 +32,10 @@ namespace Buildenator.IntegrationTests.SharedEntitiesNullable
         /// Simple non-dictionary property for comparison
         /// </summary>
         public string? Name { get; set; }
+
+        /// <summary>
+        /// Nullable value type property to test int? handling
+        /// </summary>
+        public int? Count { get; set; }
     }
 }
