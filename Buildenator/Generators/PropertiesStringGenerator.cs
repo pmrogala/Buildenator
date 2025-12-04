@@ -399,10 +399,18 @@ internal sealed class PropertiesStringGenerator
                 {collectionVarName}.Add(childBuilder.Build());
             }}";
 			
+			// For arrays, we need extra newlines between buildItemsCode and the variable declaration
+			var methodBody = isArray
+				? $@"{buildItemsCode}
+            
+            {collectionTypeName} {collectionVarName};
+            {addItemsCode}"
+				: $@"{collectionTypeName} {collectionVarName};
+            {addItemsCode}";
+			
 			return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
         {{
-            {buildItemsCode}{(isArray ? "\n            \n            " : "")}{collectionTypeName} {collectionVarName};
-            {addItemsCode}
+            {methodBody}
             
             {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({collectionVarName});
             return this;
