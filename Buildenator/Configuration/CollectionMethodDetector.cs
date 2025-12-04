@@ -9,6 +9,7 @@ internal static class CollectionMethodDetector
     /// <summary>
     /// Factory method that creates CollectionMetadata for a given type symbol.
     /// Returns ConcreteDictionaryMetadata or InterfaceDictionaryMetadata for dictionary types,
+    /// ArrayCollectionMetadata for array types,
     /// ConcreteCollectionMetadata for concrete collection types,
     /// InterfaceCollectionMetadata for interface collection types,
     /// or null if the type is not a collection.
@@ -21,6 +22,12 @@ internal static class CollectionMethodDetector
         if (dictionaryMetadata != null)
         {
             return dictionaryMetadata;
+        }
+        
+        // Check for array types
+        if (propertyType is IArrayTypeSymbol arrayType)
+        {
+            return new ArrayCollectionMetadata(arrayType.ElementType);
         }
         
         // Check for concrete collection types (before interface check)
