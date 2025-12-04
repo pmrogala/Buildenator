@@ -1459,6 +1459,108 @@ public class BuildersGeneratorTests
         _ = result.OptionalChildren[0].Name.Should().Be(childName);
     }
 
+    // ===== Tests for UseChildBuilders with Arrays =====
+    // These tests verify that child builder methods are generated for arrays when useChildBuilders is enabled
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuildersWithArray_AddToMethodShouldAcceptFuncParameter(
+        string childName1, int childValue1, string childName2, int childValue2, int parentValue)
+    {
+        // Arrange - ParentWithChildArrayEntityBuilder has useChildBuilders: true
+        var builder = ParentWithChildArrayEntityBuilder.ParentWithChildArrayEntity;
+
+        // Act - Use the generated AddTo method with Func<ChildBuilder, ChildBuilder> parameters
+        var result = builder
+            .AddToChildren(
+                child => child.WithName(childName1).WithValue(childValue1),
+                child => child.WithName(childName2).WithValue(childValue2))
+            .WithParentValue(parentValue)
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.Children.Should().HaveCount(2);
+        _ = result.Children[0].Name.Should().Be(childName1);
+        _ = result.Children[0].Value.Should().Be(childValue1);
+        _ = result.Children[1].Name.Should().Be(childName2);
+        _ = result.Children[1].Value.Should().Be(childValue2);
+        _ = result.ParentValue.Should().Be(parentValue);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuildersWithArray_SettablePropertyAddToShouldAcceptFuncParameter(
+        string childName1, int childValue1, string childName2, int childValue2, int parentValue)
+    {
+        // Arrange
+        var builder = ParentWithChildArrayEntityBuilder.ParentWithChildArrayEntity;
+
+        // Act - Use the AddTo method for the settable OptionalChildren array property
+        var result = builder
+            .AddToChildren(child => child.WithName("constructor-child").WithValue(0))
+            .WithParentValue(parentValue)
+            .AddToOptionalChildren(
+                child => child.WithName(childName1).WithValue(childValue1),
+                child => child.WithName(childName2).WithValue(childValue2))
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.OptionalChildren.Should().HaveCount(2);
+        _ = result.OptionalChildren[0].Name.Should().Be(childName1);
+        _ = result.OptionalChildren[0].Value.Should().Be(childValue1);
+        _ = result.OptionalChildren[1].Name.Should().Be(childName2);
+        _ = result.OptionalChildren[1].Value.Should().Be(childValue2);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuildersWithArray_MultipleAddToCalls_ShouldAccumulate(
+        string childName1, int childValue1, string childName2, int childValue2, int parentValue)
+    {
+        // Arrange
+        var builder = ParentWithChildArrayEntityBuilder.ParentWithChildArrayEntity;
+
+        // Act - Use AddTo multiple times - items should accumulate in the array
+        var result = builder
+            .AddToChildren(child => child.WithName(childName1).WithValue(childValue1))
+            .AddToChildren(child => child.WithName(childName2).WithValue(childValue2))
+            .WithParentValue(parentValue)
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.Children.Should().HaveCount(2);
+        _ = result.Children[0].Name.Should().Be(childName1);
+        _ = result.Children[1].Name.Should().Be(childName2);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuildersWithArray_TraditionalMethodsStillWork(
+        string childName, int childValue, int parentValue)
+    {
+        // Arrange - This test verifies that both traditional With/AddTo methods and Func-based methods are generated
+        // Compilation success is the test - if the methods don't exist, this won't compile
+        var child = new ChildForParentEntity(childName, childValue);
+        var builder = ParentWithChildArrayEntityBuilder.ParentWithChildArrayEntity;
+
+        // Act - Use the traditional WithChildren and AddToChildren methods
+        var result = builder
+            .WithChildren(new[] { child })  // Traditional With method
+            .AddToOptionalChildren(child)   // Traditional AddTo method for settable property
+            .WithParentValue(parentValue)
+            .Build();
+
+        // Assert
+        _ = result.Should().NotBeNull();
+        _ = result.Children.Should().HaveCount(1);
+        _ = result.Children[0].Name.Should().Be(childName);
+        _ = result.OptionalChildren.Should().HaveCount(1);
+        _ = result.OptionalChildren[0].Name.Should().Be(childName);
+    }
+
     // ===== Tests for UseChildBuilders: false =====
     // These tests verify that Func<> methods are NOT generated when useChildBuilders is disabled
 

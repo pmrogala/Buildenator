@@ -117,3 +117,14 @@ internal sealed class InterfaceDictionaryMetadata : CollectionMetadata
         ValueTypeDisplayName = valueType.ToDisplayString();
     }
 }
+
+/// <summary>
+/// Metadata for array types (e.g., T[]).
+/// </summary>
+internal sealed class ArrayCollectionMetadata : CollectionMetadata
+{
+    public ArrayCollectionMetadata(ITypeSymbol elementType) 
+        : base(elementType)
+    {
+    }
+}
