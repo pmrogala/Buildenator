@@ -164,12 +164,12 @@ internal sealed class TypedSymbol : ITypedSymbol
     }
 
     public string GenerateLazyFieldType()
-        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{NonNullableTypeFullName}>?";
+        => IsMockable() ? GenerateMockableFieldType() : $"{DefaultConstants.NullBox}<{TypeFullName}>?";
 
     public string GenerateLazyFieldValueReturn()
         => IsMockable()
             ? string.Format(_mockingProperties!.ReturnObjectFormat, UnderScoreName)
-            : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{NonNullableTypeFullName}>({(IsFakeable()
+            : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{TypeFullName}>({(IsFakeable()
                 ? $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
                   + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "")
                 : $"default({TypeFullName})")})).Object";

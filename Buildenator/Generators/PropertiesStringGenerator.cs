@@ -175,7 +175,7 @@ internal sealed class PropertiesStringGenerator
 		if (defaultValueName is null)
 			return string.Empty;
 		
-		return $" = new {DefaultConstants.NullBox}<{typedSymbol.NonNullableTypeFullName}>({defaultValueName})";
+		return $" = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({defaultValueName})";
 	}
 
 	private string GenerateMethodDefinition(ITypedSymbol typedSymbol)
@@ -193,10 +193,7 @@ internal sealed class PropertiesStringGenerator
 		if (typedSymbol.IsMockable())
 			return $"{DefaultConstants.SetupActionLiteral}({typedSymbol.UnderScoreName})";
 		
-		// Add null-forgiving operator (!) for nullable reference types to suppress CS8604 warnings
-		// when assigning potentially null values to NullBox<T> where T is non-nullable
-		var nullForgiving = typedSymbol.TypeFullName != typedSymbol.NonNullableTypeFullName ? "!" : "";
-		return $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.NonNullableTypeFullName}>({DefaultConstants.ValueLiteral}{nullForgiving})";
+		return $"{typedSymbol.UnderScoreName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({DefaultConstants.ValueLiteral})";
 	}
 
 	private string CreateMethodName(ITypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
@@ -233,7 +230,7 @@ internal sealed class PropertiesStringGenerator
                 dictionary[item.Key] = item.Value;
             }}
             
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.NonNullableTypeFullName}>(dictionary);
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(dictionary);
             return this;
         }}";
 		}
@@ -253,7 +250,7 @@ internal sealed class PropertiesStringGenerator
             {{
                 dictionary[item.Key] = item.Value;
             }}
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.NonNullableTypeFullName}>(dictionary);
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(dictionary);
             return this;
         }}";
 		}
@@ -278,7 +275,7 @@ internal sealed class PropertiesStringGenerator
                 collection.Add(item);
             }}
             
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.NonNullableTypeFullName}>(collection);
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(collection);
             return this;
         }}";
 		}
@@ -290,7 +287,7 @@ internal sealed class PropertiesStringGenerator
                 ? new System.Collections.Generic.List<{elementTypeName}>({fieldName}.Value.Object) 
                 : new System.Collections.Generic.List<{elementTypeName}>();
             list.AddRange(items);
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.NonNullableTypeFullName}>(({typedSymbol.NonNullableTypeFullName})list);
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(({typedSymbol.TypeFullName})list);
             return this;
         }}";
 	}
@@ -321,13 +318,12 @@ internal sealed class PropertiesStringGenerator
 
 		var methodName = CreateMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
-		var entityTypeName = typedSymbol.NonNullableTypeFullName;
 
 		return $@"public {_builder.FullName} {methodName}(System.Func<{childBuilderName}, {childBuilderName}> configure{typedSymbol.SymbolPascalName})
         {{
             var childBuilder = new {childBuilderName}();
             childBuilder = configure{typedSymbol.SymbolPascalName}(childBuilder);
-            {fieldName} = new {DefaultConstants.NullBox}<{entityTypeName}>(childBuilder.Build());
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(childBuilder.Build());
             return this;
         }}";
 	}
@@ -363,7 +359,7 @@ internal sealed class PropertiesStringGenerator
                 collection.Add(childBuilder.Build());
             }}
             
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.NonNullableTypeFullName}>(collection);
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(collection);
             return this;
         }}";
 		}
@@ -382,7 +378,7 @@ internal sealed class PropertiesStringGenerator
                 list.Add(childBuilder.Build());
             }}
             
-            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.NonNullableTypeFullName}>(({typedSymbol.NonNullableTypeFullName})list);
+            {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(({typedSymbol.TypeFullName})list);
             return this;
         }}";
 	}
