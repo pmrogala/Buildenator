@@ -57,6 +57,10 @@ internal sealed class TypedSymbol : ITypedSymbol
     public string TypeFullName => _typeFullName ??= Type.ToDisplayString();
 
     private string? _nonNullableTypeFullName;
+    /// <summary>
+    /// Gets the full type name without nullable annotation (e.g., "Dictionary&lt;string, string&gt;" instead of "Dictionary&lt;string, string&gt;?").
+    /// This is used for generic type parameters like NullBox&lt;T&gt; where nullable reference types are not allowed.
+    /// </summary>
     public string NonNullableTypeFullName => _nonNullableTypeFullName ??= Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated).ToDisplayString();
 
     public string TypeName => Type.Name;
