@@ -83,19 +83,19 @@ internal static class ConstructorsGenerator
     private static string GenerateEmptyCollectionInitialization(ITypedSymbol typedSymbol, CollectionMetadata collectionMetadata)
     {
         var fieldName = typedSymbol.UnderScoreName;
-        var typeForGenericParam = typedSymbol.GetTypeFullNameForGenericParameter();
+        var typeFullName = typedSymbol.NonNullableTypeFullName;
         
         // For concrete dictionary types, create new instance
         if (collectionMetadata is ConcreteDictionaryMetadata)
         {
-            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeForGenericParam}>(new {typeForGenericParam}());";
+            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {typeFullName}());";
         }
         
         // For interface dictionary types, create a Dictionary<K,V>
         if (collectionMetadata is InterfaceDictionaryMetadata dictMetadata)
         {
             var dictionaryType = $"System.Collections.Generic.Dictionary<{dictMetadata.KeyTypeDisplayName}, {dictMetadata.ValueTypeDisplayName}>";
-            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeForGenericParam}>(new {dictionaryType}());";
+            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {dictionaryType}());";
         }
         
         // For concrete collection types, create new instance.
@@ -103,7 +103,7 @@ internal static class ConstructorsGenerator
         // Standard .NET collections (List<T>, HashSet<T>, Collection<T>, etc.) all support this.
         if (collectionMetadata is ConcreteCollectionMetadata)
         {
-            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeForGenericParam}>(new {typeForGenericParam}());";
+            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {typeFullName}());";
         }
         
         // For interface collection types, create a List<T>
@@ -111,7 +111,7 @@ internal static class ConstructorsGenerator
         {
             var elementTypeName = collectionMetadata.ElementTypeDisplayName;
             var listType = $"System.Collections.Generic.List<{elementTypeName}>";
-            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeForGenericParam}>(new {listType}());";
+            return $"{fieldName} = new {DefaultConstants.NullBox}<{typeFullName}>(new {listType}());";
         }
         
         return string.Empty;
