@@ -4,22 +4,26 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <!-- Generates a package at build -->
-    <IncludeBuildOutput>false</IncludeBuildOutput>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <AbstractionDir>..\Buildenator.Abstraction\</AbstractionDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Generates a package at build -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <!-- Do not include the generator as a lib dependency -->
-  <Version>8.5.0.2</Version>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <Version>8.5.0.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Buildenator.Abstraction\BuildenatorConfigurationAttribute.cs" Link="LinkedAttributes\BuildenatorConfigurationAttribute.cs" />
-    <Compile Include="..\Buildenator.Abstraction\FixtureConfigurationAttribute.cs" Link="LinkedAttributes\FixtureConfigurationAttribute.cs" />
-    <Compile Include="..\Buildenator.Abstraction\FixtureInterfacesStrategy.cs" Link="LinkedAttributes\FixtureInterfacesStrategy.cs" />
-    <Compile Include="..\Buildenator.Abstraction\MakeBuilderAttribute.cs" Link="LinkedAttributes\MakeBuilderAttribute.cs" />
-    <Compile Include="..\Buildenator.Abstraction\MockingConfigurationAttribute.cs" Link="LinkedAttributes\MockingConfigurationAttribute.cs" />
-    <Compile Include="..\Buildenator.Abstraction\MockingInterfacesStrategy.cs" Link="LinkedAttributes\MockingInterfacesStrategy.cs" />
-    <Compile Include="..\Buildenator.Abstraction\NullableStrategy.cs" Link="LinkedAttributes\NullableStrategy.cs" />
+    <Compile Include="$(AbstractionDir)BuildenatorConfigurationAttribute.cs" Link="LinkedAttributes\BuildenatorConfigurationAttribute.cs" />
+    <Compile Include="$(AbstractionDir)FixtureConfigurationAttribute.cs" Link="LinkedAttributes\FixtureConfigurationAttribute.cs" />
+    <Compile Include="$(AbstractionDir)FixtureInterfacesStrategy.cs" Link="LinkedAttributes\FixtureInterfacesStrategy.cs" />
+    <Compile Include="$(AbstractionDir)MakeBuilderAttribute.cs" Link="LinkedAttributes\MakeBuilderAttribute.cs" />
+    <Compile Include="$(AbstractionDir)MockingConfigurationAttribute.cs" Link="LinkedAttributes\MockingConfigurationAttribute.cs" />
+    <Compile Include="$(AbstractionDir)MockingInterfacesStrategy.cs" Link="LinkedAttributes\MockingInterfacesStrategy.cs" />
+    <Compile Include="$(AbstractionDir)NullableStrategy.cs" Link="LinkedAttributes\NullableStrategy.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,9 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="bin\Debug\netstandard2.0\\Buildenator.dll" />
-  </ItemGroup>
-  <ItemGroup>
+    <None Remove="bin\Debug\netstandard2.0\Buildenator.dll" />
     <!-- Package the generator in the analyzer directory of the nuget package -->
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
