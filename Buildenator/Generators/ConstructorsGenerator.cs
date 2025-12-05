@@ -1,5 +1,4 @@
 ﻿using Buildenator.Configuration.Contract;
-using System.Linq;
 using System.Text;
 using Buildenator.CodeAnalysis;
 using Buildenator.Configuration;
@@ -14,44 +13,51 @@ internal static class ConstructorsGenerator
         IFixtureProperties? fixtureConfiguration,
         bool initializeCollectionsWithEmpty)
     {
-            var parameters = entity.AllUniqueSettablePropertiesAndParameters;
+        var parameters = entity.AllUniqueSettablePropertiesAndParameters;
 
-            var output = new StringBuilder();
-        output = output.AppendLine($@"{CommentsGenerator.GenerateSummaryOverrideComment()}
+        var output = new StringBuilder();
+        output.AppendLine($@"{CommentsGenerator.GenerateSummaryOverrideComment()}
         public {builderName}()
         {{");
-            foreach (var typedSymbol in parameters.Where(a => a.NeedsFieldInit()))
-            {
-                output = output.AppendLine($@"            {typedSymbol.GenerateFieldInitialization()}");
-            }
 
-            // Generate empty collection initializations if the option is enabled
-            if (initializeCollectionsWithEmpty)
+        for (var i = 0; i < parameters.Count; i++)
+        {
+            var typedSymbol = parameters[i];
+            if (!typedSymbol.NeedsFieldInit())
+                continue;
+
+            output.AppendLine($"            {typedSymbol.GenerateFieldInitialization()}");
+        }
+
+        if (initializeCollectionsWithEmpty)
+        {
+            for (var i = 0; i < parameters.Count; i++)
             {
-                foreach (var typedSymbol in parameters.Where(ShouldInitializeCollectionField))
+                var typedSymbol = parameters[i];
+                if (!ShouldInitializeCollectionField(typedSymbol))
+                    continue;
+
+                var collectionMetadata = typedSymbol.GetCollectionMetadata();
+                if (collectionMetadata == null)
+                    continue;
+
+                var initCode = GenerateEmptyCollectionInitialization(typedSymbol, collectionMetadata);
+                if (!string.IsNullOrEmpty(initCode))
                 {
-                    var collectionMetadata = typedSymbol.GetCollectionMetadata();
-                    if (collectionMetadata != null)
-                    {
-                        var initCode = GenerateEmptyCollectionInitialization(typedSymbol, collectionMetadata);
-                        if (!string.IsNullOrEmpty(initCode))
-                        {
-                            output = output.AppendLine($@"            {initCode}");
-                        }
-                    }
+                    output.AppendLine($"            {initCode}");
                 }
             }
-
-            if (fixtureConfiguration is not null && fixtureConfiguration.NeedsAdditionalConfiguration())
-            {
-                output = output.AppendLine($@"            {fixtureConfiguration.GenerateAdditionalConfiguration()};");
-            }
-
-            output = output.AppendLine($@"
-        }}");
-
-            return output.ToString();
         }
+
+        if (fixtureConfiguration is not null && fixtureConfiguration.NeedsAdditionalConfiguration())
+        {
+            output.AppendLine($"            {fixtureConfiguration.GenerateAdditionalConfiguration()};");
+        }
+
+        output.AppendLine("\n        }");
+
+        return output.ToString();
+    }
 
     /// <summary>
     /// Determines if a typed symbol should be considered for empty collection initialization.

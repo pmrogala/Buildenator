@@ -46,9 +46,8 @@ internal sealed class EntityToBuild : IEntityToBuild
 
         AdditionalNamespaces = additionalNamespaces.ToArray();
         Name = entityToBuildSymbol.Name;
-        FullName = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters, typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
-        FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(new SymbolDisplayFormat(
-            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters | SymbolDisplayGenericsOptions.IncludeTypeConstraints | SymbolDisplayGenericsOptions.IncludeVariance));
+        FullName = entityToBuildSymbol.ToDisplayString(SymbolDisplayFormats.TypeWithNamespaceAndGenerics);
+        FullNameWithConstraints = entityToBuildSymbol.ToDisplayString(SymbolDisplayFormats.TypeWithGenericsAndConstraints);
 
         ConstructorToBuild = Constructor.CreateConstructorOrDefault(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy, staticFactoryMethodName, defaultValueNames);
         (_properties, _uniqueReadOnlyTypedSymbols) = DividePropertiesBySetability(entityToBuildSymbol, mockingConfiguration, fixtureConfiguration, nullableStrategy, defaultValueNames);

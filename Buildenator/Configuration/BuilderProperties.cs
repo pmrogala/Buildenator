@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using Buildenator.Extensions;
 using System.Linq;
 using Buildenator.Diagnostics;
+using Buildenator.CodeAnalysis;
 
 namespace Buildenator.Configuration;
 
@@ -71,7 +72,7 @@ internal readonly struct BuilderProperties : IBuilderProperties
     {
         ContainingNamespace = builderSymbol.ContainingNamespace.ToDisplayString();
         Name = builderSymbol.Name;
-        FullName = builderSymbol.ToDisplayString(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters));
+        FullName = builderSymbol.ToDisplayString(SymbolDisplayFormats.TypeWithGenerics);
         BuildingMethodsPrefix = attributeData.BuildingMethodsPrefix ?? DefaultConstants.BuildingMethodsPrefix;
         NullableStrategy = attributeData.NullableStrategy ?? NullableStrategy.Default;
         GenerateDefaultBuildMethod = attributeData.GenerateDefaultBuildMethod ?? true;

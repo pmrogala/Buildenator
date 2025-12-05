@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace Buildenator.Generators;
@@ -7,20 +8,38 @@ internal static class NamespacesGenerator
 {
     internal static string GenerateNamespaces(params IAdditionalNamespacesProvider?[] additionalNamespacesProviders)
     {
-        var list = new[]
-        {
-            "System",
-            "System.Linq",
-            "Buildenator.Abstraction.Helpers"
-        }.Concat(additionalNamespacesProviders.SelectMany(a => a?.AdditionalNamespaces ?? []));
-
-        list = list.Distinct();
-
         var output = new StringBuilder();
-        foreach (var @namespace in list)
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        Add("System");
+        Add("System.Linq");
+        Add("Buildenator.Abstraction.Helpers");
+
+        for (var i = 0; i < additionalNamespacesProviders.Length; i++)
         {
-            output = output.Append("using ").Append(@namespace).AppendLine(";");
+            var provider = additionalNamespacesProviders[i];
+            var namespaces = provider?.AdditionalNamespaces;
+            if (namespaces == null)
+                continue;
+
+            for (var j = 0; j < namespaces.Length; j++)
+            {
+                var additional = namespaces[j];
+                if (string.IsNullOrWhiteSpace(additional))
+                    continue;
+
+                Add(additional);
+            }
         }
+
         return output.ToString();
+
+        void Add(string @namespace)
+        {
+            if (seen.Add(@namespace))
+            {
+                output.Append("using ").Append(@namespace).AppendLine(";");
+            }
+        }
     }
 }

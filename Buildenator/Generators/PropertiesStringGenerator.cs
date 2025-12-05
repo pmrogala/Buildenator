@@ -49,12 +49,14 @@ internal sealed class PropertiesStringGenerator
 	/// </summary>
 	private void GenerateFieldDeclarations(IReadOnlyList<ITypedSymbol> properties, StringBuilder output)
 	{
-		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredField))
+		for (var i = 0; i < properties.Count; i++)
 		{
-			output.AppendLine($@"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName}{GenerateFieldInitializer(typedSymbol)};");
+			var typedSymbol = properties[i];
+			if (_builder.Fields.ContainsKey(typedSymbol.UnderScoreName))
+				continue;
+
+			output.AppendLine($"        private {typedSymbol.GenerateLazyFieldType()} {typedSymbol.UnderScoreName}{GenerateFieldInitializer(typedSymbol)};");
 		}
-		
-		bool IsNotYetDeclaredField(ITypedSymbol x) => !_builder.Fields.TryGetValue(x.UnderScoreName, out _);
 	}
 	
 	/// <summary>
@@ -62,15 +64,31 @@ internal sealed class PropertiesStringGenerator
 	/// </summary>
 	private void GenerateWithMethods(IReadOnlyList<ITypedSymbol> properties, StringBuilder output)
 	{
-		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredWithMethod))
+		for (var i = 0; i < properties.Count; i++)
 		{
-			output.AppendLine($@"
+			var typedSymbol = properties[i];
+			if (HasExistingWithMethod(typedSymbol))
+				continue;
 
-        {GenerateMethodDefinition(typedSymbol)}");
+			output.AppendLine();
+			output.AppendLine();
+			output.AppendLine($"        {GenerateMethodDefinition(typedSymbol)}");
 		}
-		
-		bool IsNotYetDeclaredWithMethod(ITypedSymbol x) => !_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var methods)
-		                                               || !methods.Any(method => method.Parameters.Length == 1 && method.Parameters[0].Type.Name == x.TypeName);
+	}
+
+	private bool HasExistingWithMethod(ITypedSymbol typedSymbol)
+	{
+		if (!_builder.BuildingMethods.TryGetValue(CreateMethodName(typedSymbol), out var methods))
+			return false;
+
+		for (var i = 0; i < methods.Count; i++)
+		{
+			var method = methods[i];
+			if (method.Parameters.Length == 1 && method.Parameters[0].Type.Name == typedSymbol.TypeName)
+				return true;
+		}
+
+		return false;
 	}
 	
 	/// <summary>
@@ -78,31 +96,42 @@ internal sealed class PropertiesStringGenerator
 	/// </summary>
 	private void GenerateAddToMethods(IReadOnlyList<ITypedSymbol> properties, StringBuilder output)
 	{
-		foreach (var typedSymbol in properties.Where(IsCollectionProperty).Where(IsNotYetDeclaredAddToMethod))
+		for (var i = 0; i < properties.Count; i++)
 		{
-			output.AppendLine($@"
+			var typedSymbol = properties[i];
+			var collectionMetadata = typedSymbol.GetCollectionMetadata();
+			if (collectionMetadata == null || typedSymbol.IsMockable())
+				continue;
 
-        {GenerateAddToMethodDefinition(typedSymbol)}");
+			if (HasExistingAddToMethod(typedSymbol, collectionMetadata))
+				continue;
+
+			output.AppendLine();
+			output.AppendLine();
+			output.AppendLine($"        {GenerateAddToMethodDefinition(typedSymbol)}");
+		}
+	}
+
+	private bool HasExistingAddToMethod(ITypedSymbol typedSymbol, CollectionMetadata collectionMetadata)
+	{
+		if (!_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(typedSymbol), out var methods))
+			return false;
+
+		for (var i = 0; i < methods.Count; i++)
+		{
+			var method = methods[i];
+			if (method.Parameters.Length != 1)
+				continue;
+
+			var parameter = method.Parameters[0];
+			if (!parameter.IsParams)
+				continue;
+
+			if (parameter.Type is IArrayTypeSymbol arrayType && arrayType.ElementType.Name == collectionMetadata.ElementTypeName)
+				return true;
 		}
 
-		bool IsNotYetDeclaredAddToMethod(ITypedSymbol x)
-		{
-			if (!_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(x), out var methods))
-				return true;
-
-			var collectionMetadata = x.GetCollectionMetadata();
-			if (collectionMetadata == null)
-				return true;
-
-			// Check if any method has a matching params array parameter
-			return !methods.Any(method => 
-				method.Parameters.Length == 1 && 
-				method.Parameters[0].IsParams &&
-				method.Parameters[0].Type is IArrayTypeSymbol arrayType &&
-				arrayType.ElementType.Name == collectionMetadata.ElementTypeName);
-		}
-
-		bool IsCollectionProperty(ITypedSymbol x) => x.GetCollectionMetadata() != null && !x.IsMockable();
+		return false;
 	}
 	
 	/// <summary>
@@ -114,55 +143,64 @@ internal sealed class PropertiesStringGenerator
 		if (!_builder.UseChildBuilders || _entityToBuilderMappings == null)
 			return;
 			
-		// Generate With methods that accept Func<ChildBuilder, ChildBuilder> for single entity properties
-		foreach (var typedSymbol in properties.Where(HasChildBuilder).Where(IsNotYetDeclaredChildBuilderMethod))
+		for (var i = 0; i < properties.Count; i++)
 		{
-			output.AppendLine($@"
+			var typedSymbol = properties[i];
+			if (typedSymbol.IsMockable())
+				continue;
 
-        {GenerateChildBuilderMethodDefinition(typedSymbol)}");
-		}
-		
-		// Generate AddTo methods that accept Func<ChildBuilder, ChildBuilder>[] for collection properties
-		foreach (var typedSymbol in properties.Where(IsNotYetDeclaredChildBuilderAddToMethod))
-		{
+			var hasChildBuilder = GetChildBuilderName(typedSymbol) != null;
+			if (hasChildBuilder && !HasExistingChildBuilderWithMethod(typedSymbol))
+			{
+				output.AppendLine();
+				output.AppendLine();
+				output.AppendLine($"        {GenerateChildBuilderMethodDefinition(typedSymbol)}");
+			}
+
 			var collectionMetadata = typedSymbol.GetCollectionMetadata();
 			if (collectionMetadata == null)
 				continue;
-				
-			// Look up the child builder name using the element type
+
 			if (!_entityToBuilderMappings.TryGetValue(collectionMetadata.ElementTypeDisplayName, out var childBuilderName))
 				continue;
-			
-			output.AppendLine($@"
 
-        {GenerateChildBuilderAddToMethodDefinition(typedSymbol, collectionMetadata, childBuilderName)}");
+			if (HasExistingChildBuilderAddToMethod(typedSymbol))
+				continue;
+
+			output.AppendLine();
+			output.AppendLine();
+			output.AppendLine($"        {GenerateChildBuilderAddToMethodDefinition(typedSymbol, collectionMetadata, childBuilderName)}");
 		}
-		
-		bool HasChildBuilder(ITypedSymbol x) => !x.IsMockable() && GetChildBuilderName(x) != null;
-		
-		bool IsNotYetDeclaredChildBuilderMethod(ITypedSymbol x)
+	}
+
+	private bool HasExistingChildBuilderWithMethod(ITypedSymbol typedSymbol)
+	{
+		if (!_builder.BuildingMethods.TryGetValue(CreateMethodName(typedSymbol), out var methods))
+			return false;
+
+		for (var i = 0; i < methods.Count; i++)
 		{
-			// Check if a method with Func<ChildBuilder, ChildBuilder> signature already exists
-			if (!_builder.BuildingMethods.TryGetValue(CreateMethodName(x), out var methods))
+			var method = methods[i];
+			if (method.Parameters.Length == 1 && method.Parameters[0].Type.Name.StartsWith("Func"))
 				return true;
-			
-			// Check if any method has a Func parameter
-			return !methods.Any(method => 
-				method.Parameters.Length == 1 && 
-				method.Parameters[0].Type.Name.StartsWith("Func"));
 		}
-		
-		bool IsNotYetDeclaredChildBuilderAddToMethod(ITypedSymbol x)
+
+		return false;
+	}
+
+	private bool HasExistingChildBuilderAddToMethod(ITypedSymbol typedSymbol)
+	{
+		if (!_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(typedSymbol), out var methods))
+			return false;
+
+		for (var i = 0; i < methods.Count; i++)
 		{
-			// Check if a method with Func<ChildBuilder, ChildBuilder> signature already exists
-			if (!_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(x), out var methods))
+			var method = methods[i];
+			if (method.Parameters.Length == 1 && method.Parameters[0].Type.Name.StartsWith("Func"))
 				return true;
-			
-			// Check if any method has a Func parameter
-			return !methods.Any(method => 
-				method.Parameters.Length == 1 && 
-				method.Parameters[0].Type.Name.StartsWith("Func"));
 		}
+
+		return false;
 	}
 	
 	private string GenerateFieldInitializer(ITypedSymbol typedSymbol)

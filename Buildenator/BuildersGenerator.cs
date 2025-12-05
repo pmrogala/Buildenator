@@ -15,6 +15,7 @@ using System.Collections.Immutable;
 using System.Threading;
 using Buildenator.Diagnostics;
 using System.Collections.Generic;
+using Buildenator.CodeAnalysis;
 
 [assembly: InternalsVisibleTo("Buildenator.UnitTests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
@@ -83,21 +84,15 @@ public class BuildersGenerator : IIncrementalGenerator
             .Collect()
             .Select(static (builders, _) =>
             {
-                var mapping = new Dictionary<string, string>();
+                var mapping = ImmutableDictionary.CreateBuilder<string, string>();
                 foreach (var builder in builders)
                 {
-                    var entityFullName = builder.BuilderAttribute.TypeForBuilder.ToDisplayString(
-                        new SymbolDisplayFormat(
-                            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
-                    var builderFullName = builder.BuilderSymbol.ToDisplayString(
-                        new SymbolDisplayFormat(
-                            genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeParameters,
-                            typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces));
+                    var entityFullName = builder.BuilderAttribute.TypeForBuilder.ToDisplayString(SymbolDisplayFormats.TypeWithNamespaceAndGenerics);
+                    var builderFullName = builder.BuilderSymbol.ToDisplayString(SymbolDisplayFormats.TypeWithNamespaceAndGenerics);
                     // If there are multiple builders for the same entity, the last one wins
                     mapping[entityFullName] = builderFullName;
                 }
-                return mapping.ToImmutableDictionary();
+                return mapping.ToImmutable();
             });
 
         var generators = classSymbols
