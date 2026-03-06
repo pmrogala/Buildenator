@@ -37,9 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BDN007 diagnostic error**: Emitted when `builderConstructorMandatoryParameters = true` is combined with a mocking configuration, since the two features are fundamentally incompatible.
 - **BDN008 diagnostic error**: Emitted when `builderConstructorMandatoryParameters = true` is combined with a fixture configuration, since fixture auto-generation of unset values is incompatible with explicit constructor-driven initialization.
 
-### Fixed
-- **`builderConstructorMandatoryParameters` field re-initialization bug**: Constructor parameter fields were incorrectly included in the `initializeCollectionsWithEmpty` block inside the generated mandatory constructor, potentially overwriting the value provided by the caller. The generator now correctly excludes constructor parameters (matched by their PascalCase name) from subsequent field initialization.
-
 ## 8.7.1.0 - 2025-12-4
 
 ### Fixed
