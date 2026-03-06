@@ -17,6 +17,7 @@ public sealed class BuildenatorConfigurationAttribute : Attribute
     /// <param name="generateStaticPropertyForBuilderCreation">If you want to generate static property that will return a new builder instance.</param>
     /// <param name="initializeCollectionsWithEmpty">If true, collection fields will be initialized with empty collections in the constructor instead of null.</param>
     /// <param name="useChildBuilders">If true, generates additional With methods that accept Func&lt;ChildBuilder, ChildBuilder&gt; for properties that have their own builders.</param>
+    /// <param name="builderConstructorMandatoryParameters">If true, all generated builders in this assembly will require the entity's constructor parameters as mandatory builder constructor arguments. Incompatible with mocking.</param>
     public BuildenatorConfigurationAttribute(
         string buildingMethodsPrefix = "With",
         bool generateDefaultBuildMethod = true,
@@ -25,7 +26,8 @@ public sealed class BuildenatorConfigurationAttribute : Attribute
         bool implicitCast = false,
         bool generateStaticPropertyForBuilderCreation = false,
         bool initializeCollectionsWithEmpty = true,
-        bool useChildBuilders = true)
+        bool useChildBuilders = true,
+        bool builderConstructorMandatoryParameters = false)
     {
         }
 }

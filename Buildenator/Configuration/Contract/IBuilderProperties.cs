@@ -27,6 +27,7 @@ internal interface IBuilderProperties
     bool GenerateStaticPropertyForBuilderCreation { get; }
     bool InitializeCollectionsWithEmpty { get; }
     bool UseChildBuilders { get; }
+    bool BuilderConstructorMandatoryParameters { get; }
     
     /// <summary>
     /// Gets the set of user-defined default value names available in this builder.

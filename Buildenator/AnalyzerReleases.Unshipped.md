@@ -10,3 +10,4 @@ BDN003 | Buildenator | Info | BuildenatorDiagnosticDescriptors
 BDN004 | Buildenator | Info | BuildenatorDiagnosticDescriptors
 BDN005 | Buildenator | Info | BuildenatorDiagnosticDescriptors
 BDN006 | Buildenator | Info | BuildenatorDiagnosticDescriptors
+BDN007 | Buildenator | Error | BuildenatorDiagnosticDescriptors

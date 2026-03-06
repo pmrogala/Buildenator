@@ -13,7 +13,8 @@ internal readonly struct MakeBuilderAttributeInternal(
     string? staticFactoryMethodName,
     bool? generateStaticPropertyForBuilderCreation,
     bool? initializeCollectionsWithEmpty,
-    bool? useChildBuilders)
+    bool? useChildBuilders,
+    bool? builderConstructorMandatoryParameters)
 {
 
     public MakeBuilderAttributeInternal(AttributeData attribute)
@@ -29,7 +30,8 @@ internal readonly struct MakeBuilderAttributeInternal(
             (string?)attribute.ConstructorArguments[6].Value,
             (bool?)attribute.ConstructorArguments[7].Value,
             (bool?)attribute.ConstructorArguments[8].Value,
-            (bool?)attribute.ConstructorArguments[9].Value)
+            (bool?)attribute.ConstructorArguments[9].Value,
+            (bool?)attribute.ConstructorArguments[10].Value)
     {
 
     }
@@ -43,5 +45,6 @@ internal readonly struct MakeBuilderAttributeInternal(
     public bool? GenerateStaticPropertyForBuilderCreation { get; } = generateStaticPropertyForBuilderCreation;
     public bool? InitializeCollectionsWithEmpty { get; } = initializeCollectionsWithEmpty;
     public bool? UseChildBuilders { get; } = useChildBuilders;
+    public bool? BuilderConstructorMandatoryParameters { get; } = builderConstructorMandatoryParameters;
     internal string? StaticFactoryMethodName { get; } = staticFactoryMethodName;
 }

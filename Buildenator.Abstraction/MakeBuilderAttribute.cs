@@ -19,6 +19,7 @@ public sealed class MakeBuilderAttribute : Attribute
     /// <param name="generateStaticPropertyForBuilderCreation">If you want to generate static property that will return a new builder instance.</param>
     /// <param name="initializeCollectionsWithEmpty">If true, collection fields will be initialized with empty collections in the constructor instead of null.</param>
     /// <param name="useChildBuilders">If true, generates additional With methods that accept Func&lt;ChildBuilder, ChildBuilder&gt; for properties that have their own builders.</param>
+    /// <param name="builderConstructorMandatoryParameters">If true, the generated builder constructor will require the entity's constructor parameters as mandatory arguments instead of using a parameterless constructor. Incompatible with mocking.</param>
     public MakeBuilderAttribute(
         Type typeForBuilder,
         string? buildingMethodsPrefix = "With",
@@ -29,7 +30,8 @@ public sealed class MakeBuilderAttribute : Attribute
         string? staticFactoryMethodName = null,
         object? generateStaticPropertyForBuilderCreation = null,
         object? initializeCollectionsWithEmpty = null,
-        object? useChildBuilders = null
+        object? useChildBuilders = null,
+        object? builderConstructorMandatoryParameters = null
     )
     {
         }

@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 8.8.0.0 - 2026-3-6
+
+### Added
+- **`builderConstructorMandatoryParameters` option**: New configuration option that makes the generated builder enforce mandatory parameters by requiring the entity's constructor parameters as arguments to the builder's own constructor.
+  - Enabled per builder: `[MakeBuilder(typeof(MyClass), builderConstructorMandatoryParameters: true)]`
+  - Enabled globally: `[assembly: BuildenatorConfiguration(builderConstructorMandatoryParameters: true)]`
+  - When enabled:
+    - The builder gets a **parameterized constructor** mirroring the entity's primary constructor instead of a parameterless one.
+    - The **static factory property** (`generateStaticPropertyForBuilderCreation`) is automatically suppressed, since it would call a parameterless constructor that no longer exists.
+    - All `With...` methods remain available and can still override the values passed to the constructor.
+    - **Mocking is incompatible** — combining this option with a mocking configuration (e.g. `MoqConfiguration`) produces a compile-time error **BDN007**.
+  - Example:
+    ```csharp
+    public class Dto
+    {
+        public Dto(int lineNumber, string activity) { LineNumber = lineNumber; Activity = activity; }
+        public int LineNumber { get; set; }
+        public string Activity { get; set; }
+        public List<string> Tags { get; set; } = [];
+    }
+
+    [MakeBuilder(typeof(Dto), builderConstructorMandatoryParameters: true)]
+    public partial class DtoBuilder { }
+
+    // Usage — constructor enforces required values, With methods allow overrides
+    var dto = new DtoBuilder(lineNumber: 1, activity: "shipping")
+        .AddToTags("express")
+        .Build();
+    ```
+- **BDN007 diagnostic error**: Emitted when `builderConstructorMandatoryParameters = true` is combined with a mocking configuration, since the two features are fundamentally incompatible.
+
 ## 8.7.1.0 - 2025-12-4
 
 ### Fixed
