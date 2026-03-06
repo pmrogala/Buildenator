@@ -41,13 +41,8 @@ internal static class ConstructorsGenerator
         }
 
         var settableProperties = entity.AllUniqueSettablePropertiesAndParameters
-            .Where(p => constructorToBuild?.ContainsParameter(p.SymbolName) != true)
+            .Where(p => constructorToBuild?.ContainsParameter(p.SymbolPascalName) != true)
             .ToList();
-
-        foreach (var typedSymbol in settableProperties.Where(a => a.NeedsFieldInit()))
-        {
-            output.AppendLine($@"            {typedSymbol.GenerateFieldInitialization()}");
-        }
 
         if (initializeCollectionsWithEmpty)
         {

@@ -41,6 +41,13 @@ internal sealed class BuilderSourceStringGenerator
                 _builder.OriginalLocation,
                 _builder.Name));
         }
+        if (_builder.BuilderConstructorMandatoryParameters && fixtureConfiguration != null)
+        {
+            _diagnostics.Add(new BuildenatorDiagnostic(
+                BuildenatorDiagnosticDescriptors.MandatoryParametersWithFixtureDiagnostic,
+                _builder.OriginalLocation,
+                _builder.Name));
+        }
         _diagnostics.AddRange(_builder.Diagnostics);
         _diagnostics.AddRange(_entity.Diagnostics);
 

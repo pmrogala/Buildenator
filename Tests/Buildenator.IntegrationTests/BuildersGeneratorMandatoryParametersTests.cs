@@ -10,17 +10,18 @@ public class BuildersGeneratorMandatoryParametersTests
     [Fact]
     public void BuildersGenerator_MandatoryParameters_BuilderRequiresConstructorArguments()
     {
-        var result = new EntityWithMandatoryConstructorParametersBuilder(42, "shipping")
+        var result = new EntityWithMandatoryConstructorParametersBuilder(42, "shipping", ["tag1", "tag2"])
             .Build();
 
         result.LineNumber.Should().Be(42);
         result.Activity.Should().Be("shipping");
+        result.Tags.Should().BeEquivalentTo(["tag1", "tag2"]);
     }
 
     [Fact]
     public void BuildersGenerator_MandatoryParameters_WithMethodsOverrideConstructorValues()
     {
-        var result = new EntityWithMandatoryConstructorParametersBuilder(1, "initial")
+        var result = new EntityWithMandatoryConstructorParametersBuilder(1, "initial", null)
             .WithLineNumber(99)
             .WithActivity("updated")
             .Build();
@@ -32,7 +33,7 @@ public class BuildersGeneratorMandatoryParametersTests
     [Fact]
     public void BuildersGenerator_MandatoryParameters_CollectionPropertiesStillWork()
     {
-        var result = new EntityWithMandatoryConstructorParametersBuilder(1, "test")
+        var result = new EntityWithMandatoryConstructorParametersBuilder(1, "test", null)
             .AddToTags("tag1", "tag2")
             .Build();
 
