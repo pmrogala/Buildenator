@@ -301,7 +301,8 @@ using Buildenator.Abstraction.Moq;
     implicitCast: false,
     generateStaticPropertyForBuilderCreation: true,
     initializeCollectionsWithEmpty: true,  // Default: true - collections are initialized with empty instead of null
-    useChildBuilders: true  // Default: true - generates Func<ChildBuilder, ChildBuilder> methods
+    useChildBuilders: true,  // Default: true - generates Func<ChildBuilder, ChildBuilder> methods
+    builderConstructorMandatoryParameters: false  // Default: false - require entity constructor params in builder constructor
 )]
 
 // Optional: AutoFixture configuration
@@ -328,7 +329,8 @@ Override global settings for specific builders:
     staticFactoryMethodName: nameof(User.CreateUser), // Use static factory method
     generateStaticPropertyForBuilderCreation: true, // Generate static User property
     initializeCollectionsWithEmpty: true,      // Default: true - Initialize collections with empty instead of null
-    useChildBuilders: true                     // Default: true - Generate Func<ChildBuilder, ChildBuilder> methods
+    useChildBuilders: true,                    // Default: true - Generate Func<ChildBuilder, ChildBuilder> methods
+    builderConstructorMandatoryParameters: false // Default: false - Require entity constructor params in builder constructor
 )]
 public partial class UserBuilder { }
 ```
@@ -547,9 +549,66 @@ var parent2 = ParentBuilder.Parent
     .Build();
 ```
 
+#### `builderConstructorMandatoryParameters` (default: `false`)
+When `true`, the generated builder constructor takes the entity's primary constructor parameters as required arguments instead of using a parameterless constructor. This communicates intent and prevents constructing invalid objects in tests.
+
+- The static factory property is automatically suppressed (it would need a parameterless constructor).
+- All `With...` methods are still generated and can override the values.
+- **Incompatible with mocking** — causes compiler error **BDN007** if combined with a mocking configuration.
+
+See the [Mandatory Constructor Parameters](#mandatory-constructor-parameters) section in Advanced Usage for a full example.
+
 ---
 
 ## Advanced Usage
+
+### Mandatory Constructor Parameters
+
+Enforce required initialization values through the builder's own constructor by setting `builderConstructorMandatoryParameters: true`. This is especially useful for DTOs or value objects where constructing an instance without specific required values is either invalid or meaningless.
+
+```csharp
+public class Dto
+{
+    public Dto(int lineNumber, string activity)
+    {
+        LineNumber = lineNumber;
+        Activity = activity;
+    }
+
+    public int LineNumber { get; set; }
+    public string Activity { get; set; }
+    public List<string> Tags { get; set; } = [];
+}
+
+[MakeBuilder(typeof(Dto), builderConstructorMandatoryParameters: true)]
+public partial class DtoBuilder { }
+```
+
+The generated builder constructor mirrors the entity constructor:
+
+```csharp
+// Generated:
+// public DtoBuilder(int lineNumber, string activity) { ... }
+
+// Usage — required parameters are enforced at the call site
+var dto = new DtoBuilder(lineNumber: 1, activity: "shipping")
+    .WithLineNumber(99)   // With methods still work and override constructor values
+    .AddToTags("express")
+    .Build();
+```
+
+**Behaviour:**
+- The builder gets a **parameterized constructor** matching the entity's primary constructor (the one with the most parameters).
+- All `With...` and `AddTo...` methods are generated as usual and override the constructor values.
+- The **static factory property** (`generateStaticPropertyForBuilderCreation`) is automatically suppressed, since it would require a parameterless constructor that no longer exists.
+- **Mocking is incompatible** — combining this option with a mocking configuration produces compiler error **BDN007**.
+
+**Global configuration:**
+
+```csharp
+[assembly: BuildenatorConfiguration(builderConstructorMandatoryParameters: true)]
+```
+
 
 ### Working with Collections
 

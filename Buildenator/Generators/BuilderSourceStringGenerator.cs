@@ -34,6 +34,13 @@ internal sealed class BuilderSourceStringGenerator
         {
             _diagnostics.Add(privateConstructorDiagnostic);
         }
+        if (_builder.BuilderConstructorMandatoryParameters && mockingConfiguration != null)
+        {
+            _diagnostics.Add(new BuildenatorDiagnostic(
+                BuildenatorDiagnosticDescriptors.MandatoryParametersWithMockingDiagnostic,
+                _builder.OriginalLocation,
+                _builder.Name));
+        }
         _diagnostics.AddRange(_builder.Diagnostics);
         _diagnostics.AddRange(_entity.Diagnostics);
 
@@ -67,11 +74,11 @@ namespace {_builder.ContainingNamespace}
 {GenerateGlobalNullable()}{GenerateBuilderDefinition()}
     {{
 {(_fixtureConfiguration is null ? string.Empty : $"        private readonly {_fixtureConfiguration.Name} {DefaultConstants.FixtureLiteral} = new {_fixtureConfiguration.Name}({_fixtureConfiguration.ConstructorParameters});")}
-{(_builder.IsDefaultConstructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration, _builder.InitializeCollectionsWithEmpty))}
+{(_builder.IsDefaultConstructorOverriden ? string.Empty : GenerateConstructor(_builder.Name, _entity, _fixtureConfiguration, _builder.InitializeCollectionsWithEmpty, _builder.BuilderConstructorMandatoryParameters))}
 {_propertiesStringGenerator.GeneratePropertiesCode()}
 {(_builder.IsBuildMethodOverriden ? string.Empty : _entity.GenerateBuildsCode(_builder.ShouldGenerateMethodsForUnreachableProperties))}
 {(_builder.IsBuildManyMethodOverriden ? string.Empty : GenerateBuildManyCode())}
-{(_builder.GenerateStaticPropertyForBuilderCreation ? $"        public static {_builder.FullName} {_entity.Name} => new {_builder.FullName}();" : "")}
+{(_builder.GenerateStaticPropertyForBuilderCreation && !_builder.BuilderConstructorMandatoryParameters ? $"        public static {_builder.FullName} {_entity.Name} => new {_builder.FullName}();" : "")}
 {(_builder.GenerateDefaultBuildMethod ? _entity.GenerateDefaultBuildsCode() : string.Empty)}
 {(_builder.ImplicitCast ? GenerateImplicitCastCode() : string.Empty)}
 {GeneratePreBuildMethod()}

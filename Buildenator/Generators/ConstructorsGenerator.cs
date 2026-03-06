@@ -12,6 +12,65 @@ internal static class ConstructorsGenerator
         string builderName,
         IEntityToBuild entity,
         IFixtureProperties? fixtureConfiguration,
+        bool initializeCollectionsWithEmpty,
+        bool builderConstructorMandatoryParameters)
+    {
+        return builderConstructorMandatoryParameters
+            ? GenerateMandatoryParamConstructor(builderName, entity, initializeCollectionsWithEmpty)
+            : GenerateParameterlessConstructor(builderName, entity, fixtureConfiguration, initializeCollectionsWithEmpty);
+    }
+
+    private static string GenerateMandatoryParamConstructor(
+        string builderName,
+        IEntityToBuild entity,
+        bool initializeCollectionsWithEmpty)
+    {
+        var constructorToBuild = entity.ConstructorToBuild;
+        var mandatoryParams = constructorToBuild?.Parameters.ToList() ?? [];
+
+        var signatureParams = string.Join(", ", mandatoryParams.Select(p => $"{p.TypeFullName} {p.SymbolName}"));
+
+        var output = new StringBuilder();
+        output.AppendLine($@"{CommentsGenerator.GenerateSummaryOverrideComment()}
+        public {builderName}({signatureParams})
+        {{");
+
+        foreach (var p in mandatoryParams)
+        {
+            output.AppendLine($@"            {p.UnderScoreName} = new {DefaultConstants.NullBox}<{p.TypeFullName}>({p.SymbolName});");
+        }
+
+        var settableProperties = entity.AllUniqueSettablePropertiesAndParameters
+            .Where(p => constructorToBuild?.ContainsParameter(p.SymbolName) != true)
+            .ToList();
+
+        foreach (var typedSymbol in settableProperties.Where(a => a.NeedsFieldInit()))
+        {
+            output.AppendLine($@"            {typedSymbol.GenerateFieldInitialization()}");
+        }
+
+        if (initializeCollectionsWithEmpty)
+        {
+            foreach (var typedSymbol in settableProperties.Where(ShouldInitializeCollectionField))
+            {
+                var collectionMetadata = typedSymbol.GetCollectionMetadata();
+                if (collectionMetadata != null)
+                {
+                    var initCode = GenerateEmptyCollectionInitialization(typedSymbol, collectionMetadata);
+                    if (!string.IsNullOrEmpty(initCode))
+                        output.AppendLine($@"            {initCode}");
+                }
+            }
+        }
+
+        output.AppendLine($@"        }}");
+        return output.ToString();
+    }
+
+    private static string GenerateParameterlessConstructor(
+        string builderName,
+        IEntityToBuild entity,
+        IFixtureProperties? fixtureConfiguration,
         bool initializeCollectionsWithEmpty)
     {
             var parameters = entity.AllUniqueSettablePropertiesAndParameters;

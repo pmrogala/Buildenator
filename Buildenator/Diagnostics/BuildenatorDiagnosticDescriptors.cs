@@ -52,4 +52,12 @@ internal static class BuildenatorDiagnosticDescriptors
         "Buildenator",
         DiagnosticSeverity.Info,
         true);
+
+    internal static readonly DiagnosticDescriptor MandatoryParametersWithMockingDiagnostic = new(
+        "BDN007",
+        "BuilderConstructorMandatoryParameters is incompatible with mocking",
+        "The builder '{0}' has BuilderConstructorMandatoryParameters = true, which is incompatible with a mocking configuration. Remove the mocking configuration or disable BuilderConstructorMandatoryParameters.",
+        "Buildenator",
+        DiagnosticSeverity.Error,
+        true);
 }
