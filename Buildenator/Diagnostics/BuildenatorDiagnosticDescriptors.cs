@@ -60,4 +60,12 @@ internal static class BuildenatorDiagnosticDescriptors
         "Buildenator",
         DiagnosticSeverity.Error,
         true);
+
+    internal static readonly DiagnosticDescriptor MandatoryParametersWithFixtureDiagnostic = new(
+        "BDN008",
+        "BuilderConstructorMandatoryParameters is incompatible with fixture configuration",
+        "The builder '{0}' has BuilderConstructorMandatoryParameters = true, which is incompatible with a fixture configuration. Remove the fixture configuration or disable BuilderConstructorMandatoryParameters.",
+        "Buildenator",
+        DiagnosticSeverity.Error,
+        true);
 }

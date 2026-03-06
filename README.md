@@ -555,6 +555,7 @@ When `true`, the generated builder constructor takes the entity's primary constr
 - The static factory property is automatically suppressed (it would need a parameterless constructor).
 - All `With...` methods are still generated and can override the values.
 - **Incompatible with mocking** — causes compiler error **BDN007** if combined with a mocking configuration.
+- **Incompatible with fixture configuration** — causes compiler error **BDN008** if combined with an AutoFixture configuration.
 
 See the [Mandatory Constructor Parameters](#mandatory-constructor-parameters) section in Advanced Usage for a full example.
 
@@ -602,6 +603,7 @@ var dto = new DtoBuilder(lineNumber: 1, activity: "shipping")
 - All `With...` and `AddTo...` methods are generated as usual and override the constructor values.
 - The **static factory property** (`generateStaticPropertyForBuilderCreation`) is automatically suppressed, since it would require a parameterless constructor that no longer exists.
 - **Mocking is incompatible** — combining this option with a mocking configuration produces compiler error **BDN007**.
+- **Fixture configuration is incompatible** — combining this option with an AutoFixture configuration produces compiler error **BDN008**.
 
 **Global configuration:**
 
