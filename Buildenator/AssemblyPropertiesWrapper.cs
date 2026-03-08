@@ -7,7 +7,7 @@ using System;
 
 namespace Buildenator;
 
-internal readonly struct AssemblyPropertiesWrapper(
+internal sealed class AssemblyPropertiesWrapper(
     ImmutableArray<TypedConstant>? globalFixtureProperties,
     ImmutableArray<TypedConstant>? mockingConfigurationBuilder,
     ImmutableArray<TypedConstant>? globalBuilderProperties) : IEquatable<AssemblyPropertiesWrapper>
