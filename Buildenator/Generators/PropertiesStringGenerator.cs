@@ -94,12 +94,16 @@ internal sealed class PropertiesStringGenerator
 			if (collectionMetadata == null)
 				return true;
 
-			// Check if any method has a matching params array parameter
+			// Check if any method has a matching params parameter (array or IEnumerable)
 			return !methods.Any(method => 
 				method.Parameters.Length == 1 && 
 				method.Parameters[0].IsParams &&
-				method.Parameters[0].Type is IArrayTypeSymbol arrayType &&
-				arrayType.ElementType.Name == collectionMetadata.ElementTypeName);
+				((method.Parameters[0].Type is IArrayTypeSymbol arrayType &&
+				  arrayType.ElementType.Name == collectionMetadata.ElementTypeName) ||
+				 (method.Parameters[0].Type is INamedTypeSymbol namedType &&
+				  namedType.Name == "IEnumerable" &&
+				  namedType.TypeArguments.Length == 1 &&
+				  namedType.TypeArguments[0].Name == collectionMetadata.ElementTypeName)));
 		}
 
 		bool IsCollectionProperty(ITypedSymbol x) => x.GetCollectionMetadata() != null && !x.IsMockable();
@@ -158,10 +162,14 @@ internal sealed class PropertiesStringGenerator
 			if (!_builder.BuildingMethods.TryGetValue(CreateAddToMethodName(x), out var methods))
 				return true;
 			
-			// Check if any method has a Func parameter
+			// Check if any method has a Func parameter (either params Func<>[] or params IEnumerable<Func<>>)
 			return !methods.Any(method => 
 				method.Parameters.Length == 1 && 
-				method.Parameters[0].Type.Name.StartsWith("Func"));
+				(method.Parameters[0].Type.Name.StartsWith("Func") ||
+				 (method.Parameters[0].Type is INamedTypeSymbol namedType2 &&
+				  namedType2.Name == "IEnumerable" &&
+				  namedType2.TypeArguments.Length == 1 &&
+				  namedType2.TypeArguments[0].Name.StartsWith("Func"))));
 		}
 	}
 	
@@ -213,7 +221,7 @@ internal sealed class PropertiesStringGenerator
 		{
 			var keyTypeName = concreteDictMetadata.KeyTypeDisplayName;
 			var valueTypeName = concreteDictMetadata.ValueTypeDisplayName;
-			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>[] items)
+			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>> items)
         {{
             {typedSymbol.TypeFullName} dictionary;
             if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
@@ -241,7 +249,7 @@ internal sealed class PropertiesStringGenerator
 			var keyTypeName = interfaceDictMetadata.KeyTypeDisplayName;
 			var valueTypeName = interfaceDictMetadata.ValueTypeDisplayName;
 			var dictionaryType = $"System.Collections.Generic.Dictionary<{keyTypeName}, {valueTypeName}>";
-			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>[] items)
+			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>> items)
         {{
             var dictionary = {fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null
                 ? new {dictionaryType}({fieldName}.Value.Object) 
@@ -263,16 +271,14 @@ internal sealed class PropertiesStringGenerator
 			var collectionTypeName = isArray ? $"{elementTypeName}[]" : typedSymbol.TypeFullName;
 			
 			var addItemsCode = isArray
-				? $@"if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+				? $@"var itemsArray = System.Linq.Enumerable.ToArray(items);
+            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
             {{
-                var existingArray = {fieldName}.Value.Object;
-                {collectionVarName} = new {elementTypeName}[existingArray.Length + items.Length];
-                System.Array.Copy(existingArray, 0, {collectionVarName}, 0, existingArray.Length);
-                System.Array.Copy(items, 0, {collectionVarName}, existingArray.Length, items.Length);
+                {collectionVarName} = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat({fieldName}.Value.Object, itemsArray));
             }}
             else
             {{
-                {collectionVarName} = items;
+                {collectionVarName} = itemsArray;
             }}"
 				: $@"if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
             {{
@@ -288,7 +294,7 @@ internal sealed class PropertiesStringGenerator
                 {collectionVarName}.Add(item);
             }}";
 			
-			return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
+			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<{elementTypeName}> items)
         {{
             {collectionTypeName} {collectionVarName};
             {addItemsCode}
@@ -299,7 +305,7 @@ internal sealed class PropertiesStringGenerator
 		}
 		
 		// For interface types, use List<T> and AddRange
-		return $@"public {_builder.FullName} {methodName}(params {elementTypeName}[] items)
+		return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<{elementTypeName}> items)
         {{
             var list = {fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null
                 ? new System.Collections.Generic.List<{elementTypeName}>({fieldName}.Value.Object) 
@@ -364,13 +370,14 @@ internal sealed class PropertiesStringGenerator
 			
 			// Build child items first - for arrays we need to know the count upfront
 			var buildItemsCode = isArray
-				? $@"var newItems = new {elementTypeName}[configures.Length];
-            for (int i = 0; i < configures.Length; i++)
+				? $@"var newItemsList = new System.Collections.Generic.List<{elementTypeName}>();
+            foreach (var configure in configures)
             {{
                 var childBuilder = new {childBuilderName}();
-                childBuilder = configures[i](childBuilder);
-                newItems[i] = childBuilder.Build();
-            }}"
+                childBuilder = configure(childBuilder);
+                newItemsList.Add(childBuilder.Build());
+            }}
+            var newItems = newItemsList.ToArray();"
 				: "";
 			
 			var addItemsCode = isArray
@@ -410,7 +417,7 @@ internal sealed class PropertiesStringGenerator
 				: $@"{collectionTypeName} {collectionVarName};
             {addItemsCode}";
 			
-			return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
+			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<System.Func<{childBuilderName}, {childBuilderName}>> configures)
         {{
             {methodBody}
             
@@ -420,7 +427,7 @@ internal sealed class PropertiesStringGenerator
 		}
 		
 		// For interface collection types, use List<T>
-		return $@"public {_builder.FullName} {methodName}(params System.Func<{childBuilderName}, {childBuilderName}>[] configures)
+		return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<System.Func<{childBuilderName}, {childBuilderName}>> configures)
         {{
             var list = {fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null
                 ? new System.Collections.Generic.List<{elementTypeName}>({fieldName}.Value.Object) 
