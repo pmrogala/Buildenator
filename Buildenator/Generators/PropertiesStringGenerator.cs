@@ -206,6 +206,12 @@ internal sealed class PropertiesStringGenerator
 
 	private string CreateMethodName(ITypedSymbol property) => $"{_builder.BuildingMethodsPrefix}{property.SymbolPascalName}";
 
+	private static string FieldHasValue(string fieldName)
+		=> $"{fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null";
+
+	private static string ParamsIEnumerable(string elementType, string paramName = "items")
+		=> $"params System.Collections.Generic.IEnumerable<{elementType}> {paramName}";
+
 	private string GenerateAddToMethodDefinition(ITypedSymbol typedSymbol)
 	{
 		var collectionMetadata = typedSymbol.GetCollectionMetadata();
@@ -215,16 +221,29 @@ internal sealed class PropertiesStringGenerator
 		var elementTypeName = collectionMetadata.ElementTypeDisplayName;
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
-		
-		// For concrete dictionary types, use Dictionary's indexer for adding
+
 		if (collectionMetadata is ConcreteDictionaryMetadata concreteDictMetadata)
-		{
-			var keyTypeName = concreteDictMetadata.KeyTypeDisplayName;
-			var valueTypeName = concreteDictMetadata.ValueTypeDisplayName;
-			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>> items)
+			return GenerateConcreteDictionaryAddTo(methodName, fieldName, typedSymbol, concreteDictMetadata);
+
+		if (collectionMetadata is InterfaceDictionaryMetadata interfaceDictMetadata)
+			return GenerateInterfaceDictionaryAddTo(methodName, fieldName, typedSymbol, interfaceDictMetadata);
+
+		if (collectionMetadata is ArrayCollectionMetadata or ConcreteCollectionMetadata)
+			return GenerateArrayOrConcreteCollectionAddTo(methodName, fieldName, typedSymbol, collectionMetadata, elementTypeName);
+
+		// Interface collection types: use List<T> and AddRange
+		return GenerateInterfaceCollectionAddTo(methodName, fieldName, typedSymbol, elementTypeName);
+	}
+
+	private string CreateAddToMethodName(ITypedSymbol property) => $"AddTo{property.SymbolPascalName}";
+
+	private string GenerateConcreteDictionaryAddTo(string methodName, string fieldName, ITypedSymbol typedSymbol, ConcreteDictionaryMetadata meta)
+	{
+		var kvpType = $"System.Collections.Generic.KeyValuePair<{meta.KeyTypeDisplayName}, {meta.ValueTypeDisplayName}>";
+		return $@"public {_builder.FullName} {methodName}({ParamsIEnumerable(kvpType)})
         {{
             {typedSymbol.TypeFullName} dictionary;
-            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+            if ({FieldHasValue(fieldName)})
             {{
                 dictionary = {fieldName}.Value.Object;
             }}
@@ -241,17 +260,15 @@ internal sealed class PropertiesStringGenerator
             {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(dictionary);
             return this;
         }}";
-		}
-		
-		// For interface dictionary types, create a new Dictionary and use indexer
-		if (collectionMetadata is InterfaceDictionaryMetadata interfaceDictMetadata)
-		{
-			var keyTypeName = interfaceDictMetadata.KeyTypeDisplayName;
-			var valueTypeName = interfaceDictMetadata.ValueTypeDisplayName;
-			var dictionaryType = $"System.Collections.Generic.Dictionary<{keyTypeName}, {valueTypeName}>";
-			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<{keyTypeName}, {valueTypeName}>> items)
+	}
+
+	private string GenerateInterfaceDictionaryAddTo(string methodName, string fieldName, ITypedSymbol typedSymbol, InterfaceDictionaryMetadata meta)
+	{
+		var kvpType = $"System.Collections.Generic.KeyValuePair<{meta.KeyTypeDisplayName}, {meta.ValueTypeDisplayName}>";
+		var dictionaryType = $"System.Collections.Generic.Dictionary<{meta.KeyTypeDisplayName}, {meta.ValueTypeDisplayName}>";
+		return $@"public {_builder.FullName} {methodName}({ParamsIEnumerable(kvpType)})
         {{
-            var dictionary = {fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null
+            var dictionary = {FieldHasValue(fieldName)}
                 ? new {dictionaryType}({fieldName}.Value.Object) 
                 : new {dictionaryType}();
             foreach (var item in items)
@@ -261,18 +278,17 @@ internal sealed class PropertiesStringGenerator
             {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>(dictionary);
             return this;
         }}";
-		}
-		
-		// For array types and concrete collection types, use similar pattern
-		if (collectionMetadata is ArrayCollectionMetadata or ConcreteCollectionMetadata)
-		{
-			var isArray = collectionMetadata is ArrayCollectionMetadata;
-			var collectionVarName = isArray ? "array" : "collection";
-			var collectionTypeName = isArray ? $"{elementTypeName}[]" : typedSymbol.TypeFullName;
-			
-			var addItemsCode = isArray
-				? $@"var itemsArray = System.Linq.Enumerable.ToArray(items);
-            if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+	}
+
+	private string GenerateArrayOrConcreteCollectionAddTo(string methodName, string fieldName, ITypedSymbol typedSymbol, CollectionMetadata collectionMetadata, string elementTypeName)
+	{
+		var isArray = collectionMetadata is ArrayCollectionMetadata;
+		var collectionVarName = isArray ? "array" : "collection";
+		var collectionTypeName = isArray ? $"{elementTypeName}[]" : typedSymbol.TypeFullName;
+
+		var addItemsCode = isArray
+			? $@"var itemsArray = System.Linq.Enumerable.ToArray(items);
+            if ({FieldHasValue(fieldName)})
             {{
                 {collectionVarName} = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat({fieldName}.Value.Object, itemsArray));
             }}
@@ -280,7 +296,7 @@ internal sealed class PropertiesStringGenerator
             {{
                 {collectionVarName} = itemsArray;
             }}"
-				: $@"if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+			: $@"if ({FieldHasValue(fieldName)})
             {{
                 {collectionVarName} = {fieldName}.Value.Object;
             }}
@@ -293,8 +309,8 @@ internal sealed class PropertiesStringGenerator
             {{
                 {collectionVarName}.Add(item);
             }}";
-			
-			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<{elementTypeName}> items)
+
+		return $@"public {_builder.FullName} {methodName}({ParamsIEnumerable(elementTypeName)})
         {{
             {collectionTypeName} {collectionVarName};
             {addItemsCode}
@@ -302,12 +318,13 @@ internal sealed class PropertiesStringGenerator
             {fieldName} = new {DefaultConstants.NullBox}<{typedSymbol.TypeFullName}>({collectionVarName});
             return this;
         }}";
-		}
-		
-		// For interface types, use List<T> and AddRange
-		return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<{elementTypeName}> items)
+	}
+
+	private string GenerateInterfaceCollectionAddTo(string methodName, string fieldName, ITypedSymbol typedSymbol, string elementTypeName)
+	{
+		return $@"public {_builder.FullName} {methodName}({ParamsIEnumerable(elementTypeName)})
         {{
-            var list = {fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null
+            var list = {FieldHasValue(fieldName)}
                 ? new System.Collections.Generic.List<{elementTypeName}>({fieldName}.Value.Object) 
                 : new System.Collections.Generic.List<{elementTypeName}>();
             list.AddRange(items);
@@ -315,8 +332,6 @@ internal sealed class PropertiesStringGenerator
             return this;
         }}";
 	}
-
-	private string CreateAddToMethodName(ITypedSymbol property) => $"AddTo{property.SymbolPascalName}";
 
 	/// <summary>
 	/// Gets the builder name for a property's type.
@@ -360,7 +375,7 @@ internal sealed class PropertiesStringGenerator
 		var elementTypeName = collectionMetadata.ElementTypeDisplayName;
 		var methodName = CreateAddToMethodName(typedSymbol);
 		var fieldName = typedSymbol.UnderScoreName;
-		
+		var funcType = $"System.Func<{childBuilderName}, {childBuilderName}>";
 		// For array types and concrete collection types, use similar pattern
 		if (collectionMetadata is ArrayCollectionMetadata or ConcreteCollectionMetadata)
 		{
@@ -381,18 +396,15 @@ internal sealed class PropertiesStringGenerator
 				: "";
 			
 			var addItemsCode = isArray
-				? $@"if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+				? $@"if ({FieldHasValue(fieldName)})
             {{
-                var existingArray = {fieldName}.Value.Object;
-                {collectionVarName} = new {elementTypeName}[existingArray.Length + newItems.Length];
-                System.Array.Copy(existingArray, 0, {collectionVarName}, 0, existingArray.Length);
-                System.Array.Copy(newItems, 0, {collectionVarName}, existingArray.Length, newItems.Length);
+                {collectionVarName} = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat({fieldName}.Value.Object, newItems));
             }}
             else
             {{
                 {collectionVarName} = newItems;
             }}"
-				: $@"if ({fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null)
+				: $@"if ({FieldHasValue(fieldName)})
             {{
                 {collectionVarName} = {fieldName}.Value.Object;
             }}
@@ -416,8 +428,8 @@ internal sealed class PropertiesStringGenerator
             {addItemsCode}"
 				: $@"{collectionTypeName} {collectionVarName};
             {addItemsCode}";
-			
-			return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<System.Func<{childBuilderName}, {childBuilderName}>> configures)
+				
+			return $@"public {_builder.FullName} {methodName}({ParamsIEnumerable(funcType, "configures")})
         {{
             {methodBody}
             
@@ -427,9 +439,9 @@ internal sealed class PropertiesStringGenerator
 		}
 		
 		// For interface collection types, use List<T>
-		return $@"public {_builder.FullName} {methodName}(params System.Collections.Generic.IEnumerable<System.Func<{childBuilderName}, {childBuilderName}>> configures)
+		return $@"public {_builder.FullName} {methodName}({ParamsIEnumerable(funcType, "configures")})
         {{
-            var list = {fieldName} != null && {fieldName}.HasValue && {fieldName}.Value.Object != null
+            var list = {FieldHasValue(fieldName)}
                 ? new System.Collections.Generic.List<{elementTypeName}>({fieldName}.Value.Object) 
                 : new System.Collections.Generic.List<{elementTypeName}>();
             

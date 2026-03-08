@@ -1640,4 +1640,63 @@ public class BuildersGeneratorTests
         _ = result.Child.Should().Be(childEntity);
         _ = result.ParentValue.Should().Be(parentValue);
     }
+
+    // ===== Tests for params IEnumerable<T> signature =====
+    // These tests verify that the new params IEnumerable<T> signature accepts pre-created collections directly
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_CollectionProperty_AddToMethodShouldAcceptPreCreatedIEnumerable(string item1, string item2, string item3)
+    {
+        // Verify that params IEnumerable<T> accepts a pre-created collection directly (not just spread args)
+        IEnumerable<string> items = new List<string> { item1, item2, item3 };
+
+        var result = EntityWithCollectionAndAddMethodBuilder.EntityWithCollectionAndAddMethod
+            .AddToEnumerableItems(items)
+            .Build();
+
+        _ = result.EnumerableItems.Should().HaveCount(3);
+        _ = result.EnumerableItems.Should().ContainInOrder(item1, item2, item3);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_DictionaryProperty_AddToMethodShouldAcceptPreCreatedIEnumerableOfKvp(string key1, int value1, string key2, int value2)
+    {
+        // Verify that params IEnumerable<KeyValuePair<K,V>> accepts a pre-created sequence directly
+        IEnumerable<KeyValuePair<string, int>> items = new[]
+        {
+            new KeyValuePair<string, int>(key1, value1),
+            new KeyValuePair<string, int>(key2, value2)
+        };
+
+        var result = EntityWithDictionaryBuilder.EntityWithDictionary
+            .AddToScores(items)
+            .Build();
+
+        _ = result.Scores.Should().HaveCount(2);
+        _ = result.Scores[key1].Should().Be(value1);
+        _ = result.Scores[key2].Should().Be(value2);
+    }
+
+    [Theory]
+    [AutoData]
+    public void BuildersGenerator_UseChildBuildersWithCollection_AddToMethodShouldAcceptPreCreatedIEnumerableOfFuncs(
+        string childName1, int childValue1, string childName2, int childValue2)
+    {
+        // Verify that params IEnumerable<Func<,>> accepts a pre-created array of configurators
+        var configurators = new Func<ChildForParentEntityBuilder, ChildForParentEntityBuilder>[]
+        {
+            child => child.WithName(childName1).WithValue(childValue1),
+            child => child.WithName(childName2).WithValue(childValue2)
+        };
+
+        var result = ParentWithChildCollectionEntityBuilder.ParentWithChildCollectionEntity
+            .AddToChildren(configurators)
+            .Build();
+
+        _ = result.Children.Should().HaveCount(2);
+        _ = result.Children[0].Name.Should().Be(childName1);
+        _ = result.Children[1].Name.Should().Be(childName2);
+    }
 }
