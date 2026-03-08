@@ -3,7 +3,7 @@ using Microsoft.CodeAnalysis;
 
 namespace Buildenator;
 
-internal readonly struct MakeBuilderAttributeInternal(
+internal sealed class MakeBuilderAttributeInternal(
     INamedTypeSymbol typeForBuilder,
     string? buildingMethodsPrefix,
     bool? staticCreator,
@@ -14,7 +14,7 @@ internal readonly struct MakeBuilderAttributeInternal(
     bool? generateStaticPropertyForBuilderCreation,
     bool? initializeCollectionsWithEmpty,
     bool? useChildBuilders,
-    bool? builderConstructorMandatoryParameters)
+    bool? builderConstructorMandatoryParameters) : System.IEquatable<MakeBuilderAttributeInternal>
 {
 
     public MakeBuilderAttributeInternal(AttributeData attribute)
@@ -47,4 +47,42 @@ internal readonly struct MakeBuilderAttributeInternal(
     public bool? UseChildBuilders { get; } = useChildBuilders;
     public bool? BuilderConstructorMandatoryParameters { get; } = builderConstructorMandatoryParameters;
     internal string? StaticFactoryMethodName { get; } = staticFactoryMethodName;
+
+    public bool Equals(MakeBuilderAttributeInternal other)
+    {
+        return
+            TypeForBuilder.Equals(other.TypeForBuilder, SymbolEqualityComparer.Default)
+            && BuildingMethodsPrefix == other.BuildingMethodsPrefix
+            && GenerateDefaultBuildMethod == other.GenerateDefaultBuildMethod
+            && ImplicitCast == other.ImplicitCast
+            && NullableStrategy == other.NullableStrategy
+            && GenerateMethodsForUnreachableProperties == other.GenerateMethodsForUnreachableProperties
+            && GenerateStaticPropertyForBuilderCreation == other.GenerateStaticPropertyForBuilderCreation
+            && InitializeCollectionsWithEmpty == other.InitializeCollectionsWithEmpty
+            && UseChildBuilders == other.UseChildBuilders
+            && BuilderConstructorMandatoryParameters == other.BuilderConstructorMandatoryParameters
+            && StaticFactoryMethodName == other.StaticFactoryMethodName;
+    }
+
+    public override bool Equals(object? obj) => obj is MakeBuilderAttributeInternal other && Equals(other);
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            var hash = 17;
+            hash = (hash * 31) + SymbolEqualityComparer.Default.GetHashCode(TypeForBuilder);
+            hash = (hash * 31) + (BuildingMethodsPrefix?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (GenerateDefaultBuildMethod?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (ImplicitCast?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (NullableStrategy?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (GenerateMethodsForUnreachableProperties?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (GenerateStaticPropertyForBuilderCreation?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (InitializeCollectionsWithEmpty?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (UseChildBuilders?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (BuilderConstructorMandatoryParameters?.GetHashCode() ?? 0);
+            hash = (hash * 31) + (StaticFactoryMethodName?.GetHashCode() ?? 0);
+            return hash;
+        }
+    }
 }

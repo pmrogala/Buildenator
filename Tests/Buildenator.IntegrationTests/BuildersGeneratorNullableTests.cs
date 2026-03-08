@@ -1,12 +1,10 @@
-using AutoFixture.Xunit2;
 using Buildenator.IntegrationTests.SharedEntitiesNullable;
 using Buildenator.IntegrationTests.SourceNullable.Builders;
 using Buildenator.IntegrationTests.SharedEntitiesNullable.DifferentNamespace;
 using FluentAssertions;
-using System.Collections.Generic;
-using System.Linq;
 using Xunit;
 using PostBuildEntityBuilder = Buildenator.IntegrationTests.SourceNullable.Builders.PostBuildEntityBuilder;
+using AutoFixture.Xunit3;
 
 namespace Buildenator.IntegrationTests
 {
@@ -145,7 +143,7 @@ namespace Buildenator.IntegrationTests
                 .Build();
 
 
-            typeof(GrandchildEntityBuilder).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), new[] { typeof(List<string>) });
+            typeof(GrandchildEntityBuilder).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), [typeof(List<string>)]);
             result.Should().BeEquivalentTo(grandchildEntity);
             result.GetPrivateField().Should().BeEquivalentTo(grandchildEntity.GetPrivateField());
             result.GetProtectedProperty().Should().BeEquivalentTo(grandchildEntity.GetProtectedProperty());
@@ -167,7 +165,7 @@ namespace Buildenator.IntegrationTests
                 .WithInterfaceType(mock => mock.Setup(x => x.Property).Returns(interfaceProperty))
                 .Build();
 
-            typeof(EntityBuilderWithCustomMethods).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), new[] { typeof(List<string>) })
+            typeof(EntityBuilderWithCustomMethods).Should().HaveMethod(nameof(ChildEntityBuilder.WithProtectedProperty), [typeof(List<string>)])
                 .Which.Should().HaveAccessModifier(FluentAssertions.Common.CSharpAccessModifier.Private);
             result.PropertyIntGetter.Should().Be(grandchildEntity.PropertyIntGetter / 2);
             result.PropertyGetter.Should().Be(grandchildEntity.PropertyGetter + "custom");
