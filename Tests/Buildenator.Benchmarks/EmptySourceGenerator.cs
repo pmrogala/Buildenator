@@ -2,13 +2,11 @@
 
 namespace Buildenator.Benchmarks;
 
-internal class EmptySourceGenerator : ISourceGenerator
+[Generator]
+internal class EmptySourceGenerator : IIncrementalGenerator
 {
-    public void Execute(GeneratorExecutionContext context)
+    public void Initialize(IncrementalGeneratorInitializationContext initContext)
     {
-    }
 
-    public void Initialize(GeneratorInitializationContext context)
-    {
     }
 }

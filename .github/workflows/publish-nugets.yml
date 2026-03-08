@@ -36,10 +36,10 @@ jobs:
           echo Version number extracted from ${GITHUB_REF} is invalid
           exit 1
       - uses: actions/checkout@v2
-      - name: Setup .NET Core 8
+      - name: Setup .NET Core 10
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
       - name: Install dependencies
         run: dotnet restore
       - name: Build

@@ -1,4 +1,4 @@
-using AutoFixture.Xunit2;
+using AutoFixture.Xunit3;
 using Buildenator.IntegrationTests.SharedEntities;
 using Buildenator.IntegrationTests.Source.Builders;
 using Buildenator.IntegrationTests.SharedEntities.DifferentNamespace;

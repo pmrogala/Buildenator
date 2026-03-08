@@ -36,13 +36,13 @@ public class BuildersGenerator : IIncrementalGenerator
             transform: static (ctx, _) =>
             {
                 var attributes = ctx.TargetSymbol.GetAttributes();
-                return (
-                BuilderSymbol: (INamedTypeSymbol)ctx.TargetSymbol,
-                BuilderAttribute: new MakeBuilderAttributeInternal(
+                return new BuilderAttributesWrapper(
+                (INamedTypeSymbol)ctx.TargetSymbol,
+                new MakeBuilderAttributeInternal(
                     attributes.Single(
                         attributeData => attributeData.AttributeClass?.Name == nameof(MakeBuilderAttribute))),
-                MockingAttribute: GetMockingConfigurationOrDefault(attributes),
-                FixtureAttribute: GetLocalFixturePropertiesOrDefault(attributes)
+                    GetMockingConfigurationOrDefault(attributes),
+                    GetLocalFixturePropertiesOrDefault(attributes)
                         );
             }
         );
@@ -57,25 +57,17 @@ public class BuildersGenerator : IIncrementalGenerator
             .Select(static (c, _) => c.Assembly)
             .Select(static (assembly, _) => assembly.GetAttributes())
             .Select(static (attributes, _) =>
-            (
-                Mocking: attributes.Where(x =>
-                    x.AttributeClass.HasNameOrBaseClassHas(nameof(MockingConfigurationAttribute)))
-                .FirstOrDefault(),
-                Builder: attributes.Where(x =>
-                    x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute)))
-                .FirstOrDefault(),
-                Fixture: attributes.Where(x =>
+            new AssemblyPropertiesWrapper(
+                attributes.Where(x =>
                     x.AttributeClass.HasNameOrBaseClassHas(nameof(FixtureConfigurationAttribute)))
-                .FirstOrDefault()
-            ))
-            .Select(static (assembly, _) =>
-            {
-                var globalFixtureProperties = assembly.Fixture?.ConstructorArguments;
-                var mockingConfigurationBuilder = assembly.Mocking?.ConstructorArguments;
-                var globalBuilderProperties = assembly.Builder?.ConstructorArguments;
-
-                return (globalFixtureProperties, mockingConfigurationBuilder, globalBuilderProperties);
-            });
+                .FirstOrDefault()?.ConstructorArguments,
+                attributes.Where(x =>
+                    x.AttributeClass.HasNameOrBaseClassHas(nameof(MockingConfigurationAttribute)))
+                .FirstOrDefault()?.ConstructorArguments,
+                attributes.Where(x =>
+                    x.AttributeClass.HasNameOrBaseClassHas(nameof(BuildenatorConfigurationAttribute)))
+                .FirstOrDefault()?.ConstructorArguments
+            ));
 
         // Collect all builders and their entity types to create a mapping
         // This allows us to find child builders for properties when useChildBuilders is enabled
@@ -121,15 +113,9 @@ public class BuildersGenerator : IIncrementalGenerator
                 var builderProperties =
                     BuilderProperties.Create(builderNamedTypeSymbol, builderAttribute, globalBuilderProperties, nullableOptions.AnnotationsEnabled());
 
-                return (fixtureProperties, mockingConfiguration: mockingProperties, builderProperties,
-                    builderAttribute.TypeForBuilder, builderMappings);
-            })
-            .Select(static (properties, _) =>
-            {
-                var (fixtureProperties, mockingProperties, builderProperties, typeForBuilder, builderMappings) = properties;
                 return new BuilderSourceStringGenerator(builderProperties,
                     new EntityToBuild(
-                        typeForBuilder,
+                        builderAttribute.TypeForBuilder,
                         mockingProperties,
                         fixtureProperties,
                         builderProperties.NullableStrategy,
@@ -165,9 +151,6 @@ public class BuildersGenerator : IIncrementalGenerator
                 );
         });
     }
-
-    private static (SyntaxTree SyntaxTree, SemanticModel SemanticModel) SelectSyntaxTreeAndSemanticModel((SyntaxTree SyntaxTree, Compilation Compilation) tuple, CancellationToken _)
-            => (tuple.SyntaxTree, SemanticModel: tuple.Compilation.GetSemanticModel(tuple.SyntaxTree));
 
     private static ImmutableArray<TypedConstant>? GetLocalFixturePropertiesOrDefault(ImmutableArray<AttributeData> attributeData)
     {
