@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 10.8.0.0 - 2026-3-8
+
+### Added
+Support for .net 10 functionalities
+
+### Changed
+- **`AddTo` generated methods now use `params IEnumerable<T>`** instead of `params T[]`, leveraging the .NET 10 `params` collections feature. This applies to all generated `AddTo` methods for collection, array, and dictionary properties, as well as child-builder `AddTo` overloads.
+
 ## 8.8.0.0 - 2026-3-6
 
 ### Added
