@@ -1,0 +1,46 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "WebFetch(*)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(chmod *777*)",
+      "Bash(chown:*)",
+      "Bash(dd:*)",
+      "Bash(mkfs:*)",
+      "Bash(eval:*)",
+      "Bash(wget:*)",
+      "Bash(* | sh*)",
+      "Bash(* ; *)",
+      "Bash(* &)",
+      "Bash(* /etc/*)",
+      "Bash(* /usr/*)",
+      "Bash(* /var/*)",
+      "Bash(* ~/.ssh/*)",
+      "Bash(* ..*)",
+      "Bash(* //*)",
+      "Bash(* C:\\Windows\\*)",
+      "Bash(* Program Files*)"
+    ],
+    "ask": [
+      "Bash(rm:*)",
+      "Bash(git commit:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(*git merge*)",
+      "Bash(*git rebase*)",
+      "Bash(*git reset*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(git clone:*)",
+      "Bash(*--force*)",
+      "Bash(*-f *)",
+      "Bash(*install*)",
+      "Bash(*remove*)"
+    ]
+  }
+}

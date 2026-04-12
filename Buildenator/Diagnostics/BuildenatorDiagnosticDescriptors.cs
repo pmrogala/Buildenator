@@ -68,4 +68,12 @@ internal static class BuildenatorDiagnosticDescriptors
         "Buildenator",
         DiagnosticSeverity.Error,
         true);
+
+    internal static readonly DiagnosticDescriptor DefaultBuildMethodWithDefaultValuesDiagnostic = new(
+        "BDN009",
+        "BuildDefault is incompatible with Default{PropertyName} fields",
+        "The builder '{0}' has Default{{PropertyName}} members which cannot be used as default parameter values in the generated BuildDefault method. The BuildDefault method will not be generated. Use the Build() method instead, which correctly applies default values.",
+        "Buildenator",
+        DiagnosticSeverity.Warning,
+        true);
 }

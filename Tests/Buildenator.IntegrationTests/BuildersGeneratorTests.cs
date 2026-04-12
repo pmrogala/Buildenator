@@ -1277,14 +1277,28 @@ public class BuildersGeneratorTests
     {
         // Arrange - Use builder with default values
         var builder = EntityWithDefaultValueBuilder.EntityWithDefaultValue;
-        
+
         // Act - Build multiple instances
         var results = builder.BuildMany(3).ToList();
-        
+
         // Assert - All instances should have the default values
         results.Should().OnlyContain(r => r.Name == EntityWithDefaultValueBuilder.DefaultName);
         results.Should().OnlyContain(r => r.Count == EntityWithDefaultValueBuilder.DefaultCount);
         results.Should().OnlyContain(r => r.OptionalValue == EntityWithDefaultValueBuilder.DefaultOptionalValue);
+    }
+
+    // ===== Tests for BuildDefault suppression with Default Field Values =====
+    // When Default{PropertyName} members exist, BuildDefault is suppressed because
+    // static readonly / non-const default values cannot be used as C# default parameter values (BDN009)
+
+    [Fact]
+    public void BuildersGenerator_DefaultFieldValue_BuildDefaultMethodIsNotGenerated()
+    {
+        // Assert - BuildDefault should not be generated when Default{PropertyName} members exist
+        var methods = typeof(EntityWithDefaultValueBuilder).GetMethods(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        _ = methods.Should().NotContain(m => m.Name == "BuildDefault",
+            "BuildDefault is incompatible with Default{PropertyName} members");
     }
 
     // ===== Tests for UseChildBuilders feature =====

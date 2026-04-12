@@ -259,6 +259,8 @@ var customUser = new UserBuilder()
 - `static readonly` fields  
 - `static` properties
 
+> **Note:** When `Default{PropertyName}` members are defined, the `BuildDefault` static method will not be generated (diagnostic **BDN009**). This is because C# requires default parameter values to be compile-time constants, which is incompatible with `static readonly` fields and static properties. Use the `Build()` method instead, which correctly applies all default values via field initializers.
+
 #### ⚡ **Performance Optimized**
 Uses incremental source generators for fast compilation with minimal build-time impact. See [performance benchmarks](Tests/Buildenator.Benchmarks).
 
@@ -1280,6 +1282,17 @@ public class UserServiceTests
 **Solution:** Use static factory method:
 ```csharp
 [MakeBuilder(typeof(User), staticFactoryMethodName: nameof(User.CreateUser))]
+```
+
+#### BDN009: BuildDefault not generated with Default{PropertyName} members
+
+**Problem:** Warning that `BuildDefault` method is not generated.
+
+**Explanation:** The `BuildDefault` static method requires compile-time constants for default parameter values. When your builder defines `Default{PropertyName}` members (especially `static readonly` fields or `static` properties), these are not compile-time constants and cannot be used as default parameters in C#.
+
+**Solution:** Use the `Build()` method instead, which correctly applies all default values:
+```csharp
+var entity = new MyBuilder().Build(); // Uses Default{PropertyName} values
 ```
 
 #### Private properties not accessible

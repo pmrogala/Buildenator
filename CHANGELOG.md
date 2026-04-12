@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 10.8.1.0 - 2026-4-12
+
+### Fixed
+- **Build() method now uses Default{PropertyName} in fallback path**: The generated `Build()` method now uses `Default{PropertyName}` values instead of `default(type)` in the lazy field fallback expression. Previously, the generated code would contain `default(type)` even when a `Default{PropertyName}` member was defined, relying solely on field initializers to apply the correct value.
+- **BuildDefault incompatibility with Default{PropertyName} members**: The `BuildDefault` static method is now automatically suppressed when the builder defines `Default{PropertyName}` members (constants, static readonly fields, or static properties). C# requires default parameter values to be compile-time constants, which is incompatible with `static readonly` fields and static properties. The `Build()` method correctly applies these defaults via field initializers and should be used instead.
+
+### Added
+- **BDN009 diagnostic warning**: Emitted when `generateDefaultBuildMethod = true` is set on a builder that also defines `Default{PropertyName}` members, informing the user that `BuildDefault` will not be generated due to the incompatibility.
+
 ## 10.8.0.0 - 2026-3-8
 
 ### Added

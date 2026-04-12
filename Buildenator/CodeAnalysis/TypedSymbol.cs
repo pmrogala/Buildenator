@@ -172,7 +172,9 @@ internal sealed class TypedSymbol : ITypedSymbol
             : @$"({UnderScoreName}.HasValue ? {UnderScoreName}.Value : new {DefaultConstants.NullBox}<{TypeFullName}>({(IsFakeable()
                 ? $"{string.Format(_fixtureProperties!.CreateSingleFormat, TypeFullName, SymbolName, DefaultConstants.FixtureLiteral)}"
                   + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "")
-                : $"default({TypeFullName})")})).Object";
+                : GetDefaultValueName() is { } defaultValueName
+                    ? defaultValueName
+                    : $"default({TypeFullName})")})).Object";
 
     public string GenerateFieldValueReturn()
         => IsMockable()

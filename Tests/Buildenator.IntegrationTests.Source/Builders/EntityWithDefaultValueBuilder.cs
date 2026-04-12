@@ -3,7 +3,7 @@ using Buildenator.IntegrationTests.SharedEntities;
 
 namespace Buildenator.IntegrationTests.Source.Builders;
 
-[MakeBuilder(typeof(EntityWithDefaultValue), generateDefaultBuildMethod: false, generateStaticPropertyForBuilderCreation: true)]
+[MakeBuilder(typeof(EntityWithDefaultValue), generateDefaultBuildMethod: true, generateStaticPropertyForBuilderCreation: true)]
 public partial class EntityWithDefaultValueBuilder
 {
     // User-defined default values using the Default{PropertyName} naming convention

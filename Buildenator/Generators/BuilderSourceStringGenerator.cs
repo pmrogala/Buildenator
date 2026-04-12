@@ -17,6 +17,7 @@ internal sealed class BuilderSourceStringGenerator
     private readonly IFixtureProperties? _fixtureConfiguration;
     private readonly IMockingProperties? _mockingConfiguration;
     private readonly PropertiesStringGenerator _propertiesStringGenerator;
+    private readonly bool _hasDefaultValues;
     private readonly List<BuildenatorDiagnostic> _diagnostics = [];
 
     public BuilderSourceStringGenerator(
@@ -44,6 +45,14 @@ internal sealed class BuilderSourceStringGenerator
         {
             _diagnostics.Add(new BuildenatorDiagnostic(
                 BuildenatorDiagnosticDescriptors.MandatoryParametersWithFixtureDiagnostic,
+                _builder.OriginalLocation,
+                _builder.Name));
+        }
+        _hasDefaultValues = _builder.DefaultValueNames.Count > 0;
+        if (_hasDefaultValues && _builder.GenerateDefaultBuildMethod)
+        {
+            _diagnostics.Add(new BuildenatorDiagnostic(
+                BuildenatorDiagnosticDescriptors.DefaultBuildMethodWithDefaultValuesDiagnostic,
                 _builder.OriginalLocation,
                 _builder.Name));
         }
@@ -85,7 +94,7 @@ namespace {_builder.ContainingNamespace}
 {(_builder.IsBuildMethodOverriden ? string.Empty : _entity.GenerateBuildsCode(_builder.ShouldGenerateMethodsForUnreachableProperties))}
 {(_builder.IsBuildManyMethodOverriden ? string.Empty : GenerateBuildManyCode())}
 {(_builder.GenerateStaticPropertyForBuilderCreation && !_builder.BuilderConstructorMandatoryParameters ? $"        public static {_builder.FullName} {_entity.Name} => new {_builder.FullName}();" : "")}
-{(_builder.GenerateDefaultBuildMethod ? _entity.GenerateDefaultBuildsCode() : string.Empty)}
+{(_builder.GenerateDefaultBuildMethod && !_hasDefaultValues ? _entity.GenerateDefaultBuildsCode() : string.Empty)}
 {(_builder.ImplicitCast ? GenerateImplicitCastCode() : string.Empty)}
 {GeneratePreBuildMethod()}
 {GeneratePostBuildMethod()}
