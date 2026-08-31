@@ -174,7 +174,7 @@ internal sealed class TypedSymbol : ITypedSymbol
                   + (_nullableStrategy == NullableStrategy.Enabled ? "!" : "")
                 : GetDefaultValueName() is { } defaultValueName
                     ? defaultValueName
-                    : $"default({TypeFullName})")})).Object";
+                    : $"default({TypeFullName})" + (_nullableStrategy == NullableStrategy.Enabled ? "!" : ""))})).Object";
 
     public string GenerateFieldValueReturn()
         => IsMockable()
