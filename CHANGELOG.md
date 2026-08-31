@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 10.8.2.0 - 2026-8-31
+
+### Fixed
+- **CS8625/CS8604 nullable warnings in generated `Build()`/`BuildDefault()`**: Non-nullable reference properties without a fixture, mock, or `Default{PropertyName}` value fell back to `default(T)` in the generated code, which the compiler flags as a null-to-non-nullable-type conversion. `Build()` suppressed the resulting CS8604 with a pragma but never suppressed the underlying CS8625, so consumers with `WarningsAsErrors=nullable` (or similarly strict nullable settings) could hit a hard build error instead of a warning. The `default(T)` fallback now uses the null-forgiving operator (`!`) directly, the same pattern already used for the AutoFixture branch, instead of pragma-suppressing the whole method body. Both `Build()` and `BuildDefault()` are now generated warning-free with no pragmas needed.
+
 ## 10.8.1.0 - 2026-4-12
 
 ### Fixed
