@@ -68,19 +68,12 @@ internal sealed class EntityToBuild : IEntityToBuild
         if (ConstructorToBuild is null)
             return "";
 
-        var disableWarning = NullableStrategy == NullableStrategy.Enabled
-            ? "#pragma warning disable CS8604\n"
-            : string.Empty;
-        var restoreWarning = NullableStrategy == NullableStrategy.Enabled
-            ? "#pragma warning restore CS8604\n"
-            : string.Empty;
-
-        return $@"{disableWarning}        public {FullName} {DefaultConstants.BuildMethodName}()
+        return $@"        public {FullName} {DefaultConstants.BuildMethodName}()
         {{
             {DefaultConstants.PreBuildMethodName}();
             {GenerateLazyBuildEntityString(shouldGenerateMethodsForUnreachableProperties, ConstructorToBuild.Parameters)}
         }}
-{restoreWarning}
+
 ";
     }
 
@@ -151,26 +144,21 @@ internal sealed class EntityToBuild : IEntityToBuild
             .Aggregate(new StringBuilder(), (builder, s) => builder.AppendLine(s))
             .ToString();
 
+        var nullForgiving = NullableStrategy == NullableStrategy.Enabled ? "!" : string.Empty;
         var methodParameters = ConstructorToBuild.Parameters
             .Concat(_properties)
             .Select(s =>
             {
                 var fieldType = s.GenerateFieldType();
-                return $"{fieldType} {s.UnderScoreName} = default({fieldType})";
+                return $"{fieldType} {s.UnderScoreName} = default({fieldType}){nullForgiving}";
             }).ComaJoin();
-        var disableWarning = NullableStrategy == NullableStrategy.Enabled
-            ? "#pragma warning disable CS8625\n"
-            : string.Empty;
-        var restoreWarning = NullableStrategy == NullableStrategy.Enabled
-            ? "#pragma warning restore CS8625\n"
-            : string.Empty;
 
-        return $@"{disableWarning}        public static {FullName} BuildDefault({methodParameters})
+        return $@"        public static {FullName} BuildDefault({methodParameters})
         {{
             {moqInit}
             {GenerateDefaultBuildEntityString(ConstructorToBuild.Parameters)}
         }}
-{restoreWarning}";
+";
     }
 
     private string GenerateDefaultBuildEntityString(IEnumerable<TypedSymbol> parameters)

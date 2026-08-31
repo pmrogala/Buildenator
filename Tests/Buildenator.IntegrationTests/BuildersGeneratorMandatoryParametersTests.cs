@@ -51,4 +51,14 @@ public class BuildersGeneratorMandatoryParametersTests
 
         staticProperty.Should().BeNull("static factory property is incompatible with mandatory constructor parameters");
     }
+
+    [Fact]
+    public void BuildersGenerator_MandatoryParameters_BuildDefaultUsesDefaultValues()
+    {
+        var result = EntityWithMandatoryConstructorParametersBuilder.BuildDefault();
+
+        result.LineNumber.Should().Be(0);
+        result.Activity.Should().BeNull();
+        result.Tags.Should().BeNull();
+    }
 }
