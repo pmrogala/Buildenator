@@ -4,4 +4,13 @@
     <WarningsAsErrors>nullable</WarningsAsErrors>
   </PropertyGroup>
   <!-- /Project type conventions. -->
+  <!-- NuGet package metadata. -->
+  <PropertyGroup>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Copyright>Copyright (c) 2021 Cranter</Copyright>
+    <PackageProjectUrl>https://github.com/pmrogala/Buildenator</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/pmrogala/Buildenator</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+  <!-- /NuGet package metadata. -->
 </Project>
