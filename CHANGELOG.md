@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 10.8.3.0 - 2026-9-10
+
+### Fixed
+- **Missing license metadata in NuGet packages**: None of the published packages (`Buildenator`, `Buildenator.Abstraction`, `Buildenator.Abstraction.AutoFixture`, `Buildenator.Abstraction.Moq`) declared a license, so security scanners such as Aikido flagged them as unlicensed. `Directory.Build.props` now sets `PackageLicenseExpression=MIT` — matching the repository `LICENSE` file — along with `Copyright`, `PackageProjectUrl`, and `RepositoryUrl`/`RepositoryType` for all packable projects.
+
 ## 10.8.2.0 - 2026-8-31
 
 ### Fixed
